@@ -1,8 +1,0 @@
-Testing module: chatgpt
-Testing CPU time with 100000 iterations of each operation
-
-CPU time - draw_square: User time = 0.44086444400000002197s, System time = 0.00486200000000000087s
-CPU time - draw_rectangle: User time = 0.24306364799999996551s, System time = 0.00194112500000000014s
-CPU time - draw_parallelogram: User time = 0.53011519999999989761s, System time = 0.00408562600000000192s
-CPU time - draw_triangle: User time = 0.78293324800000019259s, System time = 0.02048196000000000391s
-CPU time - draw_pyramid: User time = 0.71729548799999998110s, System time = 0.00714249999999999607s

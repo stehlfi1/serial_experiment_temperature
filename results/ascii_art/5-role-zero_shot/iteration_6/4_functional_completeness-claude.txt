@@ -1,6 +1,0 @@
-Testing module: claude
-Method 'draw_square' in class 'AsciiArt': parameter 'width' is missing a type annotation.
-Method 'draw_rectangle' in class 'AsciiArt': parameter 'width' is missing a type annotation.
-Method 'draw_parallelogram' in class 'AsciiArt': parameter 'width' is missing a type annotation.
-Method 'draw_triangle' in class 'AsciiArt': parameter 'width' is missing a type annotation.
-Method 'draw_pyramid' in class 'AsciiArt': parameter 'height' is missing a type annotation.

@@ -1,4 +1,0 @@
-Testing module: chatgpt
-Number of classes: 1
-Number of methods: 7
-Number of functions: 1

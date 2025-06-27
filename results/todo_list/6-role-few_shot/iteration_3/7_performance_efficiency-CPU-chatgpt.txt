@@ -1,9 +1,0 @@
-Testing module: chatgpt
-Testing CPU time with 10000 iterations of each operation
-
-CPU time - add: User time = 0.00646233199999999772s, System time = 0.00036249999999999998s
-CPU time - get_all: User time = 2.25367838000000020315s, System time = 0.00457729200000000017s
-CPU time - search: User time = 9.74815692800000022089s, System time = 0.01730879199999999993s
-CPU time - search: User time = 9.15412479999999817437s, System time = 0.02065162399999999690s
-CPU time - finish: User time = 0.00442982399999891641s, System time = 0.00003224800000000555s
-CPU time - remove: User time = 0.00473292799999924796s, System time = 0.00003933600000000093s

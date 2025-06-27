@@ -1,9 +1,0 @@
-Testing module: chatgpt
-Testing 10000 iterations of each operation
-
-Average time for add: 0.00000074100494384766 seconds
-Average time for get_all: 0.00004432687759399414 seconds
-Average time for search: 0.00098500196933746348 seconds
-Average time for search: 0.00091833510398864750 seconds
-Average time for finish: 0.00000047879219055176 seconds
-Average time for remove: 0.00000050742626190186 seconds

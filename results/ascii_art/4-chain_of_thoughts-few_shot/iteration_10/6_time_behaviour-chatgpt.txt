@@ -1,8 +1,0 @@
-Testing module: chatgpt
-Testing 100000 iterations of each operation
-
-Average time for draw_square: 0.00000450788259506226 seconds
-Average time for draw_rectangle: 0.00000249660968780518 seconds
-Average time for draw_parallelogram: 0.00000553056955337524 seconds
-Average time for draw_triangle: 0.00000516390085220337 seconds
-Average time for draw_pyramid: 0.00000654860019683838 seconds

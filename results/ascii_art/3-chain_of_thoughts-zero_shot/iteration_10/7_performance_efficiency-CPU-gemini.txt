@@ -1,8 +1,0 @@
-Testing module: gemini
-Testing CPU time with 100000 iterations of each operation
-
-CPU time - draw_square: User time = 0.93431498000000001714s, System time = 0.00214729200000000030s
-CPU time - draw_rectangle: User time = 0.47734867200000008491s, System time = 0.00078104199999999915s
-CPU time - draw_parallelogram: User time = 0.75415270400000000706s, System time = 0.00155462500000000045s
-Method draw_triangle failed with error.
-CPU time - draw_pyramid: User time = 0.85983897599999981054s, System time = 0.00142825000000000070s

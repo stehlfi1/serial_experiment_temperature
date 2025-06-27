@@ -1,8 +1,0 @@
-Testing module: gemini
-Testing 100000 iterations of each operation
-
-Average time for draw_square: 0.00000471405029296875 seconds
-Average time for draw_rectangle: 0.00000251962900161743 seconds
-Average time for draw_parallelogram: 0.00000513350248336792 seconds
-Average time for draw_triangle: 0.00000601653814315796 seconds
-Average time for draw_pyramid: 0.00000614024877548218 seconds

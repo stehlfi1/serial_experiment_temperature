@@ -1,6 +1,0 @@
-Testing module: gemini
-Memory deltas for draw_square: 0.17 MB
-Method draw_rectangle failed with error.
-Method draw_parallelogram failed with error.
-Method draw_triangle failed with error.
-Memory deltas for draw_pyramid: 0.12 MB

@@ -1,6 +1,0 @@
-Testing module: claude
-Memory deltas for calculate (1974349+7972327): 0.25 MB
-Method calculate (1974349-7972327) failed with error.
-Memory deltas for calculate (1974349*7972327): 0.25 MB
-Memory deltas for calculate (1974349/7972327): 0.25 MB
-Method calculate (1974349+7972327-1974349*7972327/964) failed with error.

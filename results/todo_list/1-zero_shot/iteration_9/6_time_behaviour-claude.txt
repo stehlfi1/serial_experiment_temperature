@@ -1,9 +1,0 @@
-Testing module: claude
-Testing 10000 iterations of each operation
-
-Average time for add: 0.00000071086883544922 seconds
-Average time for get_all: 0.00142971611022949213 seconds
-Average time for search: 0.00267624189853668233 seconds
-Average time for search: 0.00186878778934478768 seconds
-Average time for finish: 0.00000050349235534668 seconds
-Average time for remove: 0.00000049979686737061 seconds

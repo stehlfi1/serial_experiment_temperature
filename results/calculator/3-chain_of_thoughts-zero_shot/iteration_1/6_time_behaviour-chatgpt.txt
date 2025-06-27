@@ -1,8 +1,0 @@
-Testing module: chatgpt
-Testing 100000 iterations of each operation
-
-Average time for calculate (1974349+7972327): 0.00000199509143829346 seconds
-Average time for calculate (1974349-7972327): 0.00000208611011505127 seconds
-Average time for calculate (1974349*7972327): 0.00000208123922348022 seconds
-Average time for calculate (1974349/7972327): 0.00000214712142944336 seconds
-Average time for calculate (1974349+7972327-1974349*7972327/964): 0.00000528707027435303 seconds

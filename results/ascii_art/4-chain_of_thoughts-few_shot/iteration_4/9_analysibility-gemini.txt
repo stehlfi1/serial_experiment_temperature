@@ -1,9 +1,0 @@
-Testing module: gemini
-************* Module gemini
-generated/code/ascii_art/4-chain_of_thoughts-few_shot/iteration_4/gemini.py:101:0: C0301: Line too long (105/100) (line-too-long)
-generated/code/ascii_art/4-chain_of_thoughts-few_shot/iteration_4/gemini.py:105:0: W0311: Bad indentation. Found 10 spaces, expected 12 (bad-indentation)
-generated/code/ascii_art/4-chain_of_thoughts-few_shot/iteration_4/gemini.py:1:0: C0114: Missing module docstring (missing-module-docstring)
-
-------------------------------------------------------------------
-Your code has been rated at 9.56/10 (previous run: 6.67/10, +2.89)
-

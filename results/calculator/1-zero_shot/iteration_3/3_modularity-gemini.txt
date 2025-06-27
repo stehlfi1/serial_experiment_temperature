@@ -1,4 +1,0 @@
-Testing module: gemini
-Number of classes: 1
-Number of methods: 4
-Number of functions: 1

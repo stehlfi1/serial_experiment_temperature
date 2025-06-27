@@ -1,8 +1,0 @@
-Testing module: claude
-Testing 100000 iterations of each operation
-
-Average time for calculate (1974349+7972327): 0.00000218625068664551 seconds
-Average time for calculate (1974349-7972327): 0.00000218901872634888 seconds
-Average time for calculate (1974349*7972327): 0.00000210726261138916 seconds
-Average time for calculate (1974349/7972327): 0.00000214295148849487 seconds
-Average time for calculate (1974349+7972327-1974349*7972327/964): 0.00000506249189376831 seconds

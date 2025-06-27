@@ -1,2 +1,0 @@
-Testing module: claude
-Method 'calculate' in class 'Calculator': parameter 'expression' is missing a type annotation.

@@ -1,7 +1,0 @@
-Testing module: claude
-Memory deltas for add: 4.50 MB
-Memory deltas for get_all: 3.92 MB
-Memory deltas for search: 0.22 MB
-Memory deltas for search: 0.25 MB
-Memory deltas for finish: 1.56 MB
-Memory deltas for remove: -2.00 MB

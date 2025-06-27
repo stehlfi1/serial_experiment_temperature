@@ -1,9 +1,0 @@
-Testing module: gemini
-Testing CPU time with 10000 iterations of each operation
-
-CPU time - add: User time = 0.00650408400000000025s, System time = 0.00034224999999999967s
-CPU time - get_all: User time = 6.23368050599999978800s, System time = 0.01141587599999999841s
-CPU time - search: User time = 14.44826675199999854726s, System time = 0.02714633600000000355s
-CPU time - search: User time = 14.35776614400000283922s, System time = 0.04459021199999999713s
-CPU time - finish: User time = 0.00480051199999564915s, System time = 0.00003479199999999183s
-CPU time - remove: User time = 0.00490291199999859373s, System time = 0.00016466399999999493s

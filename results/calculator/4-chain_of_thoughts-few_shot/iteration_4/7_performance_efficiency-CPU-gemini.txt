@@ -1,8 +1,0 @@
-Testing module: gemini
-Testing CPU time with 100000 iterations of each operation
-
-CPU time - calculate (1974349+7972327): User time = 0.43410667200000002675s, System time = 0.00038700000000000019s
-Method calculate (1974349-7972327) failed with error.
-CPU time - calculate (1974349*7972327): User time = 0.43670844799999997132s, System time = 0.00010941600000000020s
-CPU time - calculate (1974349/7972327): User time = 0.44026054399999992039s, System time = 0.00011887499999999919s
-Method calculate (1974349+7972327-1974349*7972327/964) failed with error.

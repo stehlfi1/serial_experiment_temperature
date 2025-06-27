@@ -1,8 +1,0 @@
-Testing module: claude
-Testing CPU time with 100000 iterations of each operation
-
-CPU time - draw_square: User time = 0.12222712399999999255s, System time = 0.00025483399999999979s
-CPU time - draw_rectangle: User time = 0.07641249600000002418s, System time = 0.00011537500000000003s
-CPU time - draw_parallelogram: User time = 0.52186631999999999465s, System time = 0.00089045800000000022s
-CPU time - draw_triangle: User time = 0.60934246400000002808s, System time = 0.00113779199999999945s
-CPU time - draw_pyramid: User time = 0.69060953599999974628s, System time = 0.00101391599999999839s

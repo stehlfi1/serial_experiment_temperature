@@ -1,8 +1,0 @@
-Testing module: gemini
-Testing 100000 iterations of each operation
-
-Average time for calculate (1974349+7972327): 0.00000317289829254150 seconds
-Average time for calculate (1974349-7972327): 0.00000318902015686035 seconds
-Average time for calculate (1974349*7972327): 0.00000322744131088257 seconds
-Average time for calculate (1974349/7972327): 0.00000326448917388916 seconds
-Average time for calculate (1974349+7972327-1974349*7972327/964): 0.00000770491123199463 seconds

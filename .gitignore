@@ -172,3 +172,11 @@ cython_debug/
 
 # DS_Store files
 .DS_Store
+
+# Experimental data and generated code
+archive/
+generated/
+
+# Archived data
+*.tar.gz
+*.zip

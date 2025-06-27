@@ -1,7 +1,0 @@
-Testing module: chatgpt
-Memory deltas for add: 3.80 MB
-Memory deltas for get_all: 0.22 MB
-Memory deltas for search: 0.05 MB
-Memory deltas for search: 0.02 MB
-Memory deltas for finish: 0.00 MB
-Memory deltas for remove: -1.00 MB

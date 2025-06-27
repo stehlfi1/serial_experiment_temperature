@@ -1,8 +1,0 @@
-Testing module: claude
-Testing 100000 iterations of each operation
-
-Average time for draw_square: 0.00000479959249496460 seconds
-Average time for draw_rectangle: 0.00000250915050506592 seconds
-Average time for draw_parallelogram: 0.00000509190320968628 seconds
-Average time for draw_triangle: 0.00000889258861541748 seconds
-Average time for draw_pyramid: 0.00000648221969604492 seconds

@@ -1,6 +1,0 @@
-Testing module: gemini
-Method calculate (1974349+7972327) failed with error.
-Method calculate (1974349-7972327) failed with error.
-Method calculate (1974349*7972327) failed with error.
-Method calculate (1974349/7972327) failed with error.
-Method calculate (1974349+7972327-1974349*7972327/964) failed with error.

@@ -1,8 +1,0 @@
-Testing module: chatgpt
-Testing CPU time with 100000 iterations of each operation
-
-CPU time - calculate (1974349+7972327): User time = 0.28012069800000000130s, System time = 0.00042279100000000049s
-CPU time - calculate (1974349-7972327): User time = 0.28543763199999994118s, System time = 0.00031637499999999982s
-CPU time - calculate (1974349*7972327): User time = 0.27993977599999997352s, System time = 0.00067137500000000010s
-CPU time - calculate (1974349/7972327): User time = 0.28412928000000003959s, System time = 0.00034541699999999977s
-CPU time - calculate (1974349+7972327-1974349*7972327/964): User time = 0.61522483199999999925s, System time = 0.00086637499999999909s

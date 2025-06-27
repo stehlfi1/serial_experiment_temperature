@@ -1,55 +1,39 @@
-"""
-This module contains the LLM class that is used to interact with the OpenAI chat completion model.
-"""
-
 import os
+from typing import Optional
 from dotenv import load_dotenv
 from openai import OpenAI
 from openai.types.chat.chat_completion import ChatCompletion
-
 
 load_dotenv()
 
 
 class Llm:
-    """
-    This class is used to interact with the OpenAI chat completion model.
-    """
-
-    def __init__(self, model: str, name: str):
-        """
-        Initializes the LLM class with the specified model and name.
-
-        Args:
-            model (str): The model identifier to be used.
-            name (str): The name of the instance.
-
-        Attributes:
-            model (str): The model identifier.
-            name (str): The name of the instance.
-            client (OpenAI): The OpenAI client initialized with the base URL and API key from environment variables.
-        """
+    def __init__(self, model: str, name: str, temperature: float = 0.7, 
+                 top_p: Optional[float] = None, top_k: Optional[int] = None):
         self.model = model
         self.name = name
+        self.temperature = temperature
+        self.top_p = top_p
+        self.top_k = top_k
         self.client = OpenAI(
             base_url=os.getenv("OPENROUTER_API_URL"),
             api_key=os.getenv("OPENROUTER_API_KEY"),
         )
 
-    def query(self, question: str) -> ChatCompletion:
-        """
-        Sends a query to the chat completion model and returns the response.
-
-        Args:
-            question (str): The question or prompt to send to the chat model.
-
-        Returns:
-            ChatCompletion: The response from the chat completion model.
-        """
-        return self.client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": "You are an AI assistant."},
+    def query(self, question: str, system_prompt: str = "You are an AI assistant.") -> ChatCompletion:
+        params = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": question},
             ],
-        )
+            "temperature": self.temperature,
+        }
+        
+        if self.top_p is not None:
+            params["top_p"] = self.top_p
+            
+        if self.top_k is not None:
+            params["extra_body"] = {"top_k": self.top_k}
+        
+        return self.client.chat.completions.create(**params)

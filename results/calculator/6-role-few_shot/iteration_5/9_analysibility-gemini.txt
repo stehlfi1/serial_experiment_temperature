@@ -1,8 +1,0 @@
-Testing module: gemini
-************* Module gemini
-generated/code/calculator/6-role-few_shot/iteration_5/gemini.py:1:0: C0114: Missing module docstring (missing-module-docstring)
-generated/code/calculator/6-role-few_shot/iteration_5/gemini.py:4:0: R0903: Too few public methods (1/2) (too-few-public-methods)
-
-------------------------------------------------------------------
-Your code has been rated at 9.76/10 (previous run: 8.82/10, +0.94)
-

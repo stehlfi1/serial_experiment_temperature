@@ -1,2 +1,0 @@
-Testing module: gemini
-Yes, the code is compilable.

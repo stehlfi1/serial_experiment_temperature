@@ -1,26 +1,15 @@
-"""
-Configuration file for the scraper
-Contains the following:
-- LLMS - list of LLMs to be used
-- CHALLENGES - list of challenges to be sent to the LLMs
-- ITERATIONS - number of iterations for each prompt
-"""
-
 from llm import Llm
 from challange import Challenge
 from prompt import Prompt
 from helpers import load_string_from_file
 
-# LLMs - list of LLMs to be used
 LLMS = [
-    Llm("openai/o3-mini-high", "chatgpt"),  # LLM 1
-    Llm("anthropic/claude-3.7-sonnet", "claude"),  # LLM 2
-    Llm("google/gemini-2.0-pro-exp-02-05", "gemini"),  # LLM 3
+    Llm("openai/o3-mini-high", "chatgpt", temperature=0.7),
+    Llm("anthropic/claude-3.7-sonnet", "claude", temperature=0.7),
+    Llm("google/gemini-2.5-flash", "gemini", temperature=0.7),
 ]
 
-# Challenges - list of challenges to be sent to the LLMs
 CHALLENGES = [
-    # Challenge 1 - Calculator
     Challenge(
         "calculator",
         [
@@ -53,7 +42,6 @@ CHALLENGES = [
             ),
         ],
     ),
-    # Challenge 2 - ASCII art
     Challenge(
         "ascii_art",
         [
@@ -86,7 +74,6 @@ CHALLENGES = [
             ),
         ],
     ),
-    # Challenge 3 - TODO list
     Challenge(
         "todo_list",
         [
@@ -121,5 +108,7 @@ CHALLENGES = [
     ),
 ]
 
-# ITERATIONS - number of iterations for each prompt
-ITERATIONS = 10
+DRY_RUN_CHALLENGE = "calculator"
+DRY_RUN_PROMPT = "1-zero_shot"
+DRY_RUN_ITERATIONS = 1
+DRY_RUN_OUTPUT_DIR = "dry_run_output"

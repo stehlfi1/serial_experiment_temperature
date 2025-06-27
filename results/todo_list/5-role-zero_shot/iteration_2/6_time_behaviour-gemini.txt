@@ -1,9 +1,0 @@
-Testing module: gemini
-Testing 10000 iterations of each operation
-
-Average time for add: 0.00000068128108978271 seconds
-Average time for get_all: 0.00004353752136230469 seconds
-Average time for search: 0.00140074090957641607 seconds
-Average time for search: 0.00139000439643859855 seconds
-Average time for finish: 0.00000047111511230469 seconds
-Average time for remove: 0.00000048470497131348 seconds

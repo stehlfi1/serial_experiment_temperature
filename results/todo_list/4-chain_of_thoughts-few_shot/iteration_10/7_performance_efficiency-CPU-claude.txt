@@ -1,9 +1,0 @@
-Testing module: claude
-Testing CPU time with 10000 iterations of each operation
-
-CPU time - add: User time = 0.01037574800000000061s, System time = 0.00059341600000000112s
-CPU time - get_all: User time = 14.72549682400000037319s, System time = 0.02286545800000000170s
-CPU time - search: User time = 10.14007500800000016739s, System time = 0.01301629199999999875s
-CPU time - search: User time = 9.43705292799999995168s, System time = 0.01178054399999999696s
-CPU time - finish: User time = 0.00849305600000604954s, System time = 0.00002896000000000148s
-CPU time - remove: User time = 0.00490905600000246523s, System time = 0.00014916799999999814s

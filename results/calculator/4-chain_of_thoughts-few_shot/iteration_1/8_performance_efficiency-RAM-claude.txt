@@ -1,6 +1,0 @@
-Testing module: claude
-Memory deltas for calculate (1974349+7972327): 0.14 MB
-Memory deltas for calculate (1974349-7972327): 0.14 MB
-Memory deltas for calculate (1974349*7972327): 0.14 MB
-Memory deltas for calculate (1974349/7972327): 0.14 MB
-Memory deltas for calculate (1974349+7972327-1974349*7972327/964): 0.14 MB

@@ -1,6 +1,0 @@
-Testing module: claude
-Memory deltas for draw_square: 0.14 MB
-Memory deltas for draw_rectangle: 0.03 MB
-Memory deltas for draw_parallelogram: 0.06 MB
-Memory deltas for draw_triangle: 0.08 MB
-Memory deltas for draw_pyramid: 0.09 MB

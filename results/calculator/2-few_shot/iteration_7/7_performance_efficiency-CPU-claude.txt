@@ -1,8 +1,0 @@
-Testing module: claude
-Testing CPU time with 100000 iterations of each operation
-
-CPU time - calculate (1974349+7972327): User time = 0.35986921999999998967s, System time = 0.00049179100000000010s
-CPU time - calculate (1974349-7972327): User time = 0.35955951999999996582s, System time = 0.00045295799999999983s
-CPU time - calculate (1974349*7972327): User time = 0.36004115199999997543s, System time = 0.00074983399999999957s
-CPU time - calculate (1974349/7972327): User time = 0.36349312000000000289s, System time = 0.00043441699999999944s
-CPU time - calculate (1974349+7972327-1974349*7972327/964): User time = 0.80100864000000004950s, System time = 0.00097983300000000113s
