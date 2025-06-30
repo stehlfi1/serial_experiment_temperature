@@ -2,8 +2,16 @@ from dataclasses import dataclass, asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any
+from enum import Enum
 import json
 import uuid
+
+
+class TestGroupType(Enum):
+    """Test group classifications for organizing different types of quality tests."""
+    LEGACY = "legacy"      # Original Renner's tests (compilability, functional_correctness)  
+    QUALITY = "quality"    # Advanced quality metrics (complexity, maintainability, etc.)
+    STRUCTURE = "structure" # AST-based structural analysis
 
 
 @dataclass
@@ -25,14 +33,32 @@ class ExperimentConfig:
     challenges: List[str] 
     prompts: List[str]
     iterations: int
+    test_groups: Optional[List[str]] = None  # Track which test groups to run
     
     def to_dict(self) -> Dict[str, Any]:
         return {
             "models": [m.to_dict() for m in self.models],
             "challenges": self.challenges,
             "prompts": self.prompts,
-            "iterations": self.iterations
+            "iterations": self.iterations,
+            "test_groups": self.test_groups or []
         }
+    
+    def get_experiment_matrix(self) -> Dict[str, Any]:
+        """Get a hierarchical view of the experiment matrix"""
+        matrix = {}
+        for challenge in self.challenges:
+            matrix[challenge] = {}
+            for prompt in self.prompts:
+                matrix[challenge][prompt] = {}
+                for model in self.models:
+                    matrix[challenge][prompt][model.name] = {
+                        "temperature": model.temperature,
+                        "top_p": model.top_p,
+                        "top_k": model.top_k,
+                        "iterations": list(range(1, self.iterations + 1))
+                    }
+        return matrix
 
 
 @dataclass
@@ -86,15 +112,161 @@ class ExperimentMetadata:
         )
 
 
+# Enhanced metrics structure for temperature research
+@dataclass
+class AdvancedMetrics:
+    """Comprehensive metrics for analyzing temperature impact on code quality and structure."""
+    
+    # === COMPLEXITY METRICS ===
+    # Cyclomatic Complexity - primary metric for decision points
+    cyclomatic_complexity: Optional[float] = None
+    cyclomatic_complexity_per_function: Optional[List[float]] = None
+    
+    # Halstead metrics - operands and operators analysis
+    halstead_volume: Optional[float] = None           # V = N * log2(n)
+    halstead_difficulty: Optional[float] = None       # D = (n1/2) * (N2/n2)
+    halstead_effort: Optional[float] = None           # E = D * V
+    halstead_time: Optional[float] = None             # T = E / 18
+    halstead_bugs: Optional[float] = None             # B = V / 3000
+    halstead_length: Optional[int] = None             # N = N1 + N2
+    halstead_vocabulary: Optional[int] = None         # n = n1 + n2
+    halstead_operators: Optional[int] = None          # n1
+    halstead_operands: Optional[int] = None           # n2
+    halstead_operator_count: Optional[int] = None     # N1
+    halstead_operand_count: Optional[int] = None      # N2
+    
+    # Cognitive Complexity - weighted branching and nesting
+    cognitive_complexity: Optional[float] = None
+    cognitive_complexity_per_function: Optional[List[float]] = None
+    
+    # Nesting depth - maximum level of nested blocks
+    max_nesting_depth: Optional[int] = None
+    avg_nesting_depth: Optional[float] = None
+    nesting_depth_per_function: Optional[List[int]] = None
+    
+    # ABC metrics - Assignment, Branch, Condition
+    abc_assignment_count: Optional[int] = None
+    abc_branch_count: Optional[int] = None
+    abc_condition_count: Optional[int] = None
+    abc_magnitude: Optional[float] = None  # sqrt(A² + B² + C²)
+    
+    # Maintainability Index - composite metric
+    maintainability_index: Optional[float] = None
+    maintainability_rank: Optional[str] = None  # A, B, C, D based on MI score
+    
+    # === SIZE METRICS ===
+    # Lines of Code metrics
+    logical_lines_of_code: Optional[int] = None       # LLOC - executable lines
+    physical_lines_of_code: Optional[int] = None      # LOC - total lines
+    comment_lines: Optional[int] = None
+    blank_lines: Optional[int] = None
+    code_to_comment_ratio: Optional[float] = None
+    
+    # Function and class metrics
+    function_count: Optional[int] = None
+    class_count: Optional[int] = None
+    method_count: Optional[int] = None
+    methods_per_class: Optional[List[int]] = None
+    parameters_per_function: Optional[List[int]] = None
+    avg_parameters_per_function: Optional[float] = None
+    
+    # Weighted Methods per Class (WMC) - sum of CC for class methods
+    wmc_per_class: Optional[List[float]] = None
+    avg_wmc: Optional[float] = None
+    
+    # Import and dependency metrics
+    import_count: Optional[int] = None
+    from_import_count: Optional[int] = None
+    unique_imports: Optional[int] = None
+    stdlib_imports: Optional[int] = None
+    third_party_imports: Optional[int] = None
+    
+    # === STRUCTURE / OOP METRICS ===
+    # Inheritance metrics
+    depth_of_inheritance: Optional[List[int]] = None  # DIT per class
+    max_dit: Optional[int] = None
+    avg_dit: Optional[float] = None
+    
+    # Number of Children (NOC) - direct subclasses
+    children_per_class: Optional[List[int]] = None
+    max_noc: Optional[int] = None
+    avg_noc: Optional[float] = None
+    
+    # Coupling Between Objects (CBO) - classes referenced
+    coupling_per_class: Optional[List[int]] = None
+    max_cbo: Optional[int] = None
+    avg_cbo: Optional[float] = None
+    
+    # === AST STRUCTURE METRICS ===
+    # AST size and complexity
+    ast_node_count: Optional[int] = None
+    ast_depth: Optional[int] = None
+    ast_node_types: Optional[Dict[str, int]] = None   # Histogram of node types
+    ast_unique_node_types: Optional[int] = None
+    
+    # Control flow metrics
+    loop_count: Optional[Dict[str, int]] = None       # {'for': x, 'while': y}
+    conditional_count: Optional[Dict[str, int]] = None # {'if': x, 'try': y, 'elif': z}
+    comprehension_count: Optional[Dict[str, int]] = None # {'list': x, 'dict': y, 'set': z}
+    
+    # Code patterns
+    lambda_count: Optional[int] = None
+    generator_count: Optional[int] = None
+    decorator_count: Optional[int] = None
+    docstring_count: Optional[int] = None
+    return_statement_count: Optional[int] = None
+    raise_statement_count: Optional[int] = None
+    assert_statement_count: Optional[int] = None
+    
+    # Variable usage
+    variable_count: Optional[int] = None
+    global_variable_count: Optional[int] = None
+    nonlocal_variable_count: Optional[int] = None
+    
+    # Operator usage distribution
+    operator_distribution: Optional[Dict[str, int]] = None
+    
+    # Literal usage
+    string_literal_count: Optional[int] = None
+    number_literal_count: Optional[int] = None
+    boolean_literal_count: Optional[int] = None
+    
+    # === ADDITIONAL QUALITY METRICS ===
+    # Code style and formatting (can be analyzed via AST)
+    naming_convention_score: Optional[float] = None
+    code_duplication_ratio: Optional[float] = None
+    
+    # Function complexity distribution
+    simple_function_ratio: Optional[float] = None     # CC <= 5
+    complex_function_ratio: Optional[float] = None    # CC > 10
+    very_complex_function_ratio: Optional[float] = None # CC > 20
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
 @dataclass
 class TestMetrics:
+    # Legacy metrics (for backward compatibility)
     compilability: Dict[str, Any]
     code_length: Dict[str, Any]
     modularity: Dict[str, Any]
     functional_completeness: Dict[str, Any]
+    functional_correctness: Optional[Dict[str, Any]] = None
+    
+    # Advanced test group results
+    quality: Optional[Dict[str, Any]] = None
+    structure: Optional[Dict[str, Any]] = None
+    
+    # New advanced metrics for temperature research
+    advanced: Optional[AdvancedMetrics] = None
+    test_groups_run: Optional[List[str]] = None
     
     def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        if self.advanced:
+            data["advanced"] = self.advanced.to_dict()
+        return data
 
 
 @dataclass
@@ -233,3 +405,54 @@ class ExperimentResults:
                         experiment_results.add_result(result)
         
         return experiment_results
+
+
+# Test group definitions for temperature research
+@dataclass
+class TestGroup:
+    name: str
+    description: str
+    tests: List[str]
+    category: str  # "legacy", "quality", "similarity", "structure"
+
+
+# Predefined test groups
+TEST_GROUPS = {
+    "legacy": TestGroup(
+        name="legacy",
+        description="Original tests from Renner's work - compatibility and basic functionality",
+        tests=[
+            "1_code_compilability",
+            "2_code_length_adaptive", 
+            "3_modularity_adaptive",
+            "4_functional_completeness_adaptive",
+            "5_functional_correctness"  # Missing key test!
+        ],
+        category="legacy"
+    ),
+    "quality": TestGroup(
+        name="quality",
+        description="Advanced code quality metrics for temperature analysis",
+        tests=[
+            "complexity_analysis",     # CC, cognitive complexity, nesting depth
+            "halstead_analysis",       # All Halstead metrics (V, D, E, T, B, etc.)
+            "maintainability_analysis", # MI, ABC metrics
+            "size_analysis",           # LLOC, function count, etc.
+            "code_style_analysis"      # Naming conventions, duplication
+        ],
+        category="quality"
+    ),
+    "structure": TestGroup(
+        name="structure",
+        description="Structural analysis using AST and code organization",
+        tests=[
+            "ast_analysis",
+            "control_flow_analysis", 
+            "oop_metrics",
+            "code_patterns",
+            "variable_usage",
+            "operator_distribution"
+        ],
+        category="structure"
+    )
+}

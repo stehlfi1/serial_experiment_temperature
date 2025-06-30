@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 import sys
 import time
 
@@ -66,7 +66,7 @@ def create_llms_with_temperature(temperature: float) -> list:
     ]
 
 
-def dry_run_generation(challenge_name: str, prompt_name: str, iterations: int = 1, temperature: float = 0.7) -> None:
+def dry_run_generation(challenge_name: str, prompt_name: str, iterations: int = 1, temperature: float = 0.7, test_groups: List[str] = None) -> None:
     llms = create_llms_with_temperature(temperature)
     
     print(f"🧪 Starting dry run: {challenge_name} - {prompt_name}")
@@ -123,15 +123,29 @@ def dry_run_generation(challenge_name: str, prompt_name: str, iterations: int = 
                 code_path = Path(code_dir) / f"{llm.name}.py"
                 
                 test_results = test_runner.run_all_tests_for_model(
-                    llm.name, Path(code_dir), challenge.name
+                    llm.name, Path(code_dir), challenge.name, test_groups or ["legacy"]
                 )
                 
-                metrics_data = {
-                    "compilability": test_results.get("1_code_compilability", {}),
-                    "code_length": test_results.get("2_code_length_adaptive", {}),
-                    "modularity": test_results.get("3_modularity_adaptive", {}),
-                    "functional_completeness": test_results.get("4_functional_completeness_adaptive", {})
-                }
+                # Extract metrics based on test groups run
+                metrics_data = {}
+                
+                # Legacy test results (backward compatibility)
+                if "legacy" in (test_groups or ["legacy"]):
+                    legacy_results = test_results.get("legacy", {})
+                    metrics_data.update({
+                        "compilability": legacy_results.get("1_code_compilability", {}),
+                        "code_length": legacy_results.get("2_code_length_adaptive", {}),
+                        "modularity": legacy_results.get("3_modularity_adaptive", {}),
+                        "functional_completeness": legacy_results.get("4_functional_completeness_adaptive", {}),
+                        "functional_correctness": legacy_results.get("5_functional_correctness", {})
+                    })
+                
+                # Advanced test results
+                if "quality" in (test_groups or []):
+                    metrics_data["quality"] = test_results.get("quality", {})
+                
+                if "structure" in (test_groups or []):
+                    metrics_data["structure"] = test_results.get("structure", {})
                 
                 experiment_manager.add_result(
                     model=llm.name,
@@ -165,7 +179,7 @@ def dry_run_generation(challenge_name: str, prompt_name: str, iterations: int = 
     print(f"\n🎉 Dry run completed! Results saved to: {results_path}")
 
 
-def test_generated_code(base_dir: str = "dry_run_output") -> None:
+def test_generated_code(base_dir: str = "dry_run_output", test_groups: List[str] = None) -> None:
     print(f"🧪 Testing generated code in: {base_dir}")
     print("-" * 50)
     
@@ -227,18 +241,32 @@ def test_generated_code(base_dir: str = "dry_run_output") -> None:
                     
                     try:
                         test_results = test_runner.run_all_tests_for_model(
-                            model_name, iteration_dir, challenge_name
+                            model_name, iteration_dir, challenge_name, test_groups or ["legacy"]
                         )
                         
-                        metrics_data = {
-                            "compilability": test_results.get("1_code_compilability", {}),
-                            "code_length": test_results.get("2_code_length_adaptive", {}),
-                            "modularity": test_results.get("3_modularity_adaptive", {}),
-                            "functional_completeness": test_results.get("4_functional_completeness_adaptive", {})
-                        }
+                        # Extract metrics based on test groups run
+                        metrics_data = {}
+                        
+                        # Legacy test results (backward compatibility)
+                        if "legacy" in (test_groups or ["legacy"]):
+                            legacy_results = test_results.get("legacy", {})
+                            metrics_data.update({
+                                "compilability": legacy_results.get("1_code_compilability", {}),
+                                "code_length": legacy_results.get("2_code_length_adaptive", {}),
+                                "modularity": legacy_results.get("3_modularity_adaptive", {}),
+                                "functional_completeness": legacy_results.get("4_functional_completeness_adaptive", {}),
+                                "functional_correctness": legacy_results.get("5_functional_correctness", {})
+                            })
+                        
+                        # Advanced test results
+                        if "quality" in (test_groups or []):
+                            metrics_data["quality"] = test_results.get("quality", {})
+                        
+                        if "structure" in (test_groups or []):
+                            metrics_data["structure"] = test_results.get("structure", {})
                         
                         print(f"        ✅ Tests completed")
-                        print(f"           📊 Metrics: {len([k for k, v in metrics_data.items() if v])} tests passed")
+                        print(f"           📊 Metrics: {len([k for k, v in metrics_data.items() if v])} categories analyzed")
                         
                         results_summary.append({
                             "model": model_name,
@@ -391,6 +419,13 @@ def main() -> None:
         default=DRY_RUN_OUTPUT_DIR,
         help=f"Directory containing generated code (default: {DRY_RUN_OUTPUT_DIR})"
     )
+    test_parser.add_argument(
+        "--test-groups",
+        nargs="*",
+        choices=["legacy", "quality", "structure"],
+        default=["legacy"],
+        help="Test groups to run (default: legacy). Options: legacy, quality, structure"
+    )
     
     # Full command (generate + test)
     full_parser = subparsers.add_parser('full', help='Generate code and run tests')
@@ -419,15 +454,22 @@ def main() -> None:
         default=0.8,
         help="Temperature for generation (default: 0.8)"
     )
+    full_parser.add_argument(
+        "--test-groups",
+        nargs="*",
+        choices=["legacy", "quality", "structure"],
+        default=["legacy"],
+        help="Test groups to run (default: legacy). Options: legacy, quality, structure"
+    )
     
     args = parser.parse_args()
     
     if args.command == 'generate':
         generate_only(args.challenge, args.prompt, args.iterations, args.temperature, args.output_dir)
     elif args.command == 'test':
-        test_generated_code(args.input_dir)
+        test_generated_code(args.input_dir, getattr(args, 'test_groups', ['legacy']))
     elif args.command == 'full':
-        dry_run_generation(args.challenge, args.prompt, args.iterations, args.temperature)
+        dry_run_generation(args.challenge, args.prompt, args.iterations, args.temperature, getattr(args, 'test_groups', ['legacy']))
     else:
         parser.print_help()
         print("\n❌ Please specify a command: generate, test, or full")

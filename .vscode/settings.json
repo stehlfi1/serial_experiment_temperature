@@ -1,0 +1,7 @@
+{
+    "python.defaultInterpreterPath": "uv",
+    "python.terminal.activateEnvironment": true,
+    "github.copilot.chat.experimental.codeGeneration.instructions": [
+        "This project uses uv for Python package management. Always use 'uv add <package>' instead of 'pip install <package>' and 'uv run <command>' to run Python scripts in the project environment."
+    ]
+}

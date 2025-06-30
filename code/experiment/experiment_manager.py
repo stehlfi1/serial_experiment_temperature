@@ -75,7 +75,11 @@ class ExperimentManager:
             compilability=metrics_data.get("compilability", {}),
             code_length=metrics_data.get("code_length", {}),
             modularity=metrics_data.get("modularity", {}),
-            functional_completeness=metrics_data.get("functional_completeness", {})
+            functional_completeness=metrics_data.get("functional_completeness", {}),
+            functional_correctness=metrics_data.get("functional_correctness"),
+            quality=metrics_data.get("quality"),
+            structure=metrics_data.get("structure"),
+            test_groups_run=metrics_data.get("test_groups_run")
         )
     
     @staticmethod
