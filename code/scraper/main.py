@@ -14,7 +14,7 @@ from config import (
     DRY_RUN_ITERATIONS,
     DRY_RUN_OUTPUT_DIR
 )
-from helpers import exctract_python_code
+from helpers import extract_python_code
 from experiment.experiment_manager import ExperimentManager
 from experiment.data_models import ExperimentConfig, ModelInfo
 from experiment.test_runner import TestRunner
@@ -38,7 +38,7 @@ def _write_llm_output(code_dir: str, response_dir: str, llm_name: str, response_
     
     code_file = Path(code_dir) / f"{llm_name}.py"
     with open(code_file, "w", encoding="utf-8") as f:
-        f.write(exctract_python_code(response_content))
+        f.write(extract_python_code(response_content))
 
 
 def _find_challenge_and_prompt(challenge_name: str, prompt_name: str) -> tuple[Optional[object], Optional[object]]:
@@ -420,38 +420,6 @@ def main() -> None:
         help="Temperature for generation (default: 0.8)"
     )
     
-    # Legacy dry-run support
-    parser.add_argument(
-        "--dry-run", 
-        action="store_true",
-        help="DEPRECATED: Use 'full' command instead"
-    )
-    parser.add_argument(
-        "--challenge",
-        type=str,
-        choices=[c.name for c in CHALLENGES],
-        default=DRY_RUN_CHALLENGE,
-        help=f"Challenge to use for dry run (default: {DRY_RUN_CHALLENGE})"
-    )
-    parser.add_argument(
-        "--prompt",
-        type=str,
-        default=DRY_RUN_PROMPT,
-        help=f"Prompt to use for dry run (default: {DRY_RUN_PROMPT})"
-    )
-    parser.add_argument(
-        "--iterations",
-        type=int,
-        default=DRY_RUN_ITERATIONS,
-        help=f"Number of iterations for dry run (default: {DRY_RUN_ITERATIONS})"
-    )
-    parser.add_argument(
-        "-t", "--temperature",
-        type=float,
-        default=0.8,
-        help="Temperature for generation (default: 0.8)"
-    )
-    
     args = parser.parse_args()
     
     if args.command == 'generate':
@@ -459,9 +427,6 @@ def main() -> None:
     elif args.command == 'test':
         test_generated_code(args.input_dir)
     elif args.command == 'full':
-        dry_run_generation(args.challenge, args.prompt, args.iterations, args.temperature)
-    elif args.dry_run:
-        print("⚠️  --dry-run is deprecated. Use 'full' command instead.")
         dry_run_generation(args.challenge, args.prompt, args.iterations, args.temperature)
     else:
         parser.print_help()

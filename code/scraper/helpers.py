@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 
 
-def exctract_python_code(text: str) -> str:
+def extract_python_code(text: str) -> str:
     """
     Extracts Python code blocks from a given text.
 
