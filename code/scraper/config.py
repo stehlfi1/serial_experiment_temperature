@@ -4,9 +4,9 @@ from prompt import Prompt
 from helpers import load_string_from_file
 
 LLMS = [
-    Llm("openai/o3-mini-high", "chatgpt", temperature=0.7),
-    Llm("anthropic/claude-3.7-sonnet", "claude", temperature=0.7),
-    Llm("google/gemini-2.5-flash", "gemini", temperature=0.7),
+    Llm("openai/gpt-4.1", "chatgpt", temperature=0.7),
+    Llm("anthropic/claude-sonnet-4", "claude", temperature=0.7),
+    Llm("google/gemini-2.5-pro", "gemini", temperature=0.7),
 ]
 
 CHALLENGES = [
@@ -109,6 +109,6 @@ CHALLENGES = [
 ]
 
 DRY_RUN_CHALLENGE = "calculator"
-DRY_RUN_PROMPT = "1-zero_shot"
+DRY_RUN_PROMPT = "5-role-zero_shot"
 DRY_RUN_ITERATIONS = 1
 DRY_RUN_OUTPUT_DIR = "dry_run_output"

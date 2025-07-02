@@ -114,49 +114,28 @@ class TestResultParser:
 
     @staticmethod
     def parse_functional_correctness_output(output: str) -> Dict[str, Any]:
-        """Parse pytest output from functional correctness tests."""
+        """Parse pytest output from functional correctness tests using regex for robust parsing."""
+        import re
+        
         result = {"status": "unknown", "tests_run": 0, "tests_passed": 0, "tests_failed": 0, "pass_rate": 0.0}
         
-        lines = output.strip().split('\n')
+        # Use regex to find pytest summary line - much more robust
+        # Matches patterns like: "12 failed, 35 passed in 0.06s" or "88 passed in 0.15s"
+        summary_pattern = r'(\d+)\s+failed.*?(\d+)\s+passed\s+in\s+[\d.]+s|(\d+)\s+passed\s+in\s+[\d.]+s|(\d+)\s+failed\s+in\s+[\d.]+s'
         
-        # Find the summary line with test counts
-        for line in lines:
-            line = line.strip()
-            # Parse pytest summary line (e.g., "12 failed, 35 passed in 0.06s")
-            if " passed" in line and " failed" in line and " in " in line:
-                parts = line.split()
-                for i, part in enumerate(parts):
-                    if part == "passed" and i > 0:
-                        try:
-                            result["tests_passed"] = int(parts[i-1])
-                        except (ValueError, IndexError):
-                            pass
-                    elif part == "failed" and i > 0:
-                        try:
-                            result["tests_failed"] = int(parts[i-1])
-                        except (ValueError, IndexError):
-                            pass
-                break
-            # Handle cases with only passed or only failed
-            elif " passed in " in line and " failed" not in line:
-                parts = line.split()
-                for i, part in enumerate(parts):
-                    if part == "passed" and i > 0:
-                        try:
-                            result["tests_passed"] = int(parts[i-1])
-                            result["tests_failed"] = 0
-                        except (ValueError, IndexError):
-                            pass
-                break
-            elif " failed in " in line and " passed" not in line:
-                parts = line.split()
-                for i, part in enumerate(parts):
-                    if part == "failed" and i > 0:
-                        try:
-                            result["tests_failed"] = int(parts[i-1])
-                            result["tests_passed"] = 0
-                        except (ValueError, IndexError):
-                            pass
+        for line in output.split('\n'):
+            match = re.search(summary_pattern, line.strip())
+            if match:
+                groups = match.groups()
+                if groups[0] and groups[1]:  # Both failed and passed
+                    result["tests_failed"] = int(groups[0])
+                    result["tests_passed"] = int(groups[1])
+                elif groups[2]:  # Only passed
+                    result["tests_passed"] = int(groups[2])
+                    result["tests_failed"] = 0
+                elif groups[3]:  # Only failed
+                    result["tests_failed"] = int(groups[3])
+                    result["tests_passed"] = 0
                 break
         
         # Calculate totals and percentages
@@ -176,15 +155,17 @@ class TestResultParser:
             result["status"] = "error"
             result["error"] = "No test results found in pytest output"
         
-        # Include a summary of the output, but truncate verbose error details
+        # Extract clean summary - keep test progress and final summary
+        lines = output.strip().split('\n')
         summary_lines = []
         for line in lines:
-            if "FAILURES" in line or "short test summary" in line:
-                break
-            if line.strip() and not line.startswith('/'):  # Skip file path lines
-                summary_lines.append(line)
+            line = line.strip()
+            if line and not line.startswith('/') and not line.startswith('='):
+                # Keep test progress (dots/F's) and summary lines
+                if re.search(r'[.F]+.*\[\s*\d+%\]|^\d+.*in\s+[\d.]+s', line):
+                    summary_lines.append(line)
         
-        result["summary"] = '\n'.join(summary_lines[-5:])  # Keep only last 5 relevant lines
+        result["summary"] = '\n'.join(summary_lines[-3:])  # Keep last 3 relevant lines
         
         return result
 
@@ -205,9 +186,19 @@ class TestRunner:
                  challenge: str) -> Dict[str, Any]:
         start_time = time.time()
         
-        test_file = self.tests_dir / f"{test_name}.py"
-        if not test_file.exists():
-            test_file = self.tests_dir / challenge / f"{test_name}.py"
+        # For functional correctness, try model-specific test file first
+        if test_name == "5_functional_correctness":
+            model_specific_test = self.tests_dir / challenge / f"{test_name}-{model}.py"
+            if model_specific_test.exists():
+                test_file = model_specific_test
+            else:
+                test_file = self.tests_dir / f"{test_name}.py"
+                if not test_file.exists():
+                    test_file = self.tests_dir / challenge / f"{test_name}.py"
+        else:
+            test_file = self.tests_dir / f"{test_name}.py"
+            if not test_file.exists():
+                test_file = self.tests_dir / challenge / f"{test_name}.py"
         
         if not test_file.exists():
             return {
@@ -228,48 +219,12 @@ class TestRunner:
         
         try:
             test_content = test_file.read_text()
-            
-            # Handle pytest-based tests differently
-            if test_name == "5_functional_correctness":
-                # Modify the test content to import from the correct model file
-                # Find the main class name from the challenge
-                class_name = self._get_main_class_name(challenge)
-                import_line = f"from {model} import {class_name}"
-                
-                # Replace the commented imports with the correct import
-                lines = test_content.split('\n')
-                modified_lines = []
-                for line in lines:
-                    if line.strip().startswith('# from ') and class_name in line:
-                        # Skip commented imports
-                        continue
-                    elif line.strip() == '' and len(modified_lines) > 0 and modified_lines[-1].startswith('import'):
-                        # Add our import after the import section
-                        modified_lines.append(line)
-                        modified_lines.append(import_line)
-                        modified_lines.append('')
-                    else:
-                        modified_lines.append(line)
-                
-                # If we didn't find a good place to insert, add it after the imports
-                if import_line not in '\n'.join(modified_lines):
-                    # Find the last import and add after it
-                    for i, line in enumerate(modified_lines):
-                        if line.startswith('import ') or line.startswith('from '):
-                            continue
-                        else:
-                            modified_lines.insert(i, import_line)
-                            modified_lines.insert(i+1, '')
-                            break
-                
-                test_content = '\n'.join(modified_lines)
-            
             test_copy.write_text(test_content)
             
             # Handle pytest-based tests differently
             if test_name == "5_functional_correctness":
-                # Run with pytest using UV
-                cmd = ["uv", "run", "python", "-m", "pytest", str(test_copy), "--tb=line", "-q"]
+                # Run with pytest using UV with more reliable output format
+                cmd = ["uv", "run", "python", "-m", "pytest", str(test_copy), "--tb=no", "-v", "--no-header"]
             else:
                 # Run regular tests
                 cmd = [sys.executable, str(test_copy), model]
