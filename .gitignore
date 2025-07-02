@@ -176,6 +176,10 @@ cython_debug/
 # Experimental data and generated code
 archive/
 generated/
+dry_run_output/
+CLAUDE.md
+FUTURE_METRICS_TODO.md
+.claude
 
 # Archived data
 *.tar.gz
