@@ -100,9 +100,9 @@ def dry_run_with_tests(challenge_name: str, prompt_name: str, iterations: int = 
                       top_k: int = None, top_p: float = None, 
                       base_dir: str = "dry_run_output") -> None:
     """Generate code and run tests in one command."""
-    from ..static_analysis.experiment_manager import ExperimentManager
-    from ..static_analysis.data_models import ExperimentConfig, ModelInfo
-    from ..static_analysis.test_runner import TestRunner
+    from ..static_analysis.results.experiment_manager import ExperimentManager
+    from ..static_analysis.results.data_models import ExperimentConfig, ModelInfo
+    from ..static_analysis.execution.test_runner import TestRunner
     
     llms = create_llms_with_temperature(temperature, top_k, top_p)
     

@@ -2,9 +2,9 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 import json
 
-from .experiment_manager import ExperimentManager
-from .data_models import ExperimentConfig, ModelInfo
-from .test_runner import TestRunner
+from .results.experiment_manager import ExperimentManager
+from .results.data_models import ExperimentConfig, ModelInfo
+from .execution.test_runner import TestRunner
 
 
 def test_existing_code(base_dir: str = "dry_run_output", test_groups: List[str] = None) -> None:

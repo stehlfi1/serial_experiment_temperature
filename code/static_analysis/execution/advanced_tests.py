@@ -13,7 +13,7 @@ from typing import Dict, Any, List, Optional
 from collections import Counter
 import math
 
-from .data_models import AdvancedMetrics, TEST_GROUPS, TestGroup
+from ..results.data_models import AdvancedMetrics, TEST_GROUPS, TestGroup
 
 
 class AdvancedTestRunner:

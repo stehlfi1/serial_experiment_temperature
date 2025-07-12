@@ -3,18 +3,19 @@ import sys
 import os
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent.parent))
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from generation.config import (
+from code.generation.config import (
     CHALLENGES, 
     DRY_RUN_CHALLENGE,
     DRY_RUN_PROMPT,
     DRY_RUN_ITERATIONS,
     DRY_RUN_OUTPUT_DIR
 )
-from generation.generator import generate_code_only, dry_run_with_tests
-from static_analysis.test_analyzer import test_existing_code
-from similarity_analysis.runner import run_similarity_analysis
+from code.generation.generator import generate_code_only, dry_run_with_tests
+from code.static_analysis.test_analyzer import test_existing_code
+from code.similarity_analysis.runner import run_similarity_analysis
 
 
 def require_sudo():

@@ -13,6 +13,8 @@ import math
 from pathlib import Path
 from collections import Counter
 
+from .constants import HALSTEAD_DIFFICULTY_DIVISOR, HALSTEAD_EFFORT_THRESHOLD
+
 
 class HalsteadAnalyzer(ast.NodeVisitor):
     """Analyzes Halstead metrics in Python code."""

@@ -4,7 +4,7 @@ import json
 import pandas as pd
 from datetime import datetime
 
-from .data_models import ExperimentResults
+from .results.data_models import ExperimentResults
 
 
 class ExperimentAnalyzer:
@@ -33,12 +33,10 @@ class ExperimentAnalyzer:
                 "status": result.status
             }
             
-            for metric_type, metric_data in result.metrics.to_dict().items():
-                if isinstance(metric_data, dict):
-                    for key, value in metric_data.items():
-                        row[f"{metric_type}_{key}"] = value
-                else:
-                    row[metric_type] = metric_data
+            # Handle both old flat format and new hierarchical format
+            metrics_dict = result.metrics.to_dict()
+            flattened_metrics = self._flatten_metrics(metrics_dict)
+            row.update(flattened_metrics)
             
             rows.append(row)
         
@@ -46,61 +44,86 @@ class ExperimentAnalyzer:
     
     def summary_by_model(self) -> pd.DataFrame:
         df = self.to_dataframe()
+        available_cols = self._get_available_columns()
         
-        summary = df.groupby('model').agg({
-            'compilability_compiles': 'mean',
-            'code_length_lines': 'mean',
-            'modularity_score': 'mean',
-            'functional_completeness_score': 'mean',
-            'execution_time': 'mean',
-            'status': lambda x: (x == 'success').mean()
-        }).round(3)
+        # Build aggregation dict with available columns
+        agg_dict = {}
+        for col in available_cols.keys():
+            if col in df.columns:
+                if col.endswith('_status'):
+                    agg_dict[col] = lambda x: (x == 'success').mean()
+                else:
+                    agg_dict[col] = 'mean'
         
-        summary.columns = [
-            'Compilability Rate',
-            'Avg Lines',
-            'Avg Modularity',
-            'Avg Completeness',
-            'Avg Execution Time',
-            'Success Rate'
-        ]
+        # Always include these if available
+        agg_dict['execution_time'] = 'mean'
+        agg_dict['status'] = lambda x: (x == 'success').mean()
         
+        if not agg_dict:
+            # Return empty DataFrame if no metrics available
+            return pd.DataFrame()
+        
+        summary = df.groupby('model').agg(agg_dict).round(3)
+        
+        # Rename columns to display names
+        column_mapping = {col: available_cols.get(col, col) for col in summary.columns if col in available_cols}
+        column_mapping.update({
+            'execution_time': 'Avg Execution Time',
+            'status': 'Success Rate'
+        })
+        
+        summary = summary.rename(columns=column_mapping)
         return summary
     
     def summary_by_prompt(self) -> pd.DataFrame:
         df = self.to_dataframe()
+        available_cols = self._get_available_columns()
         
-        summary = df.groupby('prompt').agg({
-            'compilability_compiles': 'mean',
-            'code_length_lines': 'mean',
-            'modularity_score': 'mean',
-            'functional_completeness_score': 'mean',
-            'execution_time': 'mean',
-            'status': lambda x: (x == 'success').mean()
-        }).round(3)
+        # Build aggregation dict with available columns
+        agg_dict = {}
+        for col in available_cols.keys():
+            if col in df.columns:
+                if col.endswith('_status'):
+                    agg_dict[col] = lambda x: (x == 'success').mean()
+                else:
+                    agg_dict[col] = 'mean'
         
-        summary.columns = [
-            'Compilability Rate',
-            'Avg Lines',
-            'Avg Modularity',
-            'Avg Completeness',
-            'Avg Execution Time',
-            'Success Rate'
-        ]
+        # Always include these if available
+        agg_dict['execution_time'] = 'mean'
+        agg_dict['status'] = lambda x: (x == 'success').mean()
         
+        if not agg_dict:
+            return pd.DataFrame()
+        
+        summary = df.groupby('prompt').agg(agg_dict).round(3)
+        
+        # Rename columns to display names
+        column_mapping = {col: available_cols.get(col, col) for col in summary.columns if col in available_cols}
+        column_mapping.update({
+            'execution_time': 'Avg Execution Time',
+            'status': 'Success Rate'
+        })
+        
+        summary = summary.rename(columns=column_mapping)
         return summary
     
     def detailed_comparison(self) -> pd.DataFrame:
         df = self.to_dataframe()
+        available_cols = self._get_available_columns()
         
-        comparison = df.groupby(['model', 'prompt']).agg({
-            'compilability_compiles': 'mean',
-            'code_length_lines': 'mean',
-            'modularity_score': 'mean',
-            'functional_completeness_score': 'mean',
-            'execution_time': 'mean'
-        }).round(3)
+        # Build aggregation dict with available columns
+        agg_dict = {}
+        for col in available_cols.keys():
+            if col in df.columns:
+                if not col.endswith('_status'):
+                    agg_dict[col] = 'mean'
         
+        agg_dict['execution_time'] = 'mean'
+        
+        if not agg_dict:
+            return pd.DataFrame()
+        
+        comparison = df.groupby(['model', 'prompt']).agg(agg_dict).round(3)
         return comparison
     
     def export_for_latex(self, output_dir: Path) -> Dict[str, Path]:
@@ -132,34 +155,130 @@ class ExperimentAnalyzer:
     
     def get_best_performers(self) -> Dict[str, Any]:
         df = self.to_dataframe()
-        
         best = {}
         
-        if 'modularity_score' in df.columns:
-            best_modularity = df.loc[df['modularity_score'].idxmax()]
-            best['modularity'] = {
-                'model': best_modularity['model'],
-                'prompt': best_modularity['prompt'],
-                'score': best_modularity['modularity_score']
-            }
+        # Try different metric column names (old and new formats)
+        modularity_cols = ['modularity_score', 'quality_maintainability_analysis_maintainability_index', 'modularity']
+        completeness_cols = ['functional_completeness_score', 'functional_completeness']
+        lines_cols = ['code_length_lines', 'quality_size_analysis_logical_lines_of_code', 'code_length']
+        complexity_cols = ['quality_complexity_analysis_cyclomatic_complexity']
         
-        if 'functional_completeness_score' in df.columns:
-            best_completeness = df.loc[df['functional_completeness_score'].idxmax()]
-            best['completeness'] = {
-                'model': best_completeness['model'],
-                'prompt': best_completeness['prompt'],
-                'score': best_completeness['functional_completeness_score']
-            }
+        # Find best modularity/maintainability
+        for col in modularity_cols:
+            if col in df.columns and not df[col].isna().all():
+                best_idx = df[col].idxmax()
+                best_row = df.loc[best_idx]
+                best['modularity'] = {
+                    'model': best_row['model'],
+                    'prompt': best_row['prompt'],
+                    'score': best_row[col],
+                    'metric': col
+                }
+                break
         
-        if 'code_length_lines' in df.columns:
-            most_concise = df.loc[df['code_length_lines'].idxmin()]
-            best['most_concise'] = {
-                'model': most_concise['model'],
-                'prompt': most_concise['prompt'],
-                'lines': most_concise['code_length_lines']
-            }
+        # Find best completeness
+        for col in completeness_cols:
+            if col in df.columns and not df[col].isna().all():
+                best_idx = df[col].idxmax()
+                best_row = df.loc[best_idx]
+                best['completeness'] = {
+                    'model': best_row['model'],
+                    'prompt': best_row['prompt'], 
+                    'score': best_row[col],
+                    'metric': col
+                }
+                break
+        
+        # Find most concise (lowest lines)
+        for col in lines_cols:
+            if col in df.columns and not df[col].isna().all():
+                best_idx = df[col].idxmin()
+                best_row = df.loc[best_idx]
+                best['most_concise'] = {
+                    'model': best_row['model'],
+                    'prompt': best_row['prompt'],
+                    'lines': best_row[col],
+                    'metric': col
+                }
+                break
+        
+        # Find lowest complexity
+        for col in complexity_cols:
+            if col in df.columns and not df[col].isna().all():
+                best_idx = df[col].idxmin()
+                best_row = df.loc[best_idx]
+                best['lowest_complexity'] = {
+                    'model': best_row['model'],
+                    'prompt': best_row['prompt'],
+                    'complexity': best_row[col],
+                    'metric': col
+                }
+                break
         
         return best
+    
+    def _flatten_metrics(self, metrics: Dict[str, Any], prefix: str = "") -> Dict[str, Any]:
+        """Flatten hierarchical metrics into a flat dictionary with dot notation."""
+        flattened = {}
+        
+        for key, value in metrics.items():
+            new_key = f"{prefix}_{key}" if prefix else key
+            
+            if isinstance(value, dict):
+                # Check if this is a test result with status/error (leaf node)
+                if "status" in value and len(value) <= 4:  # status, error, execution_time, maybe one metric
+                    # Extract the actual metric value if present
+                    for sub_key, sub_value in value.items():
+                        if sub_key not in ["status", "error", "execution_time"] and isinstance(sub_value, (int, float, bool)):
+                            flattened[new_key] = sub_value
+                            break
+                    else:
+                        # No metric value found, use status info
+                        flattened[f"{new_key}_status"] = value.get("status")
+                        if "error" in value:
+                            flattened[f"{new_key}_error"] = value["error"]
+                else:
+                    # Recursively flatten nested dictionaries
+                    nested = self._flatten_metrics(value, new_key)
+                    flattened.update(nested)
+            else:
+                flattened[new_key] = value
+        
+        return flattened
+    
+    def _get_available_columns(self) -> Dict[str, str]:
+        """Get available metric columns and their display names."""
+        df = self.to_dataframe()
+        available = {}
+        
+        # Legacy format mappings
+        legacy_mappings = {
+            'compilability_compiles': 'Compilability Rate',
+            'code_length_lines': 'Avg Lines', 
+            'modularity_score': 'Avg Modularity',
+            'functional_completeness_score': 'Avg Completeness'
+        }
+        
+        # New format mappings (hierarchical)
+        new_mappings = {
+            'quality_complexity_analysis_cyclomatic_complexity': 'Avg Cyclomatic Complexity',
+            'quality_size_analysis_logical_lines_of_code': 'Avg Lines of Code',
+            'quality_size_analysis_function_count': 'Avg Function Count',
+            'quality_maintainability_analysis_maintainability_index': 'Avg Maintainability Index',
+            'structure_ast_analysis_node_count': 'Avg AST Nodes',
+            'structure_control_flow_analysis_loop_count': 'Avg Loop Count',
+            'compilability': 'Compilability Success',
+            'code_length': 'Code Length Success',
+            'modularity': 'Modularity Success',
+            'functional_completeness': 'Functional Completeness Success'
+        }
+        
+        # Check which columns exist
+        for col, display_name in {**legacy_mappings, **new_mappings}.items():
+            if col in df.columns:
+                available[col] = display_name
+        
+        return available
 
 
 class MultiExperimentAnalyzer:
@@ -197,10 +316,23 @@ class MultiExperimentAnalyzer:
         
         df['experiment_date'] = pd.to_datetime(df['experiment_timestamp']).dt.date
         
-        trends = df.groupby(['experiment_date', 'model']).agg({
-            'modularity_score': 'mean',
-            'functional_completeness_score': 'mean',
-            'execution_time': 'mean'
-        }).round(3)
+        # Build aggregation dict with available columns
+        agg_dict = {'execution_time': 'mean'}
         
+        # Try different metric columns
+        metric_candidates = [
+            'modularity_score', 'quality_maintainability_analysis_maintainability_index',
+            'functional_completeness_score', 'functional_completeness',
+            'quality_complexity_analysis_cyclomatic_complexity',
+            'quality_size_analysis_logical_lines_of_code'
+        ]
+        
+        for col in metric_candidates:
+            if col in df.columns:
+                agg_dict[col] = 'mean'
+        
+        if len(agg_dict) == 1:  # Only execution_time
+            return pd.DataFrame()
+        
+        trends = df.groupby(['experiment_date', 'model']).agg(agg_dict).round(3)
         return trends

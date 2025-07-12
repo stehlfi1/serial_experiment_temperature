@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
-from .data_models import TestGroupType, TEST_GROUPS, AdvancedMetrics
+from ..results.data_models import TestGroupType, TEST_GROUPS, AdvancedMetrics
 from .advanced_test_runner import AdvancedTestRunner
 
 

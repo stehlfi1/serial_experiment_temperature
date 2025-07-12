@@ -28,7 +28,9 @@ class ExperimentManager:
     
     def add_result(self, model: str, challenge: str, prompt: str, iteration: int,
                    metrics_data: Dict[str, Any], code_path: str, 
-                   execution_time: float, status: str = "success") -> None:
+                   execution_time: float, status: str = "success",
+                   temperature_folder: Optional[str] = None, 
+                   generation_params: Optional[Dict[str, Any]] = None) -> None:
         if not self.current_experiment:
             raise RuntimeError("No active experiment")
         

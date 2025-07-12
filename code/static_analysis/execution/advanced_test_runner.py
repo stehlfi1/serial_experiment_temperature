@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Any, Set, Tuple
 from collections import Counter, defaultdict
 from dataclasses import asdict
 
-from .data_models import AdvancedMetrics
+from ..results.data_models import AdvancedMetrics
 
 
 class ASTAnalyzer(ast.NodeVisitor):

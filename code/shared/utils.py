@@ -1,5 +1,5 @@
 """
-This module contains helper functions used by the scraper.
+Shared utility functions used across multiple modules.
 """
 
 import re
@@ -41,7 +41,7 @@ def load_string_from_file(file_path: str) -> str:
     
     # If path is not absolute, resolve it relative to project root
     if not path.is_absolute():
-        # Get project root (3 levels up from this file: helpers.py -> scraper -> code -> project_root)
+        # Get project root (3 levels up from this file: utils.py -> shared -> code -> project_root)
         project_root = Path(__file__).parent.parent.parent
         path = project_root / path
     

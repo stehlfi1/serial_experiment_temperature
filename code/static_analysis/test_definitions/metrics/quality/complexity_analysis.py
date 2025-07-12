@@ -11,6 +11,12 @@ import sys
 import json
 from pathlib import Path
 
+from .constants import (
+    SIMPLE_COMPLEXITY_THRESHOLD,
+    COMPLEX_COMPLEXITY_THRESHOLD, 
+    VERY_COMPLEX_COMPLEXITY_THRESHOLD
+)
+
 
 class ComplexityAnalyzer(ast.NodeVisitor):
     """Analyzes complexity metrics in Python code."""
