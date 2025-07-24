@@ -13,246 +13,29 @@ import math
 from pathlib import Path
 from collections import Counter
 
-
-class MaintainabilityAnalyzer(ast.NodeVisitor):
-    """Analyzes maintainability metrics in Python code."""
+# Import shared analyzer integration
+try:
+    from .halstead_analysis import analyze_halstead_from_analyzer
+    from ...execution.ast_analyzer import ASTAnalyzer
+except ImportError:
+    # Fallback for CLI usage
+    import sys
+    import importlib.util
+    from pathlib import Path
     
-    def __init__(self):
-        self.reset()
+    halstead_path = Path(__file__).parent / "halstead_analysis.py"
+    spec = importlib.util.spec_from_file_location("halstead_analysis", halstead_path)
+    halstead_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(halstead_module)
+    analyze_halstead_from_analyzer = halstead_module.analyze_halstead_from_analyzer
     
-    def reset(self):
-        """Reset all counters."""
-        # ABC metrics
-        self.assignments = 0
-        self.branches = 0
-        self.conditions = 0
-        
-        # For Halstead volume calculation
-        self.operators = Counter()
-        self.operands = Counter()
-        
-        # For cyclomatic complexity
-        self.cyclomatic_complexity = 1
-        
-        # Lines of code
-        self.logical_lines = 0
-        self.comment_lines = 0
-        self.blank_lines = 0
-        
-        # Other quality indicators
-        self.functions = []
-        self.classes = []
-        self.imports = 0
-        self.docstrings = 0
-    
-    def visit_Assign(self, node):
-        """Count assignments."""
-        self.assignments += len(node.targets)
-        self.operators["Assign"] += 1
-        self.generic_visit(node)
-    
-    def visit_AugAssign(self, node):
-        """Count augmented assignments."""
-        self.assignments += 1
-        op_name = type(node.op).__name__ + "Assign"
-        self.operators[op_name] += 1
-        self.generic_visit(node)
-    
-    def visit_AnnAssign(self, node):
-        """Count annotated assignments."""
-        if node.value:  # Only count if there's a value
-            self.assignments += 1
-        self.operators["AnnAssign"] += 1
-        self.generic_visit(node)
-    
-    # Branch counting
-    def visit_If(self, node):
-        """Count if statements as branches."""
-        self.branches += 1
-        self.conditions += 1
-        self.cyclomatic_complexity += 1
-        self.operators["If"] += 1
-        self.generic_visit(node)
-    
-    def visit_While(self, node):
-        """Count while loops as branches."""
-        self.branches += 1
-        self.conditions += 1
-        self.cyclomatic_complexity += 1
-        self.operators["While"] += 1
-        self.generic_visit(node)
-    
-    def visit_For(self, node):
-        """Count for loops as branches."""
-        self.branches += 1
-        self.cyclomatic_complexity += 1
-        self.operators["For"] += 1
-        self.generic_visit(node)
-    
-    def visit_Try(self, node):
-        """Count try-except as branches."""
-        self.branches += len(node.handlers)
-        if node.orelse:
-            self.branches += 1
-        if node.finalbody:
-            self.branches += 1
-        self.cyclomatic_complexity += len(node.handlers) + (1 if node.orelse else 0) + (1 if node.finalbody else 0)
-        self.operators["Try"] += 1
-        self.generic_visit(node)
-    
-    def visit_With(self, node):
-        """Count with statements as branches."""
-        self.branches += 1
-        self.cyclomatic_complexity += 1
-        self.operators["With"] += 1
-        self.generic_visit(node)
-    
-    def visit_ExceptHandler(self, node):
-        """Count except handlers."""
-        self.operators["ExceptHandler"] += 1
-        self.generic_visit(node)
-    
-    # Condition counting
-    def visit_Compare(self, node):
-        """Count comparison operations as conditions."""
-        self.conditions += len(node.ops)
-        for op in node.ops:
-            op_name = type(op).__name__
-            self.operators[op_name] += 1
-        self.generic_visit(node)
-    
-    def visit_BoolOp(self, node):
-        """Count boolean operations as conditions."""
-        self.conditions += len(node.values) - 1  # n operands = n-1 operators
-        op_name = type(node.op).__name__
-        self.operators[op_name] += 1
-        self.generic_visit(node)
-    
-    def visit_UnaryOp(self, node):
-        """Count unary operations."""
-        if isinstance(node.op, ast.Not):
-            self.conditions += 1
-        op_name = type(node.op).__name__
-        self.operators[op_name] += 1
-        self.generic_visit(node)
-    
-    # Function and class counting
-    def visit_FunctionDef(self, node):
-        """Count functions."""
-        func_info = {
-            "name": node.name,
-            "args": len(node.args.args),
-            "decorators": len(node.decorator_list),
-            "docstring": ast.get_docstring(node) is not None,
-            "lineno": node.lineno
-        }
-        self.functions.append(func_info)
-        
-        if func_info["docstring"]:
-            self.docstrings += 1
-        
-        self.operators["FunctionDef"] += 1
-        self.operands[node.name] += 1
-        self.generic_visit(node)
-    
-    def visit_AsyncFunctionDef(self, node):
-        """Count async functions."""
-        func_info = {
-            "name": node.name,
-            "args": len(node.args.args),
-            "decorators": len(node.decorator_list),
-            "docstring": ast.get_docstring(node) is not None,
-            "lineno": node.lineno,
-            "async": True
-        }
-        self.functions.append(func_info)
-        
-        if func_info["docstring"]:
-            self.docstrings += 1
-        
-        self.operators["AsyncFunctionDef"] += 1
-        self.operands[node.name] += 1
-        self.generic_visit(node)
-    
-    def visit_ClassDef(self, node):
-        """Count classes."""
-        class_info = {
-            "name": node.name,
-            "bases": len(node.bases),
-            "decorators": len(node.decorator_list),
-            "docstring": ast.get_docstring(node) is not None,
-            "lineno": node.lineno
-        }
-        self.classes.append(class_info)
-        
-        if class_info["docstring"]:
-            self.docstrings += 1
-        
-        self.operators["ClassDef"] += 1
-        self.operands[node.name] += 1
-        self.generic_visit(node)
-    
-    def visit_Import(self, node):
-        """Count imports."""
-        self.imports += len(node.names)
-        self.operators["Import"] += 1
-        for alias in node.names:
-            self.operands[alias.name] += 1
-        self.generic_visit(node)
-    
-    def visit_ImportFrom(self, node):
-        """Count from imports."""
-        self.imports += len(node.names)
-        self.operators["ImportFrom"] += 1
-        if node.module:
-            self.operands[node.module] += 1
-        for alias in node.names:
-            self.operands[alias.name] += 1
-        self.generic_visit(node)
-    
-    # Other operators for Halstead
-    def visit_BinOp(self, node):
-        """Binary operators."""
-        op_name = type(node.op).__name__
-        self.operators[op_name] += 1
-        self.generic_visit(node)
-    
-    def visit_Call(self, node):
-        """Function calls."""
-        self.operators["Call"] += 1
-        self.generic_visit(node)
-    
-    def visit_Name(self, node):
-        """Variable names."""
-        if node.id not in ['True', 'False', 'None']:
-            self.operands[node.id] += 1
-        self.generic_visit(node)
-    
-    def visit_Constant(self, node):
-        """Constants."""
-        if isinstance(node.value, (int, float)):
-            operand = f"NUM_{node.value}"
-        elif isinstance(node.value, str):
-            operand = f"STR_{len(node.value)}"
-        else:
-            operand = f"CONST_{type(node.value).__name__}"
-        self.operands[operand] += 1
-        self.generic_visit(node)
+    ast_analyzer_path = Path(__file__).parent.parent.parent.parent / "execution" / "ast_analyzer.py"
+    spec = importlib.util.spec_from_file_location("ast_analyzer", ast_analyzer_path)
+    ast_analyzer_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ast_analyzer_module)
+    ASTAnalyzer = ast_analyzer_module.ASTAnalyzer
 
 
-def calculate_halstead_volume(operators: Counter, operands: Counter) -> float:
-    """Calculate Halstead volume."""
-    n1 = len(operators)
-    n2 = len(operands)
-    N1 = sum(operators.values())
-    N2 = sum(operands.values())
-    
-    n = n1 + n2
-    N = N1 + N2
-    
-    if n > 1 and N > 0:
-        return N * math.log2(n)
-    return 0
 
 
 def calculate_maintainability_index(halstead_volume: float, cyclomatic_complexity: int, 
@@ -324,6 +107,63 @@ def calculate_maintainability_index(halstead_volume: float, cyclomatic_complexit
         }
 
 
+def analyze_maintainability_from_analyzer(analyzer, source_code: str) -> dict:
+    """Analyze maintainability metrics from a pre-populated ASTAnalyzer."""
+    # Count lines
+    lines = source_code.split('\n')
+    logical_lines = 0
+    comment_lines = 0
+    blank_lines = 0
+    
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            blank_lines += 1
+        elif stripped.startswith('#'):
+            comment_lines += 1
+        else:
+            logical_lines += 1
+    
+    # Calculate Halstead volume using shared analyzer
+    halstead_result = analyze_halstead_from_analyzer(analyzer)
+    halstead_volume = halstead_result.get("volume", 0)
+    
+    # Calculate ABC magnitude
+    abc_magnitude = math.sqrt(
+        analyzer.assignments**2 + 
+        analyzer.branches**2 + 
+        analyzer.conditions**2
+    )
+    
+    # Calculate comment ratio
+    total_lines = logical_lines + comment_lines
+    comment_ratio = comment_lines / max(total_lines, 1)
+    
+    # Calculate maintainability index
+    mi_result = calculate_maintainability_index(
+        halstead_volume, 
+        analyzer.cyclomatic_complexity, 
+        logical_lines, 
+        comment_ratio
+    )
+    
+    return {
+        "status": "success",
+        "data": {
+            "maintainability_index": mi_result.get("index", 0),
+            "maintainability_rank": mi_result.get("rank", "F"),
+            "abc_assignment_count": analyzer.assignments,
+            "abc_branch_count": analyzer.branches,
+            "abc_condition_count": analyzer.conditions,
+            "abc_magnitude": abc_magnitude,
+            "halstead_volume": halstead_volume,
+            "cyclomatic_complexity": analyzer.cyclomatic_complexity,
+            "logical_lines": logical_lines,
+            "comment_ratio": comment_ratio
+        }
+    }
+
+
 def analyze_maintainability(file_path: str) -> dict:
     """Analyze maintainability metrics for a Python file."""
     try:
@@ -333,71 +173,43 @@ def analyze_maintainability(file_path: str) -> dict:
         # Parse AST
         tree = ast.parse(source_code)
         
-        # Analyze code
-        analyzer = MaintainabilityAnalyzer()
+        # Use shared analyzer instead of duplicate MaintainabilityAnalyzer
+        analyzer = ASTAnalyzer()
+        analyzer.reset()
         analyzer.visit(tree)
         
-        # Count lines
-        lines = source_code.split('\n')
-        logical_lines = 0
-        comment_lines = 0
-        blank_lines = 0
+        # Use the shared analyzer integration function
+        result = analyze_maintainability_from_analyzer(analyzer, source_code)
         
-        for line in lines:
-            stripped = line.strip()
-            if not stripped:
-                blank_lines += 1
-            elif stripped.startswith('#'):
-                comment_lines += 1
-            else:
-                logical_lines += 1
-        
-        # Calculate Halstead volume
-        halstead_volume = calculate_halstead_volume(analyzer.operators, analyzer.operands)
-        
-        # Calculate ABC magnitude
-        abc_magnitude = math.sqrt(
-            analyzer.assignments**2 + 
-            analyzer.branches**2 + 
-            analyzer.conditions**2
-        )
-        
-        # Calculate comment ratio
-        total_lines = logical_lines + comment_lines
-        comment_ratio = comment_lines / max(total_lines, 1)
-        
-        # Calculate maintainability index
-        mi_result = calculate_maintainability_index(
-            halstead_volume, 
-            analyzer.cyclomatic_complexity, 
-            logical_lines, 
-            comment_ratio
-        )
-        
+        # Convert to legacy format for compatibility
+        data = result["data"]
         return {
             "status": "success",
             "abc_metrics": {
-                "assignments": analyzer.assignments,
-                "branches": analyzer.branches,
-                "conditions": analyzer.conditions,
-                "magnitude": abc_magnitude
+                "assignments": data["abc_assignment_count"],
+                "branches": data["abc_branch_count"],
+                "conditions": data["abc_condition_count"],
+                "magnitude": data["abc_magnitude"]
             },
-            "maintainability_index": mi_result,
-            "halstead_volume": halstead_volume,
-            "cyclomatic_complexity": analyzer.cyclomatic_complexity,
+            "maintainability_index": {
+                "index": data["maintainability_index"],
+                "rank": data["maintainability_rank"]
+            },
+            "halstead_volume": data["halstead_volume"],
+            "cyclomatic_complexity": data["cyclomatic_complexity"],
             "lines_of_code": {
-                "logical": logical_lines,
-                "comments": comment_lines,
-                "blank": blank_lines,
-                "total": len(lines),
-                "comment_ratio": comment_ratio
+                "logical": data["logical_lines"],
+                "comments": int(data["logical_lines"] * data["comment_ratio"]),
+                "blank": 0,  # Not tracked in shared analyzer version
+                "total": data["logical_lines"] + int(data["logical_lines"] * data["comment_ratio"]),
+                "comment_ratio": data["comment_ratio"]
             },
             "structure": {
                 "functions": len(analyzer.functions),
                 "classes": len(analyzer.classes),
-                "imports": analyzer.imports,
-                "docstrings": analyzer.docstrings,
-                "docstring_ratio": analyzer.docstrings / max(len(analyzer.functions) + len(analyzer.classes), 1)
+                "imports": len(analyzer.imports) + len(analyzer.from_imports),
+                "docstrings": analyzer.docstring_count,
+                "docstring_ratio": analyzer.docstring_count / max(len(analyzer.functions) + len(analyzer.classes), 1)
             },
             "quality_indicators": {
                 "avg_function_args": sum(f.get("args", 0) for f in analyzer.functions) / max(len(analyzer.functions), 1),

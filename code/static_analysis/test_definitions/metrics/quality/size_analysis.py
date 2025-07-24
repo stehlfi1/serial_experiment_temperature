@@ -12,252 +12,20 @@ import json
 from pathlib import Path
 from collections import Counter
 
-
-class SizeAnalyzer(ast.NodeVisitor):
-    """Analyzes size metrics in Python code."""
+# Import shared analyzer integration
+try:
+    from ...execution.ast_analyzer import ASTAnalyzer
+except ImportError:
+    # Fallback for CLI usage
+    import sys
+    import importlib.util
+    from pathlib import Path
     
-    def __init__(self):
-        self.reset()
-    
-    def reset(self):
-        """Reset all counters."""
-        self.functions = []
-        self.classes = []
-        self.methods = []
-        self.imports = []
-        self.from_imports = []
-        
-        # Track current context
-        self.current_class = None
-        self.class_method_counts = {}
-        
-        # Code patterns
-        self.decorators = 0
-        self.docstrings = 0
-        self.lambdas = 0
-        self.comprehensions = 0
-        self.generators = 0
-        
-        # Variable tracking
-        self.variables = set()
-        self.global_vars = set()
-        self.nonlocal_vars = set()
-        
-        # Statement counts
-        self.statements = Counter()
-    
-    def visit_FunctionDef(self, node):
-        """Analyze function definitions."""
-        func_info = {
-            "name": node.name,
-            "args": len(node.args.args),
-            "defaults": len(node.args.defaults),
-            "kwonlyargs": len(node.args.kwonlyargs),
-            "vararg": node.args.vararg is not None,
-            "kwarg": node.args.kwarg is not None,
-            "decorators": len(node.decorator_list),
-            "docstring": ast.get_docstring(node) is not None,
-            "lineno": node.lineno,
-            "is_method": self.current_class is not None,
-            "class": self.current_class
-        }
-        
-        # Count total parameters including special ones
-        total_params = (len(node.args.args) + 
-                       len(node.args.kwonlyargs) + 
-                       (1 if node.args.vararg else 0) + 
-                       (1 if node.args.kwarg else 0))
-        func_info["total_parameters"] = total_params
-        
-        if self.current_class:
-            self.methods.append(func_info)
-            if self.current_class not in self.class_method_counts:
-                self.class_method_counts[self.current_class] = 0
-            self.class_method_counts[self.current_class] += 1
-        else:
-            self.functions.append(func_info)
-        
-        self.decorators += len(node.decorator_list)
-        if func_info["docstring"]:
-            self.docstrings += 1
-        
-        self.statements["FunctionDef"] += 1
-        self.generic_visit(node)
-    
-    def visit_AsyncFunctionDef(self, node):
-        """Handle async functions same as regular functions."""
-        self.visit_FunctionDef(node)
-        self.statements["AsyncFunctionDef"] += 1
-    
-    def visit_ClassDef(self, node):
-        """Analyze class definitions."""
-        old_class = self.current_class
-        self.current_class = node.name
-        
-        class_info = {
-            "name": node.name,
-            "bases": len(node.bases),
-            "keywords": len(node.keywords),
-            "decorators": len(node.decorator_list),
-            "docstring": ast.get_docstring(node) is not None,
-            "lineno": node.lineno,
-            "methods": 0  # Will be updated after visiting
-        }
-        
-        self.classes.append(class_info)
-        self.decorators += len(node.decorator_list)
-        if class_info["docstring"]:
-            self.docstrings += 1
-        
-        self.statements["ClassDef"] += 1
-        self.generic_visit(node)
-        
-        # Update method count for this class
-        class_info["methods"] = self.class_method_counts.get(node.name, 0)
-        self.current_class = old_class
-    
-    def visit_Import(self, node):
-        """Track import statements."""
-        for alias in node.names:
-            import_info = {
-                "name": alias.name,
-                "asname": alias.asname,
-                "type": "import"
-            }
-            self.imports.append(import_info)
-        
-        self.statements["Import"] += 1
-        self.generic_visit(node)
-    
-    def visit_ImportFrom(self, node):
-        """Track from-import statements."""
-        for alias in node.names:
-            import_info = {
-                "module": node.module,
-                "name": alias.name,
-                "asname": alias.asname,
-                "level": node.level,
-                "type": "from_import"
-            }
-            self.from_imports.append(import_info)
-        
-        self.statements["ImportFrom"] += 1
-        self.generic_visit(node)
-    
-    def visit_Lambda(self, node):
-        """Count lambda expressions."""
-        self.lambdas += 1
-        lambda_params = (len(node.args.args) + 
-                        len(node.args.kwonlyargs) + 
-                        (1 if node.args.vararg else 0) + 
-                        (1 if node.args.kwarg else 0))
-        self.statements["Lambda"] += 1
-        self.generic_visit(node)
-    
-    def visit_ListComp(self, node):
-        """Count list comprehensions."""
-        self.comprehensions += 1
-        self.statements["ListComp"] += 1
-        self.generic_visit(node)
-    
-    def visit_DictComp(self, node):
-        """Count dictionary comprehensions."""
-        self.comprehensions += 1
-        self.statements["DictComp"] += 1
-        self.generic_visit(node)
-    
-    def visit_SetComp(self, node):
-        """Count set comprehensions."""
-        self.comprehensions += 1
-        self.statements["SetComp"] += 1
-        self.generic_visit(node)
-    
-    def visit_GeneratorExp(self, node):
-        """Count generator expressions."""
-        self.generators += 1
-        self.statements["GeneratorExp"] += 1
-        self.generic_visit(node)
-    
-    def visit_Global(self, node):
-        """Track global variable declarations."""
-        for name in node.names:
-            self.global_vars.add(name)
-        self.statements["Global"] += 1
-        self.generic_visit(node)
-    
-    def visit_Nonlocal(self, node):
-        """Track nonlocal variable declarations."""
-        for name in node.names:
-            self.nonlocal_vars.add(name)
-        self.statements["Nonlocal"] += 1
-        self.generic_visit(node)
-    
-    def visit_Name(self, node):
-        """Track variable names."""
-        if node.id not in ['True', 'False', 'None']:
-            self.variables.add(node.id)
-        self.generic_visit(node)
-    
-    # Statement counting
-    def visit_Assign(self, node):
-        self.statements["Assign"] += 1
-        self.generic_visit(node)
-    
-    def visit_AugAssign(self, node):
-        self.statements["AugAssign"] += 1
-        self.generic_visit(node)
-    
-    def visit_AnnAssign(self, node):
-        self.statements["AnnAssign"] += 1
-        self.generic_visit(node)
-    
-    def visit_If(self, node):
-        self.statements["If"] += 1
-        self.generic_visit(node)
-    
-    def visit_While(self, node):
-        self.statements["While"] += 1
-        self.generic_visit(node)
-    
-    def visit_For(self, node):
-        self.statements["For"] += 1
-        self.generic_visit(node)
-    
-    def visit_Try(self, node):
-        self.statements["Try"] += 1
-        self.generic_visit(node)
-    
-    def visit_With(self, node):
-        self.statements["With"] += 1
-        self.generic_visit(node)
-    
-    def visit_Return(self, node):
-        self.statements["Return"] += 1
-        self.generic_visit(node)
-    
-    def visit_Raise(self, node):
-        self.statements["Raise"] += 1
-        self.generic_visit(node)
-    
-    def visit_Assert(self, node):
-        self.statements["Assert"] += 1
-        self.generic_visit(node)
-    
-    def visit_Delete(self, node):
-        self.statements["Delete"] += 1
-        self.generic_visit(node)
-    
-    def visit_Pass(self, node):
-        self.statements["Pass"] += 1
-        self.generic_visit(node)
-    
-    def visit_Break(self, node):
-        self.statements["Break"] += 1
-        self.generic_visit(node)
-    
-    def visit_Continue(self, node):
-        self.statements["Continue"] += 1
-        self.generic_visit(node)
+    ast_analyzer_path = Path(__file__).parent.parent.parent.parent / "execution" / "ast_analyzer.py"
+    spec = importlib.util.spec_from_file_location("ast_analyzer", ast_analyzer_path)
+    ast_analyzer_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ast_analyzer_module)
+    ASTAnalyzer = ast_analyzer_module.ASTAnalyzer
 
 
 def count_lines(source_code: str) -> dict:
@@ -353,6 +121,111 @@ def analyze_imports(imports: list, from_imports: list) -> dict:
     }
 
 
+def _analyze_imports_from_strings(imports: list, from_imports: list) -> dict:
+    """Analyze import patterns from string lists (shared analyzer format)."""
+    # Classify imports
+    stdlib_modules = {
+        'os', 'sys', 'math', 'json', 're', 'collections', 'itertools', 'functools',
+        'pathlib', 'datetime', 'time', 'random', 'string', 'io', 'typing', 'copy',
+        'pickle', 'sqlite3', 'urllib', 'http', 'email', 'html', 'xml', 'csv'
+    }
+    
+    stdlib_count = 0
+    third_party_count = 0
+    local_count = 0
+    
+    all_imports = imports + from_imports
+    
+    for imp in all_imports:
+        # For shared analyzer, imports are simple strings
+        module_name = imp
+        top_level = module_name.split('.')[0]
+        
+        if top_level in stdlib_modules:
+            stdlib_count += 1
+        elif module_name.startswith('.'):
+            local_count += 1  # Relative imports
+        else:
+            third_party_count += 1
+    
+    return {
+        "total": len(all_imports),
+        "import_statements": len(imports),
+        "from_import_statements": len(from_imports),
+        "stdlib": stdlib_count,
+        "third_party": third_party_count,
+        "local": local_count,
+        "unique_modules": len(set(all_imports))
+    }
+
+
+def analyze_size_from_analyzer(analyzer, source_code: str) -> dict:
+    """Analyze size metrics from a pre-populated ASTAnalyzer."""
+    # Count lines
+    line_metrics = count_lines(source_code)
+    
+    # Analyze imports (adapt to shared analyzer's string format)
+    import_metrics = _analyze_imports_from_strings(analyzer.imports, analyzer.from_imports)
+    
+    # Calculate function metrics
+    function_metrics = {
+        "count": len(analyzer.functions),
+        "method_count": len(analyzer.methods),
+        "total_callable_count": len(analyzer.functions) + len(analyzer.methods),
+        "parameters_per_function": [f.get("args", 0) for f in analyzer.functions],
+        "parameters_per_method": [m.get("args", 0) for m in analyzer.methods],
+        "avg_parameters_per_function": sum(f.get("args", 0) for f in analyzer.functions) / max(len(analyzer.functions), 1),
+        "avg_parameters_per_method": sum(m.get("args", 0) for m in analyzer.methods) / max(len(analyzer.methods), 1),
+        "max_parameters": max([f.get("args", 0) for f in analyzer.functions] + [m.get("args", 0) for m in analyzer.methods], default=0),
+        "decorated_functions": sum(1 for f in analyzer.functions if f.get("decorators", 0) > 0),
+        "decorated_methods": sum(1 for m in analyzer.methods if m.get("decorators", 0) > 0)
+    }
+    
+    # Calculate class metrics
+    class_metrics = {
+        "count": len(analyzer.classes),
+        "methods_per_class": [c.get("methods", 0) for c in analyzer.classes],
+        "avg_methods_per_class": sum(c.get("methods", 0) for c in analyzer.classes) / max(len(analyzer.classes), 1),
+        "max_methods_per_class": max([c.get("methods", 0) for c in analyzer.classes], default=0),
+        "inheritance_usage": sum(1 for c in analyzer.classes if c.get("bases", 0) > 0),
+        "max_inheritance_depth": max([c.get("bases", 0) for c in analyzer.classes], default=0),
+        "decorated_classes": sum(1 for c in analyzer.classes if c.get("decorators", 0) > 0)
+    }
+    
+    # Calculate WMC (Weighted Methods per Class) using complexity data
+    wmc_per_class = []
+    if analyzer.classes and analyzer.function_complexities:
+        avg_cc = sum(analyzer.function_complexities) / len(analyzer.function_complexities)
+        for class_info in analyzer.classes:
+            # Simple WMC: methods * average complexity
+            wmc = class_info.get("methods", 0) * avg_cc
+            wmc_per_class.append(wmc)
+    
+    class_metrics["wmc_per_class"] = wmc_per_class
+    class_metrics["avg_wmc"] = sum(wmc_per_class) / max(len(wmc_per_class), 1)
+    
+    return {
+        "status": "success",
+        "lines": line_metrics,
+        "functions": function_metrics,
+        "classes": class_metrics,
+        "imports": import_metrics,
+        "variables": {
+            "total_unique": len(analyzer.variables),
+            "global_declared": len(analyzer.global_vars),
+            "nonlocal_declared": len(analyzer.nonlocal_vars)
+        },
+        "code_patterns": {
+            "decorators": analyzer.decorator_count,
+            "docstrings": analyzer.docstring_count,
+            "lambdas": analyzer.lambda_count,
+            "comprehensions": sum(analyzer.comprehensions.values()),
+            "generators": analyzer.generator_count,
+            "docstring_coverage": analyzer.docstring_count / max(len(analyzer.functions) + len(analyzer.classes), 1)
+        }
+    }
+
+
 def analyze_size(file_path: str) -> dict:
     """Analyze size metrics for a Python file."""
     try:
@@ -362,73 +235,13 @@ def analyze_size(file_path: str) -> dict:
         # Parse AST
         tree = ast.parse(source_code)
         
-        # Analyze code
-        analyzer = SizeAnalyzer()
+        # Use shared analyzer instead of duplicate SizeAnalyzer
+        analyzer = ASTAnalyzer()
+        analyzer.reset()
         analyzer.visit(tree)
         
-        # Count lines
-        line_metrics = count_lines(source_code)
-        
-        # Analyze imports
-        import_metrics = analyze_imports(analyzer.imports, analyzer.from_imports)
-        
-        # Calculate function metrics
-        function_metrics = {
-            "count": len(analyzer.functions),
-            "method_count": len(analyzer.methods),
-            "total_callable_count": len(analyzer.functions) + len(analyzer.methods),
-            "parameters_per_function": [f["total_parameters"] for f in analyzer.functions],
-            "parameters_per_method": [m["total_parameters"] for m in analyzer.methods],
-            "avg_parameters_per_function": sum(f["total_parameters"] for f in analyzer.functions) / max(len(analyzer.functions), 1),
-            "avg_parameters_per_method": sum(m["total_parameters"] for m in analyzer.methods) / max(len(analyzer.methods), 1),
-            "max_parameters": max([f["total_parameters"] for f in analyzer.functions] + [m["total_parameters"] for m in analyzer.methods], default=0),
-            "decorated_functions": sum(1 for f in analyzer.functions if f["decorators"] > 0),
-            "decorated_methods": sum(1 for m in analyzer.methods if m["decorators"] > 0)
-        }
-        
-        # Calculate class metrics
-        class_metrics = {
-            "count": len(analyzer.classes),
-            "methods_per_class": [c["methods"] for c in analyzer.classes],
-            "avg_methods_per_class": sum(c["methods"] for c in analyzer.classes) / max(len(analyzer.classes), 1),
-            "max_methods_per_class": max([c["methods"] for c in analyzer.classes], default=0),
-            "inheritance_usage": sum(1 for c in analyzer.classes if c["bases"] > 0),
-            "max_inheritance_depth": max([c["bases"] for c in analyzer.classes], default=0),
-            "decorated_classes": sum(1 for c in analyzer.classes if c["decorators"] > 0)
-        }
-        
-        # Calculate WMC (Weighted Methods per Class) - simplified
-        wmc_per_class = []
-        for class_info in analyzer.classes:
-            # Simple WMC: just count methods (ideally would weight by complexity)
-            wmc = class_info["methods"]
-            wmc_per_class.append(wmc)
-        
-        class_metrics["wmc_per_class"] = wmc_per_class
-        class_metrics["avg_wmc"] = sum(wmc_per_class) / max(len(wmc_per_class), 1)
-        
-        return {
-            "status": "success",
-            "lines": line_metrics,
-            "functions": function_metrics,
-            "classes": class_metrics,
-            "imports": import_metrics,
-            "variables": {
-                "total_unique": len(analyzer.variables),
-                "global_declared": len(analyzer.global_vars),
-                "nonlocal_declared": len(analyzer.nonlocal_vars)
-            },
-            "code_patterns": {
-                "decorators": analyzer.decorators,
-                "docstrings": analyzer.docstrings,
-                "lambdas": analyzer.lambdas,
-                "comprehensions": analyzer.comprehensions,
-                "generators": analyzer.generators,
-                "docstring_coverage": analyzer.docstrings / max(len(analyzer.functions) + len(analyzer.classes), 1)
-            },
-            "statements": dict(analyzer.statements),
-            "statement_count": sum(analyzer.statements.values())
-        }
+        # Use the shared analyzer integration function
+        return analyze_size_from_analyzer(analyzer, source_code)
         
     except SyntaxError as e:
         return {

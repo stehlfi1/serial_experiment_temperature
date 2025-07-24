@@ -12,217 +12,19 @@ import json
 import math
 from pathlib import Path
 from collections import Counter
+from typing import Optional
 
-from .constants import HALSTEAD_DIFFICULTY_DIVISOR, HALSTEAD_EFFORT_THRESHOLD
+# Handle imports for both CLI and integrated usage
+try:
+    from .constants import HALSTEAD_DIFFICULTY_DIVISOR, HALSTEAD_EFFORT_THRESHOLD
+    from ...execution.ast_analyzer import ASTAnalyzer
+except ImportError:
+    # Fallback for direct CLI usage
+    HALSTEAD_DIFFICULTY_DIVISOR = 3000
+    HALSTEAD_EFFORT_THRESHOLD = 18
+    ASTAnalyzer = None
 
 
-class HalsteadAnalyzer(ast.NodeVisitor):
-    """Analyzes Halstead metrics in Python code."""
-    
-    def __init__(self):
-        self.reset()
-    
-    def reset(self):
-        """Reset all counters."""
-        self.operators = Counter()
-        self.operands = Counter()
-        self.operator_instances = []
-        self.operand_instances = []
-    
-    def visit_BinOp(self, node):
-        """Binary operators (+, -, *, /, etc.)."""
-        op_name = type(node.op).__name__
-        self.operators[op_name] += 1
-        self.operator_instances.append(op_name)
-        self.generic_visit(node)
-    
-    def visit_UnaryOp(self, node):
-        """Unary operators (-, +, ~, not)."""
-        op_name = type(node.op).__name__
-        self.operators[op_name] += 1
-        self.operator_instances.append(op_name)
-        self.generic_visit(node)
-    
-    def visit_Compare(self, node):
-        """Comparison operators (==, !=, <, >, etc.)."""
-        for op in node.ops:
-            op_name = type(op).__name__
-            self.operators[op_name] += 1
-            self.operator_instances.append(op_name)
-        self.generic_visit(node)
-    
-    def visit_BoolOp(self, node):
-        """Boolean operators (and, or)."""
-        op_name = type(node.op).__name__
-        self.operators[op_name] += 1
-        self.operator_instances.append(op_name)
-        self.generic_visit(node)
-    
-    def visit_AugAssign(self, node):
-        """Augmented assignment operators (+=, -=, etc.)."""
-        op_name = type(node.op).__name__ + "Assign"
-        self.operators[op_name] += 1
-        self.operator_instances.append(op_name)
-        self.generic_visit(node)
-    
-    def visit_Assign(self, node):
-        """Assignment operator."""
-        self.operators["Assign"] += 1
-        self.operator_instances.append("Assign")
-        self.generic_visit(node)
-    
-    def visit_FunctionDef(self, node):
-        """Function definition operator."""
-        self.operators["FunctionDef"] += 1
-        self.operator_instances.append("FunctionDef")
-        # Function name is an operand
-        self.operands[node.name] += 1
-        self.operand_instances.append(node.name)
-        self.generic_visit(node)
-    
-    def visit_AsyncFunctionDef(self, node):
-        """Async function definition."""
-        self.operators["AsyncFunctionDef"] += 1
-        self.operator_instances.append("AsyncFunctionDef")
-        self.operands[node.name] += 1
-        self.operand_instances.append(node.name)
-        self.generic_visit(node)
-    
-    def visit_ClassDef(self, node):
-        """Class definition operator."""
-        self.operators["ClassDef"] += 1
-        self.operator_instances.append("ClassDef")
-        # Class name is an operand
-        self.operands[node.name] += 1
-        self.operand_instances.append(node.name)
-        self.generic_visit(node)
-    
-    def visit_If(self, node):
-        """If statement operator."""
-        self.operators["If"] += 1
-        self.operator_instances.append("If")
-        self.generic_visit(node)
-    
-    def visit_While(self, node):
-        """While loop operator."""
-        self.operators["While"] += 1
-        self.operator_instances.append("While")
-        self.generic_visit(node)
-    
-    def visit_For(self, node):
-        """For loop operator."""
-        self.operators["For"] += 1
-        self.operator_instances.append("For")
-        self.generic_visit(node)
-    
-    def visit_Try(self, node):
-        """Try statement operator."""
-        self.operators["Try"] += 1
-        self.operator_instances.append("Try")
-        self.generic_visit(node)
-    
-    def visit_With(self, node):
-        """With statement operator."""
-        self.operators["With"] += 1
-        self.operator_instances.append("With")
-        self.generic_visit(node)
-    
-    def visit_Return(self, node):
-        """Return statement operator."""
-        self.operators["Return"] += 1
-        self.operator_instances.append("Return")
-        self.generic_visit(node)
-    
-    def visit_Raise(self, node):
-        """Raise statement operator."""
-        self.operators["Raise"] += 1
-        self.operator_instances.append("Raise")
-        self.generic_visit(node)
-    
-    def visit_Assert(self, node):
-        """Assert statement operator."""
-        self.operators["Assert"] += 1
-        self.operator_instances.append("Assert")
-        self.generic_visit(node)
-    
-    def visit_Import(self, node):
-        """Import statement operator."""
-        self.operators["Import"] += 1
-        self.operator_instances.append("Import")
-        for alias in node.names:
-            self.operands[alias.name] += 1
-            self.operand_instances.append(alias.name)
-        self.generic_visit(node)
-    
-    def visit_ImportFrom(self, node):
-        """ImportFrom statement operator."""
-        self.operators["ImportFrom"] += 1
-        self.operator_instances.append("ImportFrom")
-        if node.module:
-            self.operands[node.module] += 1
-            self.operand_instances.append(node.module)
-        for alias in node.names:
-            self.operands[alias.name] += 1
-            self.operand_instances.append(alias.name)
-        self.generic_visit(node)
-    
-    def visit_Call(self, node):
-        """Function call operator."""
-        self.operators["Call"] += 1
-        self.operator_instances.append("Call")
-        self.generic_visit(node)
-    
-    def visit_Subscript(self, node):
-        """Subscript operator (indexing)."""
-        self.operators["Subscript"] += 1
-        self.operator_instances.append("Subscript")
-        self.generic_visit(node)
-    
-    def visit_Attribute(self, node):
-        """Attribute access operator."""
-        self.operators["Attribute"] += 1
-        self.operator_instances.append("Attribute")
-        # Attribute name is an operand
-        self.operands[node.attr] += 1
-        self.operand_instances.append(node.attr)
-        self.generic_visit(node)
-    
-    def visit_Name(self, node):
-        """Variable names (operands)."""
-        # Skip built-in names and keywords
-        if node.id not in ['True', 'False', 'None']:
-            self.operands[node.id] += 1
-            self.operand_instances.append(node.id)
-        self.generic_visit(node)
-    
-    def visit_Constant(self, node):
-        """Constants (operands) - Python 3.8+."""
-        if isinstance(node.value, (int, float)):
-            operand = f"NUM_{node.value}"
-        elif isinstance(node.value, str):
-            operand = f"STR_{len(node.value)}"  # Use length to avoid huge strings
-        elif isinstance(node.value, bool):
-            operand = f"BOOL_{node.value}"
-        else:
-            operand = f"CONST_{type(node.value).__name__}"
-        
-        self.operands[operand] += 1
-        self.operand_instances.append(operand)
-        self.generic_visit(node)
-    
-    def visit_Str(self, node):
-        """String literals (Python < 3.8)."""
-        operand = f"STR_{len(node.s)}"
-        self.operands[operand] += 1
-        self.operand_instances.append(operand)
-        self.generic_visit(node)
-    
-    def visit_Num(self, node):
-        """Numeric literals (Python < 3.8)."""
-        operand = f"NUM_{node.n}"
-        self.operands[operand] += 1
-        self.operand_instances.append(operand)
-        self.generic_visit(node)
 
 
 def calculate_halstead_metrics(operators: Counter, operands: Counter) -> dict:
@@ -300,20 +102,55 @@ def calculate_halstead_metrics(operators: Counter, operands: Counter) -> dict:
     return result
 
 
-def analyze_halstead(file_path: str) -> dict:
-    """Analyze Halstead metrics for a Python file."""
+def analyze_halstead_from_analyzer(analyzer) -> dict:
+    """Extract Halstead metrics from a pre-populated ASTAnalyzer."""
+    return calculate_halstead_metrics(analyzer.operators, analyzer.operands)
+
+
+def analyze_halstead(file_path: str = None, analyzer: Optional['ASTAnalyzer'] = None) -> dict:
+    """Analyze Halstead metrics for a Python file or from pre-populated analyzer."""
+    if analyzer is not None:
+        # Use provided analyzer
+        result = analyze_halstead_from_analyzer(analyzer)
+        return {
+            "status": "success",
+            "data": result
+        }
+    
+    # Parse file and create own analyzer
     try:
+        # Import shared analyzer for CLI usage
+        try:
+            from ...execution.ast_analyzer import ASTAnalyzer
+        except ImportError:
+            # Fallback for CLI usage - import directly from file path
+            import sys
+            import importlib.util
+            from pathlib import Path
+            
+            ast_analyzer_path = Path(__file__).parent.parent.parent.parent / "execution" / "ast_analyzer.py"
+            spec = importlib.util.spec_from_file_location("ast_analyzer", ast_analyzer_path)
+            ast_analyzer_module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(ast_analyzer_module)
+            ASTAnalyzer = ast_analyzer_module.ASTAnalyzer
+        
         with open(file_path, 'r', encoding='utf-8') as f:
             source_code = f.read()
         
         # Parse AST
         tree = ast.parse(source_code)
         
-        # Analyze Halstead metrics
-        analyzer = HalsteadAnalyzer()
-        analyzer.visit(tree)
+        # Analyze Halstead metrics using shared analyzer
+        local_analyzer = ASTAnalyzer()
+        local_analyzer.reset()
+        local_analyzer.visit(tree)
         
-        return calculate_halstead_metrics(analyzer.operators, analyzer.operands)
+        # Use the shared analyzer data directly via the integration function
+        result = analyze_halstead_from_analyzer(local_analyzer)
+        return {
+            "status": "success", 
+            "data": result
+        }
         
     except SyntaxError as e:
         return {
@@ -342,7 +179,7 @@ def main():
             "error": f"File {file_path} not found"
         }
     else:
-        result = analyze_halstead(file_path)
+        result = analyze_halstead(file_path=file_path)
     
     # Output results as JSON for easy parsing
     print(json.dumps(result, indent=2))
