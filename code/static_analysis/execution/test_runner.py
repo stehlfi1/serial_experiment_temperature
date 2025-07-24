@@ -186,21 +186,53 @@ class TestRunner:
                  challenge: str) -> Dict[str, Any]:
         start_time = time.time()
         
-        # For functional correctness, try model-specific test file first
-        if test_name == "5_functional_correctness":
-            model_specific_test = self.tests_dir / challenge / f"{test_name}-{model}.py"
-            if model_specific_test.exists():
-                test_file = model_specific_test
-            else:
-                test_file = self.tests_dir / f"{test_name}.py"
-                if not test_file.exists():
-                    test_file = self.tests_dir / challenge / f"{test_name}.py"
-        else:
-            test_file = self.tests_dir / f"{test_name}.py"
-            if not test_file.exists():
-                test_file = self.tests_dir / challenge / f"{test_name}.py"
+        # Map legacy test names to actual file names
+        test_name_mappings = {
+            "1_code_compilability": "1_code_compilability",
+            "2_code_length_adaptive": "2_code_length", 
+            "3_modularity_adaptive": "3_modularity",
+            "4_functional_completeness_adaptive": "4_functional_completeness",
+            "5_functional_correctness": "5_functional_correctness"
+        }
         
-        if not test_file.exists():
+        actual_test_name = test_name_mappings.get(test_name, test_name)
+        
+        # Try multiple search paths
+        test_file = None
+        search_paths = []
+        
+        if test_name == "5_functional_correctness":
+            # For functional correctness, try model-specific test file first
+            search_paths = [
+                self.tests_dir / "challenges" / challenge / f"{actual_test_name}-{model}.py",
+                self.tests_dir / "challenges" / challenge / f"{actual_test_name}.py",
+                self.tests_dir / challenge / f"{actual_test_name}-{model}.py",
+                self.tests_dir / challenge / f"{actual_test_name}.py",
+                self.tests_dir / f"{actual_test_name}.py"
+            ]
+        elif test_name in ["2_code_length_adaptive", "3_modularity_adaptive", "4_functional_completeness_adaptive"]:
+            # For legacy adaptive tests, try legacy location first, then challenge-specific
+            search_paths = [
+                self.tests_dir / "metrics" / "legacy" / f"{test_name}.py",
+                self.tests_dir / "challenges" / challenge / f"{actual_test_name}.py",
+                self.tests_dir / challenge / f"{actual_test_name}.py",
+                self.tests_dir / f"{actual_test_name}.py"
+            ]
+        else:
+            # For other tests, try challenge-specific first
+            search_paths = [
+                self.tests_dir / "challenges" / challenge / f"{actual_test_name}.py",
+                self.tests_dir / challenge / f"{actual_test_name}.py",
+                self.tests_dir / f"{actual_test_name}.py"
+            ]
+        
+        # Find the first existing test file
+        for path in search_paths:
+            if path.exists():
+                test_file = path
+                break
+        
+        if not test_file:
             return {
                 "status": "error",
                 "error": f"Test file not found: {test_name}",

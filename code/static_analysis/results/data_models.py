@@ -426,7 +426,7 @@ TEST_GROUPS = {
             "2_code_length_adaptive", 
             "3_modularity_adaptive",
             "4_functional_completeness_adaptive",
-            "5_functional_correctness"  # Missing key test!
+            "5_functional_correctness"
         ],
         category="legacy"
     ),
