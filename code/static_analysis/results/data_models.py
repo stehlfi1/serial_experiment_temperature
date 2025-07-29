@@ -247,10 +247,8 @@ class AdvancedMetrics:
 
 @dataclass
 class TestMetrics:
-    # Legacy metrics (for backward compatibility)
+    # Legacy metrics (consolidated structure)
     compilability: Dict[str, Any]
-    code_length: Dict[str, Any]
-    modularity: Dict[str, Any]
     functional_completeness: Dict[str, Any]
     functional_correctness: Optional[Dict[str, Any]] = None
     
@@ -419,12 +417,10 @@ class TestGroup:
 # Predefined test groups
 TEST_GROUPS = {
     "legacy": TestGroup(
-        name="legacy",
-        description="Original tests from Renner's work - compatibility and basic functionality",
+        name="legacy", 
+        description="Core functionality tests - compilability and behavior verification",
         tests=[
             "1_code_compilability",
-            "2_code_length_adaptive", 
-            "3_modularity_adaptive",
             "4_functional_completeness_adaptive",
             "5_functional_correctness"
         ],

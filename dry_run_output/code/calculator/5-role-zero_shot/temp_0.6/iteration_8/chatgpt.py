@@ -1,0 +1,242 @@
+
+from typing import List, Union
+
+
+class Calculator:
+    """
+    Console-based arithmetic calculator supporting +, -, *, /, parentheses, and correct precedence.
+    Implements robust validation and does not use eval().
+    """
+
+    # Allowed operators and their precedence (higher number = higher precedence)
+    OPERATORS = {
+        '+': (1, 'left'),
+        '-': (1, 'left'),
+        '*': (2, 'left'),
+        '/': (2, 'left')
+    }
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluate an arithmetic expression and return the result as a float.
+
+        Args:
+            expression (str): The arithmetic expression to evaluate.
+
+        Returns:
+            float: The result of the evaluated expression.
+
+        Raises:
+            ValueError: If the expression is invalid (syntax, unbalanced parentheses, invalid characters).
+            ZeroDivisionError: If division by zero occurs.
+        """
+        tokens = self._tokenize(expression)
+        self._validate_tokens(tokens)
+        rpn = self._to_rpn(tokens)
+        result = self._evaluate_rpn(rpn)
+        return result
+
+    def _tokenize(self, expr: str) -> List[Union[str, float]]:
+        """
+        Convert the input expression string into a list of tokens (numbers, operators, parentheses).
+
+        Args:
+            expr (str): The input expression string.
+
+        Returns:
+            List[Union[str, float]]: List of tokens.
+
+        Raises:
+            ValueError: If an invalid character is found.
+        """
+        tokens = []
+        i = 0
+        length = len(expr)
+        while i < length:
+            char = expr[i]
+            if char.isspace():
+                i += 1
+                continue
+            if char in '()+-*/':
+                # Handle unary minus (negative numbers)
+                if char == '-' and (
+                    i == 0 or expr[i - 1] in ' (*/+-'
+                ):
+                    # It's a unary minus
+                    j = i + 1
+                    num_str = '-'
+                    # Allow for numbers like "-3.5"
+                    while j < length and (expr[j].isdigit() or expr[j] == '.'):
+                        num_str += expr[j]
+                        j += 1
+                    if num_str == '-':
+                        raise ValueError("Invalid use of unary minus.")
+                    try:
+                        num = float(num_str) if '.' in num_str else int(num_str)
+                    except ValueError:
+                        raise ValueError(f"Invalid number: {num_str}")
+                    tokens.append(num)
+                    i = j
+                    continue
+                elif char in '+-*/()':
+                    tokens.append(char)
+                    i += 1
+                    continue
+            elif char.isdigit() or char == '.':
+                # Number (integer or float)
+                j = i
+                num_str = ''
+                dot_count = 0
+                while j < length and (expr[j].isdigit() or expr[j] == '.'):
+                    if expr[j] == '.':
+                        dot_count += 1
+                        if dot_count > 1:
+                            raise ValueError("Invalid number with multiple decimal points.")
+                    num_str += expr[j]
+                    j += 1
+                try:
+                    num = float(num_str) if '.' in num_str else int(num_str)
+                except ValueError:
+                    raise ValueError(f"Invalid number: {num_str}")
+                tokens.append(num)
+                i = j
+                continue
+            else:
+                raise ValueError(f"Invalid character in expression: '{char}'")
+        return tokens
+
+    def _validate_tokens(self, tokens: List[Union[str, float]]):
+        """
+        Validate the sequence of tokens for basic syntax errors.
+
+        Args:
+            tokens (List[Union[str, float]]): The list of tokens.
+
+        Raises:
+            ValueError: If the token sequence is invalid.
+        """
+        if not tokens:
+            raise ValueError("Expression is empty.")
+
+        # Parentheses balance check
+        paren_count = 0
+        prev_token = None
+        for idx, token in enumerate(tokens):
+            if token == '(':
+                paren_count += 1
+            elif token == ')':
+                paren_count -= 1
+                if paren_count < 0:
+                    raise ValueError("Unbalanced parentheses: too many closing parentheses.")
+            elif isinstance(token, (int, float)):
+                pass
+            elif token in self.OPERATORS:
+                # Prevent two consecutive operators (except for unary minus, which is handled in tokenization)
+                if prev_token is None or (prev_token in self.OPERATORS and prev_token != ')') or prev_token == '(':
+                    raise ValueError(f"Invalid operator sequence at position {idx}: '{token}'")
+            prev_token = token
+        if paren_count != 0:
+            raise ValueError("Unbalanced parentheses: too many opening parentheses.")
+
+    def _to_rpn(self, tokens: List[Union[str, float]]) -> List[Union[str, float]]:
+        """
+        Convert the list of tokens to Reverse Polish Notation (RPN) using the Shunting Yard algorithm.
+
+        Args:
+            tokens (List[Union[str, float]]): List of tokens.
+
+        Returns:
+            List[Union[str, float]]: RPN token list.
+        """
+        output = []
+        op_stack = []
+        for token in tokens:
+            if isinstance(token, (int, float)):
+                output.append(token)
+            elif token in self.OPERATORS:
+                while (
+                    op_stack
+                    and op_stack[-1] in self.OPERATORS
+                    and (
+                        (self.OPERATORS[token][1] == 'left' and self.OPERATORS[token][0] <= self.OPERATORS[op_stack[-1]][0])
+                    )
+                ):
+                    output.append(op_stack.pop())
+                op_stack.append(token)
+            elif token == '(':
+                op_stack.append(token)
+            elif token == ')':
+                while op_stack and op_stack[-1] != '(':
+                    output.append(op_stack.pop())
+                if not op_stack:
+                    raise ValueError("Unbalanced parentheses.")
+                op_stack.pop()  # Discard '('
+        while op_stack:
+            if op_stack[-1] in ('(', ')'):
+                raise ValueError("Unbalanced parentheses in expression.")
+            output.append(op_stack.pop())
+        return output
+
+    def _evaluate_rpn(self, rpn_tokens: List[Union[str, float]]) -> float:
+        """
+        Evaluate an expression in Reverse Polish Notation (RPN).
+
+        Args:
+            rpn_tokens (List[Union[str, float]]): RPN token list.
+
+        Returns:
+            float: The result of the evaluated RPN expression.
+
+        Raises:
+            ZeroDivisionError: If division by zero occurs.
+            ValueError: If the RPN is invalid.
+        """
+        stack = []
+        for token in rpn_tokens:
+            if isinstance(token, (int, float)):
+                stack.append(token)
+            elif token in self.OPERATORS:
+                if len(stack) < 2:
+                    raise ValueError("Invalid syntax: insufficient operands.")
+                b = stack.pop()
+                a = stack.pop()
+                if token == '+':
+                    stack.append(a + b)
+                elif token == '-':
+                    stack.append(a - b)
+                elif token == '*':
+                    stack.append(a * b)
+                elif token == '/':
+                    if b == 0:
+                        raise ZeroDivisionError("Division by zero.")
+                    stack.append(a / b)
+            else:
+                raise ValueError(f"Invalid token in RPN: {token}")
+        if len(stack) != 1:
+            raise ValueError("Invalid syntax in expression.")
+        return float(stack[0])
+
+
+if __name__ == "__main__":
+    # Example usage and basic test cases
+    calc = Calculator()
+    test_expressions = [
+        "1 + 2",
+        "2 * (3 + 4)",
+        "-5 + 4.2",
+        "3.5 * -2",
+        "10 / 2 + 3 * 2 - 1",
+        "((2 + 3) * (7 - 2)) / 5",
+        "4 / (2 - 2)",  # Should raise ZeroDivisionError
+        "2 + (3 * 4",   # Should raise ValueError (unbalanced parentheses)
+        "2 + $",        # Should raise ValueError (invalid character)
+        "--5",          # Should raise ValueError (invalid use of unary minus)
+    ]
+    for expr in test_expressions:
+        print(f"Expression: {expr}")
+        try:
+            result = calc.calculate(expr)
+            print(f"Result: {result:.6f}")
+        except Exception as e:
+            print(f"Error: {e}")
+        print("-" * 40)

@@ -1,0 +1,532 @@
+
+"""
+High-Quality Arithmetic Calculator
+Implements a console-based calculator with support for basic arithmetic operations,
+parentheses, and proper operator precedence following ISO/IEC 25010 standards.
+"""
+
+import re
+from typing import Union, List, Tuple
+from enum import Enum
+
+
+class TokenType(Enum):
+    """Enumeration of token types for lexical analysis."""
+    NUMBER = "NUMBER"
+    PLUS = "PLUS"
+    MINUS = "MINUS"
+    MULTIPLY = "MULTIPLY"
+    DIVIDE = "DIVIDE"
+    LPAREN = "LPAREN"
+    RPAREN = "RPAREN"
+    EOF = "EOF"
+
+
+class Token:
+    """Represents a token in the expression."""
+    
+    def __init__(self, token_type: TokenType, value: Union[str, float], position: int = 0):
+        """
+        Initialize a token.
+        
+        Args:
+            token_type: The type of the token
+            value: The value of the token
+            position: Position in the original expression
+        """
+        self.type = token_type
+        self.value = value
+        self.position = position
+    
+    def __repr__(self) -> str:
+        return f"Token({self.type}, {self.value}, {self.position})"
+
+
+class CalculatorError(Exception):
+    """Base exception class for calculator errors."""
+    pass
+
+
+class InvalidExpressionError(CalculatorError):
+    """Raised when the expression contains invalid syntax."""
+    pass
+
+
+class DivisionByZeroError(CalculatorError):
+    """Raised when attempting to divide by zero."""
+    pass
+
+
+class InvalidCharacterError(CalculatorError):
+    """Raised when the expression contains invalid characters."""
+    pass
+
+
+class UnbalancedParenthesesError(CalculatorError):
+    """Raised when parentheses are unbalanced."""
+    pass
+
+
+class Lexer:
+    """
+    Lexical analyzer for tokenizing mathematical expressions.
+    Converts input string into a sequence of tokens for parsing.
+    """
+    
+    def __init__(self, expression: str):
+        """
+        Initialize the lexer with an expression.
+        
+        Args:
+            expression: The mathematical expression to tokenize
+        """
+        self.expression = expression.replace(" ", "")  # Remove whitespace
+        self.position = 0
+        self.current_char = self.expression[0] if self.expression else None
+    
+    def advance(self) -> None:
+        """Move to the next character in the expression."""
+        self.position += 1
+        if self.position >= len(self.expression):
+            self.current_char = None
+        else:
+            self.current_char = self.expression[self.position]
+    
+    def peek(self) -> Union[str, None]:
+        """
+        Look at the next character without advancing.
+        
+        Returns:
+            The next character or None if at end
+        """
+        peek_pos = self.position + 1
+        if peek_pos >= len(self.expression):
+            return None
+        return self.expression[peek_pos]
+    
+    def read_number(self) -> float:
+        """
+        Read a number (integer or float) from the current position.
+        
+        Returns:
+            The parsed number as a float
+        
+        Raises:
+            InvalidExpressionError: If the number format is invalid
+        """
+        start_pos = self.position
+        number_str = ""
+        
+        # Handle negative numbers
+        if self.current_char == '-':
+            number_str += self.current_char
+            self.advance()
+        
+        # Read digits before decimal point
+        while self.current_char is not None and self.current_char.isdigit():
+            number_str += self.current_char
+            self.advance()
+        
+        # Read decimal point and digits after
+        if self.current_char == '.':
+            number_str += self.current_char
+            self.advance()
+            
+            if not self.current_char or not self.current_char.isdigit():
+                raise InvalidExpressionError(
+                    f"Invalid number format at position {start_pos}: decimal point must be followed by digits"
+                )
+            
+            while self.current_char is not None and self.current_char.isdigit():
+                number_str += self.current_char
+                self.advance()
+        
+        if not number_str or number_str == '-' or number_str == '.':
+            raise InvalidExpressionError(f"Invalid number format at position {start_pos}")
+        
+        try:
+            return float(number_str)
+        except ValueError:
+            raise InvalidExpressionError(f"Invalid number format at position {start_pos}: {number_str}")
+    
+    def get_next_token(self) -> Token:
+        """
+        Get the next token from the expression.
+        
+        Returns:
+            The next token in the expression
+        
+        Raises:
+            InvalidCharacterError: If an invalid character is encountered
+        """
+        while self.current_char is not None:
+            current_pos = self.position
+            
+            if self.current_char.isdigit() or self.current_char == '.':
+                number = self.read_number()
+                return Token(TokenType.NUMBER, number, current_pos)
+            
+            if self.current_char == '-':
+                # Check if this is a negative number or subtraction operator
+                if (self.position == 0 or 
+                    self.expression[self.position - 1] in '(+-*/'):
+                    number = self.read_number()
+                    return Token(TokenType.NUMBER, number, current_pos)
+                else:
+                    self.advance()
+                    return Token(TokenType.MINUS, '-', current_pos)
+            
+            if self.current_char == '+':
+                self.advance()
+                return Token(TokenType.PLUS, '+', current_pos)
+            
+            if self.current_char == '*':
+                self.advance()
+                return Token(TokenType.MULTIPLY, '*', current_pos)
+            
+            if self.current_char == '/':
+                self.advance()
+                return Token(TokenType.DIVIDE, '/', current_pos)
+            
+            if self.current_char == '(':
+                self.advance()
+                return Token(TokenType.LPAREN, '(', current_pos)
+            
+            if self.current_char == ')':
+                self.advance()
+                return Token(TokenType.RPAREN, ')', current_pos)
+            
+            raise InvalidCharacterError(
+                f"Invalid character '{self.current_char}' at position {current_pos}"
+            )
+        
+        return Token(TokenType.EOF, None, self.position)
+
+
+class Parser:
+    """
+    Recursive descent parser for mathematical expressions.
+    Implements proper operator precedence and handles parentheses.
+    
+    Grammar:
+    expression := term (('+' | '-') term)*
+    term := factor (('*' | '/') factor)*
+    factor := ('+'|'-') factor | NUMBER | '(' expression ')'
+    """
+    
+    def __init__(self, lexer: Lexer):
+        """
+        Initialize the parser with a lexer.
+        
+        Args:
+            lexer: The lexer to get tokens from
+        """
+        self.lexer = lexer
+        self.current_token = self.lexer.get_next_token()
+        self.paren_count = 0  # Track parentheses balance
+    
+    def eat(self, token_type: TokenType) -> None:
+        """
+        Consume a token of the expected type.
+        
+        Args:
+            token_type: The expected token type
+        
+        Raises:
+            InvalidExpressionError: If the token type doesn't match
+        """
+        if self.current_token.type == token_type:
+            self.current_token = self.lexer.get_next_token()
+        else:
+            raise InvalidExpressionError(
+                f"Expected {token_type.value}, got {self.current_token.type.value} "
+                f"at position {self.current_token.position}"
+            )
+    
+    def factor(self) -> float:
+        """
+        Parse a factor (number, parenthesized expression, or unary operation).
+        
+        Returns:
+            The evaluated value of the factor
+        
+        Raises:
+            UnbalancedParenthesesError: If parentheses are unbalanced
+            InvalidExpressionError: If the factor is invalid
+        """
+        token = self.current_token
+        
+        if token.type == TokenType.PLUS:
+            self.eat(TokenType.PLUS)
+            return +self.factor()
+        
+        elif token.type == TokenType.MINUS:
+            self.eat(TokenType.MINUS)
+            return -self.factor()
+        
+        elif token.type == TokenType.NUMBER:
+            self.eat(TokenType.NUMBER)
+            return token.value
+        
+        elif token.type == TokenType.LPAREN:
+            self.paren_count += 1
+            self.eat(TokenType.LPAREN)
+            result = self.expression()
+            if self.current_token.type != TokenType.RPAREN:
+                raise UnbalancedParenthesesError("Missing closing parenthesis")
+            self.paren_count -= 1
+            self.eat(TokenType.RPAREN)
+            return result
+        
+        else:
+            raise InvalidExpressionError(
+                f"Unexpected token {token.type.value} at position {token.position}"
+            )
+    
+    def term(self) -> float:
+        """
+        Parse a term (multiplication and division operations).
+        
+        Returns:
+            The evaluated value of the term
+        
+        Raises:
+            DivisionByZeroError: If division by zero is attempted
+        """
+        result = self.factor()
+        
+        while self.current_token.type in (TokenType.MULTIPLY, TokenType.DIVIDE):
+            token = self.current_token
+            
+            if token.type == TokenType.MULTIPLY:
+                self.eat(TokenType.MULTIPLY)
+                result = result * self.factor()
+            
+            elif token.type == TokenType.DIVIDE:
+                self.eat(TokenType.DIVIDE)
+                divisor = self.factor()
+                if divisor == 0:
+                    raise DivisionByZeroError("Division by zero is not allowed")
+                result = result / divisor
+        
+        return result
+    
+    def expression(self) -> float:
+        """
+        Parse an expression (addition and subtraction operations).
+        
+        Returns:
+            The evaluated value of the expression
+        """
+        result = self.term()
+        
+        while self.current_token.type in (TokenType.PLUS, TokenType.MINUS):
+            token = self.current_token
+            
+            if token.type == TokenType.PLUS:
+                self.eat(TokenType.PLUS)
+                result = result + self.term()
+            
+            elif token.type == TokenType.MINUS:
+                self.eat(TokenType.MINUS)
+                result = result - self.term()
+        
+        return result
+    
+    def parse(self) -> float:
+        """
+        Parse the complete expression and return the result.
+        
+        Returns:
+            The evaluated value of the expression
+        
+        Raises:
+            UnbalancedParenthesesError: If parentheses are unbalanced
+            InvalidExpressionError: If there are extra tokens after parsing
+        """
+        if self.current_token.type == TokenType.EOF:
+            raise InvalidExpressionError("Empty expression")
+        
+        result = self.expression()
+        
+        if self.current_token.type != TokenType.EOF:
+            raise InvalidExpressionError(
+                f"Unexpected token after expression: {self.current_token.type.value} "
+                f"at position {self.current_token.position}"
+            )
+        
+        if self.paren_count != 0:
+            raise UnbalancedParenthesesError("Unbalanced parentheses")
+        
+        return result
+
+
+class Calculator:
+    """
+    High-quality arithmetic calculator supporting basic operations with proper
+    operator precedence and parentheses handling.
+    
+    This calculator implements the ISO/IEC 25010 quality standards for
+    functionality, reliability, performance efficiency, maintainability,
+    and portability.
+    """
+    
+    def __init__(self):
+        """Initialize the calculator."""
+        self._validate_implementation()
+    
+    def _validate_implementation(self) -> None:
+        """Validate the calculator implementation with basic test cases."""
+        try:
+            # Test basic functionality
+            assert abs(self.calculate("2 + 3") - 5.0) < 1e-10
+            assert abs(self.calculate("10 - 4") - 6.0) < 1e-10
+            assert abs(self.calculate("3 * 4") - 12.0) < 1e-10
+            assert abs(self.calculate("15 / 3") - 5.0) < 1e-10
+        except Exception as e:
+            raise RuntimeError(f"Calculator implementation validation failed: {e}")
+    
+    def _validate_expression(self, expression: str) -> None:
+        """
+        Validate the input expression format.
+        
+        Args:
+            expression: The expression to validate
+        
+        Raises:
+            InvalidExpressionError: If the expression is invalid
+            InvalidCharacterError: If invalid characters are present
+        """
+        if not expression or not expression.strip():
+            raise InvalidExpressionError("Expression cannot be empty")
+        
+        # Check for valid characters only
+        valid_chars = set("0123456789+-*/().eE ")
+        expression_chars = set(expression)
+        invalid_chars = expression_chars - valid_chars
+        
+        if invalid_chars:
+            raise InvalidCharacterError(
+                f"Invalid characters found: {', '.join(sorted(invalid_chars))}"
+            )
+        
+        # Check for basic balance of parentheses
+        paren_count = 0
+        for char in expression:
+            if char == '(':
+                paren_count += 1
+            elif char == ')':
+                paren_count -= 1
+                if paren_count < 0:
+                    raise UnbalancedParenthesesError("Unbalanced parentheses: too many closing parentheses")
+        
+        if paren_count != 0:
+            raise UnbalancedParenthesesError("Unbalanced parentheses: missing closing parentheses")
+    
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluate a mathematical expression and return the result.
+        
+        Supports:
+        - Basic arithmetic operations: +, -, *, /
+        - Parentheses for grouping: (, )
+        - Integer and floating-point numbers
+        - Negative numbers
+        - Proper operator precedence (*, / before +, -)
+        
+        Args:
+            expression: A string containing the mathematical expression to evaluate
+        
+        Returns:
+            The result of the evaluation as a float
+        
+        Raises:
+            InvalidExpressionError: If the expression has invalid syntax
+            InvalidCharacterError: If the expression contains invalid characters
+            UnbalancedParenthesesError: If parentheses are not properly balanced
+            DivisionByZeroError: If division by zero is attempted
+        
+        Examples:
+            >>> calc = Calculator()
+            >>> calc.calculate("2 + 3 * 4")
+            14.0
+            >>> calc.calculate("(2 + 3) * 4")
+            20.0
+            >>> calc.calculate("-5 + 3")
+            -2.0
+            >>> calc.calculate("10 / 2.5")
+            4.0
+        """
+        try:
+            # Input validation
+            if not isinstance(expression, str):
+                raise InvalidExpressionError("Expression must be a string")
+            
+            self._validate_expression(expression)
+            
+            # Tokenize and parse the expression
+            lexer = Lexer(expression)
+            parser = Parser(lexer)
+            result = parser.parse()
+            
+            # Validate result
+            if not isinstance(result, (int, float)):
+                raise InvalidExpressionError("Invalid calculation result")
+            
+            # Check for infinity and NaN
+            if result == float('inf') or result == float('-inf'):
+                raise CalculatorError("Result is infinity")
+            
+            if result != result:  # NaN check
+                raise CalculatorError("Result is not a number")
+            
+            return float(result)
+            
+        except (CalculatorError,):
+            # Re-raise calculator-specific exceptions
+            raise
+        except Exception as e:
+            # Wrap unexpected exceptions
+            raise CalculatorError(f"Unexpected error during calculation: {str(e)}")
+
+
+def main():
+    """
+    Main function demonstrating the calculator usage.
+    Provides an interactive console interface for the calculator.
+    """
+    calculator = Calculator()
+    
+    print("High-Quality Arithmetic Calculator")
+    print("Supported operations: +, -, *, /, ()")
+    print("Type 'quit' or 'exit' to stop")
+    print("-" * 40)
+    
+    while True:
+        try:
+            expression = input("Enter expression: ").strip()
+            
+            if expression.lower() in ('quit', 'exit'):
+                print("Goodbye!")
+                break
+            
+            if not expression:
+                continue
+            
+            result = calculator.calculate(expression)
+            print(f"Result: {result}")
+            
+        except CalculatorError as e:
+            print(f"Error: {e}")
+        except KeyboardInterrupt:
+            print("\nGoodbye!")
+            break
+        except EOFError:
+            print("\nGoodbye!")
+            break
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,227 @@
+```python
+import sys
+from typing import List, Dict, Optional
+
+class TaskValidationError(ValueError):
+    """Custom exception for invalid task operations."""
+    pass
+
+class Task:
+    """
+    Represents a single task in the todo list.
+    """
+    def __init__(self, task_id: int, name: str, description: str):
+        self.id = task_id
+        self.name = name
+        self.description = description
+        self.is_finished = False
+
+    def to_dict(self) -> Dict:
+        """Return a dictionary representation of the task."""
+        return {
+            'id': self.id,
+            'task_name': self.name,
+            'task_description': self.description,
+            'is_finished': self.is_finished
+        }
+
+class TaskManager:
+    """
+    Manages the todo tasks and provides methods to interact with them.
+    This class operates entirely in memory and does not persist data to disk.
+    """
+
+    def __init__(self):
+        self._tasks: Dict[int, Task] = {}
+        self._next_id: int = 1  # Auto-incrementing task ID
+
+    def add(self, task_name: str, task_description: str) -> int:
+        """
+        Adds a new task with the given name and description.
+        Returns:
+            int: The unique ID assigned to the task.
+        Raises:
+            ValueError: If name or description are empty or whitespace.
+        """
+        if not isinstance(task_name, str) or not task_name.strip():
+            raise ValueError("Task name cannot be empty.")
+        if not isinstance(task_description, str) or not task_description.strip():
+            raise ValueError("Task description cannot be empty.")
+
+        task_id = self._next_id
+        self._tasks[task_id] = Task(task_id, task_name.strip(), task_description.strip())
+        self._next_id += 1
+
+        return task_id
+
+    def remove(self, task_id: int) -> bool:
+        """
+        Removes the task with the specified ID.
+        Returns:
+            bool: True if removed, False if task not found.
+        Raises:
+            ValueError: If task_id is not a positive integer.
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise ValueError("Task ID must be a positive integer.")
+
+        return self._tasks.pop(task_id, None) is not None
+
+    def search(self, task_term: str) -> List[Dict]:
+        """
+        Searches for tasks whose name or description includes the given term (case-insensitive).
+        Returns:
+            List[Dict]: List of matching tasks as dictionaries.
+        Raises:
+            ValueError: If search term is empty.
+        """
+        if not isinstance(task_term, str) or not task_term.strip():
+            raise ValueError("Search term cannot be empty.")
+
+        term = task_term.strip().lower()
+        matches = [
+            task.to_dict()
+            for task in self._tasks.values()
+            if term in task.name.lower() or term in task.description.lower()
+        ]
+        return matches
+
+    def finish(self, task_id: int) -> bool:
+        """
+        Marks the task with the given ID as finished.
+        Returns:
+            bool: True if successful, False if task not found.
+        Raises:
+            ValueError: If task_id is not a positive integer.
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise ValueError("Task ID must be a positive integer.")
+
+        task = self._tasks.get(task_id)
+        if task is None:
+            return False
+        if task.is_finished:
+            return True  # Already finished; idempotent
+        task.is_finished = True
+        return True
+
+    def get_all(self) -> List[Dict]:
+        """
+        Retrieves all tasks as a list of dictionaries.
+        Returns:
+            List[Dict]: List of all tasks.
+        """
+        return [task.to_dict() for task in self._tasks.values()]
+
+    def clear_all(self) -> bool:
+        """
+        Removes all tasks from the manager.
+        Returns:
+            bool: True if any tasks were deleted, False if already empty.
+        """
+        if self._tasks:
+            self._tasks.clear()
+            return True
+        return False
+
+def _print_tasks(tasks: List[Dict]):
+    """
+    Utility function to print tasks in a tabular format for the console interface.
+    """
+    if not tasks:
+        print("No tasks found.")
+        return
+    header = f"{'ID':<4} | {'Name':<20} | {'Description':<30} | {'Finished'}"
+    print(header)
+    print('-' * len(header))
+    for task in tasks:
+        print(
+            f"{task['id']:<4} | "
+            f"{task['task_name'][:20]:<20} | "
+            f"{task['task_description'][:30]:<30} | "
+            f"{'Yes' if task['is_finished'] else 'No'}"
+        )
+
+def main():
+    """
+    Console-based interface for the TaskManager.
+    """
+    manager = TaskManager()
+
+    MENU = """
+Todo List Application
+---------------------
+1. Add Task
+2. Remove Task
+3. Search Tasks
+4. Mark Task as Finished
+5. View All Tasks
+6. Clear All Tasks
+7. Exit
+"""
+
+    while True:
+        print(MENU)
+        choice = input("Select an option (1-7): ").strip()
+
+        try:
+            if choice == '1':
+                name = input("Enter task name: ").strip()
+                desc = input("Enter task description: ").strip()
+                task_id = manager.add(name, desc)
+                print(f"Task added with ID: {task_id}")
+
+            elif choice == '2':
+                tid = input("Enter task ID to remove: ").strip()
+                if not tid.isdigit():
+                    print("Invalid ID.")
+                    continue
+                success = manager.remove(int(tid))
+                print("Task removed." if success else "Task not found.")
+
+            elif choice == '3':
+                term = input("Enter search term: ").strip()
+                results = manager.search(term)
+                _print_tasks(results)
+
+            elif choice == '4':
+                tid = input("Enter task ID to mark as finished: ").strip()
+                if not tid.isdigit():
+                    print("Invalid ID.")
+                    continue
+                success = manager.finish(int(tid))
+                print("Task marked as finished." if success else "Task not found.")
+
+            elif choice == '5':
+                _print_tasks(manager.get_all())
+
+            elif choice == '6':
+                confirm = input("Are you sure you want to clear all tasks? (y/N): ").strip().lower()
+                if confirm == 'y':
+                    success = manager.clear_all()
+                    print("All tasks cleared." if success else "No tasks to clear.")
+
+            elif choice == '7':
+                print("Exiting Todo List Application.")
+                break
+
+            else:
+                print("Invalid option.")
+
+        except ValueError as ve:
+            print(f"Error: {ve}")
+
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+
+if __name__ == "__main__":
+    # To allow easy testing, only run the console interface when called as a script
+    main()
+```
+**Notes:**
+- The code meets the OOP and modularity requirements.
+- All methods check input validity and raise errors when violated.
+- The internal `_tasks` dict maps IDs to `Task` objects for efficient lookup, insertion, and deletion.
+- Each method is documented with precise descriptions per the ISO/IEC 25010 quality attributes (correctness, usability, safety).
+- Console interface is optional—you can comment out `main()` for testing/import in other modules.
+- Testing is simple because of the clear class interface; you can instantiate `TaskManager` in your unit tests and call its methods directly.

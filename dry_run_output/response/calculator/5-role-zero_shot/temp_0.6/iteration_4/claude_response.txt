@@ -1,0 +1,458 @@
+```python
+"""
+A high-quality console-based arithmetic calculator implementation.
+
+This module provides a Calculator class that can evaluate mathematical expressions
+with support for basic arithmetic operations, parentheses, and proper operator precedence.
+"""
+
+import re
+from typing import List, Union
+from enum import Enum
+
+
+class TokenType(Enum):
+    """Enumeration of token types for expression parsing."""
+    NUMBER = "NUMBER"
+    OPERATOR = "OPERATOR"
+    LEFT_PAREN = "LEFT_PAREN"
+    RIGHT_PAREN = "RIGHT_PAREN"
+
+
+class Token:
+    """Represents a token in a mathematical expression."""
+    
+    def __init__(self, token_type: TokenType, value: Union[str, float]):
+        """
+        Initialize a token.
+        
+        Args:
+            token_type: The type of the token
+            value: The value of the token
+        """
+        self.type = token_type
+        self.value = value
+    
+    def __repr__(self) -> str:
+        return f"Token({self.type}, {self.value})"
+
+
+class Calculator:
+    """
+    A mathematical expression calculator that supports basic arithmetic operations.
+    
+    This calculator implements the Shunting Yard algorithm for parsing expressions
+    and evaluates them without using eval() or equivalent methods.
+    
+    Supported operations:
+    - Addition (+)
+    - Subtraction (-)
+    - Multiplication (*)
+    - Division (/)
+    - Parentheses for grouping
+    
+    The calculator respects standard operator precedence and associativity rules.
+    """
+    
+    # Operator precedence mapping (higher number = higher precedence)
+    OPERATOR_PRECEDENCE = {
+        '+': 1,
+        '-': 1,
+        '*': 2,
+        '/': 2
+    }
+    
+    # Left-associative operators
+    LEFT_ASSOCIATIVE = {'+', '-', '*', '/'}
+    
+    def __init__(self):
+        """Initialize the calculator."""
+        self._reset_state()
+    
+    def _reset_state(self) -> None:
+        """Reset internal state for a new calculation."""
+        self._tokens: List[Token] = []
+        self._output_queue: List[Token] = []
+        self._operator_stack: List[Token] = []
+    
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluate a mathematical expression and return the result.
+        
+        Args:
+            expression: A string containing the mathematical expression to evaluate
+            
+        Returns:
+            The numerical result of the expression evaluation
+            
+        Raises:
+            ValueError: If the expression is invalid (syntax errors, unbalanced parentheses)
+            ZeroDivisionError: If division by zero is attempted
+            
+        Examples:
+            >>> calc = Calculator()
+            >>> calc.calculate("2 + 3 * 4")
+            14.0
+            >>> calc.calculate("(2 + 3) * 4")
+            20.0
+            >>> calc.calculate("-5 + 3")
+            -2.0
+        """
+        if not expression or not expression.strip():
+            raise ValueError("Expression cannot be empty")
+        
+        self._reset_state()
+        
+        try:
+            # Step 1: Tokenize the expression
+            self._tokenize(expression)
+            
+            # Step 2: Convert to postfix notation using Shunting Yard algorithm
+            self._convert_to_postfix()
+            
+            # Step 3: Evaluate the postfix expression
+            result = self._evaluate_postfix()
+            
+            return float(result)
+            
+        except (ValueError, ZeroDivisionError):
+            raise
+        except Exception as e:
+            raise ValueError(f"Invalid expression: {str(e)}")
+    
+    def _tokenize(self, expression: str) -> None:
+        """
+        Tokenize the input expression into numbers, operators, and parentheses.
+        
+        Args:
+            expression: The mathematical expression to tokenize
+            
+        Raises:
+            ValueError: If invalid characters are found in the expression
+        """
+        # Remove whitespace and validate characters
+        expression = expression.replace(" ", "")
+        
+        if not re.match(r'^[0-9+\-*/().]+$', expression):
+            raise ValueError("Expression contains invalid characters")
+        
+        i = 0
+        while i < len(expression):
+            char = expression[i]
+            
+            if char.isdigit() or char == '.':
+                # Parse number (integer or float)
+                number_str = ""
+                while i < len(expression) and (expression[i].isdigit() or expression[i] == '.'):
+                    number_str += expression[i]
+                    i += 1
+                
+                try:
+                    number = float(number_str)
+                    self._tokens.append(Token(TokenType.NUMBER, number))
+                except ValueError:
+                    raise ValueError(f"Invalid number format: {number_str}")
+                
+                continue
+                
+            elif char in "+-":
+                # Handle unary minus/plus or binary operators
+                if self._is_unary_operator(i):
+                    # Parse unary operator with the following number
+                    i += 1
+                    if i >= len(expression) or not (expression[i].isdigit() or expression[i] == '.'):
+                        raise ValueError("Invalid unary operator usage")
+                    
+                    number_str = char  # Include the sign
+                    while i < len(expression) and (expression[i].isdigit() or expression[i] == '.'):
+                        number_str += expression[i]
+                        i += 1
+                    
+                    try:
+                        number = float(number_str)
+                        self._tokens.append(Token(TokenType.NUMBER, number))
+                    except ValueError:
+                        raise ValueError(f"Invalid number format: {number_str}")
+                else:
+                    # Binary operator
+                    self._tokens.append(Token(TokenType.OPERATOR, char))
+                    i += 1
+                    
+            elif char in "*/":
+                self._tokens.append(Token(TokenType.OPERATOR, char))
+                i += 1
+                
+            elif char == '(':
+                self._tokens.append(Token(TokenType.LEFT_PAREN, char))
+                i += 1
+                
+            elif char == ')':
+                self._tokens.append(Token(TokenType.RIGHT_PAREN, char))
+                i += 1
+                
+            else:
+                raise ValueError(f"Unexpected character: {char}")
+        
+        if not self._tokens:
+            raise ValueError("No valid tokens found in expression")
+        
+        self._validate_token_sequence()
+    
+    def _is_unary_operator(self, position: int) -> bool:
+        """
+        Determine if the operator at the given position is unary.
+        
+        Args:
+            position: The position of the operator in the expression
+            
+        Returns:
+            True if the operator is unary, False if binary
+        """
+        if position == 0:
+            return True
+        
+        if not self._tokens:
+            return True
+        
+        last_token = self._tokens[-1]
+        return (last_token.type == TokenType.OPERATOR or 
+                last_token.type == TokenType.LEFT_PAREN)
+    
+    def _validate_token_sequence(self) -> None:
+        """
+        Validate that the token sequence forms a valid mathematical expression.
+        
+        Raises:
+            ValueError: If the token sequence is invalid
+        """
+        if not self._tokens:
+            raise ValueError("Empty token sequence")
+        
+        paren_count = 0
+        prev_token = None
+        
+        for token in self._tokens:
+            if token.type == TokenType.LEFT_PAREN:
+                paren_count += 1
+            elif token.type == TokenType.RIGHT_PAREN:
+                paren_count -= 1
+                if paren_count < 0:
+                    raise ValueError("Unbalanced parentheses: too many closing parentheses")
+            
+            # Validate token sequence rules
+            if prev_token:
+                if (prev_token.type == TokenType.OPERATOR and 
+                    token.type == TokenType.OPERATOR):
+                    raise ValueError("Consecutive operators are not allowed")
+                
+                if (prev_token.type == TokenType.NUMBER and 
+                    token.type == TokenType.NUMBER):
+                    raise ValueError("Consecutive numbers without operator")
+                
+                if (prev_token.type == TokenType.RIGHT_PAREN and 
+                    token.type == TokenType.NUMBER):
+                    raise ValueError("Number cannot follow closing parenthesis without operator")
+                
+                if (prev_token.type == TokenType.NUMBER and 
+                    token.type == TokenType.LEFT_PAREN):
+                    raise ValueError("Opening parenthesis cannot follow number without operator")
+            
+            prev_token = token
+        
+        if paren_count != 0:
+            raise ValueError("Unbalanced parentheses")
+        
+        # Check that expression doesn't start or end with binary operators
+        if self._tokens[0].type == TokenType.OPERATOR:
+            raise ValueError("Expression cannot start with binary operator")
+        
+        if self._tokens[-1].type == TokenType.OPERATOR:
+            raise ValueError("Expression cannot end with operator")
+    
+    def _convert_to_postfix(self) -> None:
+        """
+        Convert the tokenized expression to postfix notation using the Shunting Yard algorithm.
+        """
+        for token in self._tokens:
+            if token.type == TokenType.NUMBER:
+                self._output_queue.append(token)
+                
+            elif token.type == TokenType.OPERATOR:
+                while (self._operator_stack and 
+                       self._operator_stack[-1].type == TokenType.OPERATOR and
+                       self._has_higher_or_equal_precedence(
+                           self._operator_stack[-1].value, token.value)):
+                    self._output_queue.append(self._operator_stack.pop())
+                
+                self._operator_stack.append(token)
+                
+            elif token.type == TokenType.LEFT_PAREN:
+                self._operator_stack.append(token)
+                
+            elif token.type == TokenType.RIGHT_PAREN:
+                while (self._operator_stack and 
+                       self._operator_stack[-1].type != TokenType.LEFT_PAREN):
+                    self._output_queue.append(self._operator_stack.pop())
+                
+                if not self._operator_stack:
+                    raise ValueError("Mismatched parentheses")
+                
+                # Remove the left parenthesis
+                self._operator_stack.pop()
+        
+        # Pop remaining operators
+        while self._operator_stack:
+            if self._operator_stack[-1].type == TokenType.LEFT_PAREN:
+                raise ValueError("Mismatched parentheses")
+            self._output_queue.append(self._operator_stack.pop())
+    
+    def _has_higher_or_equal_precedence(self, op1: str, op2: str) -> bool:
+        """
+        Check if op1 has higher or equal precedence than op2.
+        
+        Args:
+            op1: First operator
+            op2: Second operator
+            
+        Returns:
+            True if op1 has higher or equal precedence than op2
+        """
+        prec1 = self.OPERATOR_PRECEDENCE[op1]
+        prec2 = self.OPERATOR_PRECEDENCE[op2]
+        
+        if prec1 > prec2:
+            return True
+        elif prec1 == prec2 and op1 in self.LEFT_ASSOCIATIVE:
+            return True
+        
+        return False
+    
+    def _evaluate_postfix(self) -> float:
+        """
+        Evaluate the postfix expression and return the result.
+        
+        Returns:
+            The numerical result of the expression
+            
+        Raises:
+            ZeroDivisionError: If division by zero is attempted
+            ValueError: If the expression is malformed
+        """
+        stack: List[float] = []
+        
+        for token in self._output_queue:
+            if token.type == TokenType.NUMBER:
+                stack.append(float(token.value))
+                
+            elif token.type == TokenType.OPERATOR:
+                if len(stack) < 2:
+                    raise ValueError("Insufficient operands for operator")
+                
+                operand2 = stack.pop()
+                operand1 = stack.pop()
+                
+                result = self._apply_operator(token.value, operand1, operand2)
+                stack.append(result)
+        
+        if len(stack) != 1:
+            raise ValueError("Invalid expression: incorrect number of operands")
+        
+        return stack[0]
+    
+    def _apply_operator(self, operator: str, operand1: float, operand2: float) -> float:
+        """
+        Apply the specified operator to two operands.
+        
+        Args:
+            operator: The operator to apply (+, -, *, /)
+            operand1: The first operand
+            operand2: The second operand
+            
+        Returns:
+            The result of the operation
+            
+        Raises:
+            ZeroDivisionError: If division by zero is attempted
+            ValueError: If an unknown operator is encountered
+        """
+        if operator == '+':
+            return operand1 + operand2
+        elif operator == '-':
+            return operand1 - operand2
+        elif operator == '*':
+            return operand1 * operand2
+        elif operator == '/':
+            if operand2 == 0:
+                raise ZeroDivisionError("Division by zero is not allowed")
+            return operand1 / operand2
+        else:
+            raise ValueError(f"Unknown operator: {operator}")
+
+
+def main():
+    """
+    Main function to run the calculator in console mode.
+    
+    Provides an interactive console interface for the calculator.
+    """
+    calculator = Calculator()
+    
+    print("Console Arithmetic Calculator")
+    print("Supported operations: +, -, *, /, ()")
+    print("Enter 'quit' or 'exit' to stop")
+    print("-" * 40)
+    
+    while True:
+        try:
+            expression = input("Enter expression: ").strip()
+            
+            if expression.lower() in ['quit', 'exit']:
+                print("Goodbye!")
+                break
+            
+            if not expression:
+                continue
+            
+            result = calculator.calculate(expression)
+            print(f"Result: {result}")
+            
+        except (ValueError, ZeroDivisionError) as e:
+            print(f"Error: {e}")
+        except KeyboardInterrupt:
+            print("\nGoodbye!")
+            break
+        except EOFError:
+            print("\nGoodbye!")
+            break
+
+
+if __name__ == "__main__":
+    main()
+```
+
+This implementation provides a high-quality arithmetic calculator that meets all the specified requirements:
+
+## Key Features:
+
+1. **Functionality**: Supports +, -, *, /, parentheses, proper operator precedence, and negative numbers
+2. **OOP Design**: Clean Calculator class with well-defined interface
+3. **No eval()**: Uses Shunting Yard algorithm for safe expression parsing
+4. **Comprehensive Validation**: Handles invalid inputs, unbalanced parentheses, division by zero
+5. **Performance**: Efficient O(n) algorithm for parsing and evaluation
+6. **Modularity**: Separated concerns with distinct methods for tokenization, parsing, and evaluation
+7. **Safety**: Robust error handling and input validation
+8. **Testability**: Pure functions and clear separation of concerns
+9. **Documentation**: Comprehensive docstrings and comments
+
+## ISO/IEC 25010 Compliance:
+
+- **Functional Suitability**: Correctly implements all required operations
+- **Performance Efficiency**: Uses efficient algorithms with linear time complexity
+- **Compatibility**: Standard Python with no external dependencies
+- **Usability**: Clear error messages and intuitive interface
+- **Reliability**: Robust error handling and edge case management
+- **Security**: Safe parsing without code execution risks
+- **Maintainability**: Clean code structure, good documentation, and modularity
+- **Portability**: Pure Python implementation works across platforms
+
+The calculator can be used both programmatically and as an interactive console application.

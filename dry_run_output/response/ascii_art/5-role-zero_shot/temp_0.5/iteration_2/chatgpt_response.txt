@@ -1,0 +1,249 @@
+```python
+"""
+ascii_art.py
+
+A console-based 2D ASCII Art application for drawing geometric shapes.
+
+This module defines the AsciiArt class, which provides methods to draw various ASCII shapes.
+All methods validate input parameters according to ISO/IEC 25010 quality standards, ensuring
+correctness, reliability, maintainability, and usability.
+
+Author: [Your Name]
+"""
+
+import string
+
+
+class AsciiArt:
+    """
+    AsciiArt provides methods to generate ASCII representations of various geometric shapes.
+
+    Methods
+    -------
+    draw_square(width: int, symbol: str) -> str
+        Draws a square.
+
+    draw_rectangle(width: int, height: int, symbol: str) -> str
+        Draws a rectangle.
+
+    draw_parallelogram(width: int, height: int, symbol: str) -> str
+        Draws a parallelogram.
+
+    draw_triangle(width: int, height: int, symbol: str) -> str
+        Draws a right-angled triangle.
+
+    draw_pyramid(height: int, symbol: str) -> str
+        Draws a symmetrical pyramid.
+    """
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def _validate_symbol(symbol: str) -> None:
+        """
+        Validate that the symbol is a single, printable, non-whitespace character.
+
+        Raises
+        ------
+        ValueError: If the symbol is invalid.
+        """
+        if not isinstance(symbol, str):
+            raise TypeError("Symbol must be a string.")
+        if len(symbol) != 1:
+            raise ValueError("Symbol must be a single character.")
+        if symbol.isspace():
+            raise ValueError("Symbol must not be a whitespace character.")
+        if symbol not in string.printable:
+            raise ValueError("Symbol must be a printable character.")
+
+    @staticmethod
+    def _validate_dimension(value: int, name: str = "dimension") -> None:
+        """
+        Validate that a dimension is a positive integer.
+
+        Raises
+        ------
+        ValueError: If the dimension is not a positive integer.
+        """
+        if not isinstance(value, int):
+            raise TypeError(f"{name.capitalize()} must be an integer.")
+        if value <= 0:
+            raise ValueError(f"{name.capitalize()} must be a positive integer.")
+
+    def draw_square(self, width: int, symbol: str) -> str:
+        """
+        Draw a filled square of given width.
+
+        Parameters
+        ----------
+        width : int
+            The width (and height) of the square. Must be positive.
+        symbol : str
+            A single, printable, non-whitespace character.
+
+        Returns
+        -------
+        str
+            Multiline string representing the square.
+
+        Raises
+        ------
+        ValueError, TypeError: On invalid input.
+        """
+        self._validate_dimension(width, "width")
+        self._validate_symbol(symbol)
+        lines = [symbol * width for _ in range(width)]
+        return "\n".join(lines)
+
+    def draw_rectangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draw a filled rectangle.
+
+        Parameters
+        ----------
+        width : int
+            The width of the rectangle. Must be positive.
+        height : int
+            The height of the rectangle. Must be positive.
+        symbol : str
+            A single, printable, non-whitespace character.
+
+        Returns
+        -------
+        str
+            Multiline string representing the rectangle.
+
+        Raises
+        ------
+        ValueError, TypeError: On invalid input.
+        """
+        self._validate_dimension(width, "width")
+        self._validate_dimension(height, "height")
+        self._validate_symbol(symbol)
+        lines = [symbol * width for _ in range(height)]
+        return "\n".join(lines)
+
+    def draw_parallelogram(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draw a filled parallelogram (shifted right by one space per row).
+
+        Parameters
+        ----------
+        width : int
+            The width of the parallelogram. Must be positive.
+        height : int
+            The height of the parallelogram. Must be positive.
+        symbol : str
+            A single, printable, non-whitespace character.
+
+        Returns
+        -------
+        str
+            Multiline string representing the parallelogram.
+
+        Raises
+        ------
+        ValueError, TypeError: On invalid input.
+        """
+        self._validate_dimension(width, "width")
+        self._validate_dimension(height, "height")
+        self._validate_symbol(symbol)
+        lines = []
+        for row in range(height):
+            line = " " * row + symbol * width
+            lines.append(line)
+        return "\n".join(lines)
+
+    def draw_triangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draw a filled right-angled triangle (top-left right angle).
+
+        The base is at most 'width' characters wide, and the height is 'height'.
+
+        Parameters
+        ----------
+        width : int
+            The width (base) of the triangle. Must be positive.
+        height : int
+            The height of the triangle. Must be positive.
+        symbol : str
+            A single, printable, non-whitespace character.
+
+        Returns
+        -------
+        str
+            Multiline string representing the triangle.
+
+        Raises
+        ------
+        ValueError, TypeError: On invalid input.
+        """
+        self._validate_dimension(width, "width")
+        self._validate_dimension(height, "height")
+        self._validate_symbol(symbol)
+        lines = []
+        for row in range(height):
+            # Number of symbols on this row, at least 1, at most width
+            count = max(1, min(width, (row + 1) * width // height))
+            lines.append(symbol * count)
+        return "\n".join(lines)
+
+    def draw_pyramid(self, height: int, symbol: str) -> str:
+        """
+        Draw a filled, symmetrical pyramid.
+
+        The base will have (2*height - 1) symbols.
+
+        Parameters
+        ----------
+        height : int
+            The height of the pyramid. Must be positive.
+        symbol : str
+            A single, printable, non-whitespace character.
+
+        Returns
+        -------
+        str
+            Multiline string representing the pyramid.
+
+        Raises
+        ------
+        ValueError, TypeError: On invalid input.
+        """
+        self._validate_dimension(height, "height")
+        self._validate_symbol(symbol)
+        lines = []
+        for row in range(height):
+            num_symbols = 2 * row + 1
+            num_spaces = height - row - 1
+            line = " " * num_spaces + symbol * num_symbols + " " * num_spaces
+            lines.append(line)
+        return "\n".join(lines)
+
+
+# Example usage and test cases
+if __name__ == "__main__":
+    art = AsciiArt()
+
+    print("SQUARE (width=5, symbol='#'):\n")
+    print(art.draw_square(5, '#'))
+    print("\nRECTANGLE (width=8, height=3, symbol='*'):\n")
+    print(art.draw_rectangle(8, 3, '*'))
+    print("\nPARALLELOGRAM (width=6, height=4, symbol='@'):\n")
+    print(art.draw_parallelogram(6, 4, '@'))
+    print("\nTRIANGLE (width=7, height=5, symbol='+'):\n")
+    print(art.draw_triangle(7, 5, '+'))
+    print("\nPYRAMID (height=4, symbol='^'):\n")
+    print(art.draw_pyramid(4, '^'))
+```
+This implementation:
+
+- **Validates all input parameters** for type, positivity, and symbol constraints, raising appropriate exceptions.
+- **Uses OOP principles**: All drawing methods are encapsulated within the `AsciiArt` class.
+- **Returns multi-line strings** for each shape, suitable for console output or further processing.
+- **Is modular and testable**: Each method is self-contained and can be unit tested.
+- **Is well-documented**: Each method and helper function has a clear docstring.
+- **Is safe and maintainable**: All validation and drawing logic is separated, and variable names are meaningful.
+
+You can use or extend this class in any Python application, and the included test cases in the `__main__` section demonstrate usage and output.

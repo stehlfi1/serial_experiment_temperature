@@ -1,0 +1,390 @@
+```python
+"""
+A console-based arithmetic calculator implementing a recursive descent parser.
+
+This module provides a Calculator class that can evaluate mathematical expressions
+containing addition, subtraction, multiplication, division, and parentheses while
+respecting operator precedence and handling various edge cases.
+
+Author: Senior Software Developer
+Compliance: ISO/IEC 25010 Software Quality Standard
+"""
+
+import re
+from typing import Union, Tuple
+
+
+class CalculatorError(Exception):
+    """Base exception class for calculator-related errors."""
+    pass
+
+
+class InvalidExpressionError(CalculatorError):
+    """Raised when the expression contains invalid characters or syntax."""
+    pass
+
+
+class UnbalancedParenthesesError(CalculatorError):
+    """Raised when parentheses are not properly balanced."""
+    pass
+
+
+class DivisionByZeroError(CalculatorError):
+    """Raised when attempting to divide by zero."""
+    pass
+
+
+class Calculator:
+    """
+    A mathematical expression calculator using recursive descent parsing.
+    
+    This calculator supports:
+    - Basic arithmetic operations: +, -, *, /
+    - Parentheses for grouping
+    - Integer and floating-point numbers (including negative values)
+    - Proper operator precedence (*, / before +, -)
+    
+    The implementation uses a recursive descent parser to ensure correct
+    evaluation without using eval() or similar unsafe methods.
+    """
+    
+    # Valid characters pattern for input validation
+    VALID_PATTERN = re.compile(r'^[0-9+\-*/().\s]+$')
+    
+    def __init__(self):
+        """Initialize the calculator."""
+        self._expression = ""
+        self._position = 0
+        self._length = 0
+    
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluate a mathematical expression and return the result.
+        
+        Args:
+            expression (str): The mathematical expression to evaluate.
+                            Must contain only numbers, operators (+, -, *, /),
+                            parentheses, and whitespace.
+        
+        Returns:
+            float: The calculated result of the expression.
+        
+        Raises:
+            InvalidExpressionError: If the expression contains invalid characters
+                                  or has invalid syntax.
+            UnbalancedParenthesesError: If parentheses are not properly balanced.
+            DivisionByZeroError: If division by zero is attempted.
+            
+        Examples:
+            >>> calc = Calculator()
+            >>> calc.calculate("2 + 3 * 4")
+            14.0
+            >>> calc.calculate("(10 - 5) / 2.5")
+            2.0
+            >>> calc.calculate("-3 + 2")
+            -1.0
+        """
+        if not isinstance(expression, str):
+            raise InvalidExpressionError("Expression must be a string")
+        
+        if not expression.strip():
+            raise InvalidExpressionError("Expression cannot be empty")
+        
+        # Validate input characters
+        self._validate_expression(expression)
+        
+        # Initialize parsing state
+        self._expression = expression.replace(" ", "")  # Remove whitespace
+        self._position = 0
+        self._length = len(self._expression)
+        
+        if self._length == 0:
+            raise InvalidExpressionError("Expression cannot be empty")
+        
+        # Parse and evaluate the expression
+        try:
+            result = self._parse_expression()
+            
+            # Ensure we've consumed the entire expression
+            if self._position < self._length:
+                raise InvalidExpressionError(
+                    f"Unexpected character at position {self._position}: "
+                    f"'{self._expression[self._position]}'"
+                )
+            
+            return float(result)
+            
+        except IndexError:
+            raise InvalidExpressionError("Incomplete expression")
+    
+    def _validate_expression(self, expression: str) -> None:
+        """
+        Validate the expression for allowed characters and balanced parentheses.
+        
+        Args:
+            expression (str): The expression to validate.
+            
+        Raises:
+            InvalidExpressionError: If invalid characters are found.
+            UnbalancedParenthesesError: If parentheses are unbalanced.
+        """
+        # Check for valid characters
+        if not self.VALID_PATTERN.match(expression):
+            raise InvalidExpressionError(
+                "Expression contains invalid characters. "
+                "Only numbers, +, -, *, /, (, ), and spaces are allowed."
+            )
+        
+        # Check for balanced parentheses
+        self._validate_parentheses(expression)
+        
+        # Check for invalid operator sequences
+        self._validate_operator_sequences(expression)
+    
+    def _validate_parentheses(self, expression: str) -> None:
+        """
+        Validate that parentheses are properly balanced.
+        
+        Args:
+            expression (str): The expression to validate.
+            
+        Raises:
+            UnbalancedParenthesesError: If parentheses are not balanced.
+        """
+        balance = 0
+        for i, char in enumerate(expression):
+            if char == '(':
+                balance += 1
+            elif char == ')':
+                balance -= 1
+                if balance < 0:
+                    raise UnbalancedParenthesesError(
+                        f"Unmatched closing parenthesis at position {i}"
+                    )
+        
+        if balance > 0:
+            raise UnbalancedParenthesesError("Unmatched opening parenthesis")
+    
+    def _validate_operator_sequences(self, expression: str) -> None:
+        """
+        Validate operator sequences to prevent invalid combinations.
+        
+        Args:
+            expression (str): The expression to validate.
+            
+        Raises:
+            InvalidExpressionError: If invalid operator sequences are found.
+        """
+        # Remove spaces for validation
+        clean_expr = expression.replace(" ", "")
+        
+        # Check for consecutive operators (except for negative numbers)
+        operators = "*/+"
+        for i in range(len(clean_expr) - 1):
+            if (clean_expr[i] in operators and 
+                clean_expr[i + 1] in operators):
+                raise InvalidExpressionError(
+                    f"Invalid operator sequence at position {i}: "
+                    f"'{clean_expr[i]}{clean_expr[i + 1]}'"
+                )
+        
+        # Check for operators at the end
+        if clean_expr and clean_expr[-1] in "+-*/":
+            raise InvalidExpressionError("Expression cannot end with an operator")
+    
+    def _parse_expression(self) -> float:
+        """
+        Parse an expression (handles + and - operators).
+        
+        Returns:
+            float: The result of the expression.
+        """
+        result = self._parse_term()
+        
+        while self._position < self._length:
+            if self._current_char() == '+':
+                self._advance()
+                result += self._parse_term()
+            elif self._current_char() == '-':
+                self._advance()
+                result -= self._parse_term()
+            else:
+                break
+        
+        return result
+    
+    def _parse_term(self) -> float:
+        """
+        Parse a term (handles * and / operators).
+        
+        Returns:
+            float: The result of the term.
+            
+        Raises:
+            DivisionByZeroError: If division by zero is attempted.
+        """
+        result = self._parse_factor()
+        
+        while self._position < self._length:
+            if self._current_char() == '*':
+                self._advance()
+                result *= self._parse_factor()
+            elif self._current_char() == '/':
+                self._advance()
+                divisor = self._parse_factor()
+                if divisor == 0:
+                    raise DivisionByZeroError("Division by zero is not allowed")
+                result /= divisor
+            else:
+                break
+        
+        return result
+    
+    def _parse_factor(self) -> float:
+        """
+        Parse a factor (handles numbers, unary operators, and parentheses).
+        
+        Returns:
+            float: The result of the factor.
+            
+        Raises:
+            InvalidExpressionError: If invalid syntax is encountered.
+        """
+        # Handle unary minus
+        if self._current_char() == '-':
+            self._advance()
+            return -self._parse_factor()
+        
+        # Handle unary plus
+        if self._current_char() == '+':
+            self._advance()
+            return self._parse_factor()
+        
+        # Handle parentheses
+        if self._current_char() == '(':
+            self._advance()
+            result = self._parse_expression()
+            if self._position >= self._length or self._current_char() != ')':
+                raise InvalidExpressionError("Missing closing parenthesis")
+            self._advance()
+            return result
+        
+        # Handle numbers
+        return self._parse_number()
+    
+    def _parse_number(self) -> float:
+        """
+        Parse a number (integer or floating-point).
+        
+        Returns:
+            float: The parsed number.
+            
+        Raises:
+            InvalidExpressionError: If no valid number is found.
+        """
+        start_pos = self._position
+        
+        # Parse digits before decimal point
+        while (self._position < self._length and 
+               self._current_char().isdigit()):
+            self._advance()
+        
+        # Parse decimal point and digits after
+        if (self._position < self._length and 
+            self._current_char() == '.'):
+            self._advance()
+            while (self._position < self._length and 
+                   self._current_char().isdigit()):
+                self._advance()
+        
+        # Check if we parsed any digits
+        if start_pos == self._position:
+            char = self._current_char() if self._position < self._length else 'EOF'
+            raise InvalidExpressionError(
+                f"Expected number at position {self._position}, found '{char}'"
+            )
+        
+        number_str = self._expression[start_pos:self._position]
+        return float(number_str)
+    
+    def _current_char(self) -> str:
+        """
+        Get the current character being parsed.
+        
+        Returns:
+            str: The current character.
+        """
+        if self._position < self._length:
+            return self._expression[self._position]
+        return ''
+    
+    def _advance(self) -> None:
+        """Advance the parsing position by one character."""
+        self._position += 1
+
+
+def main():
+    """
+    Main function to run the calculator in interactive mode.
+    
+    Provides a simple console interface for users to input expressions
+    and see the calculated results.
+    """
+    calculator = Calculator()
+    
+    print("=== Arithmetic Calculator ===")
+    print("Supported operations: +, -, *, /, ()")
+    print("Enter 'quit' or 'exit' to stop")
+    print("-" * 40)
+    
+    while True:
+        try:
+            expression = input("Enter expression: ").strip()
+            
+            if expression.lower() in ['quit', 'exit']:
+                print("Goodbye!")
+                break
+            
+            if not expression:
+                continue
+            
+            result = calculator.calculate(expression)
+            print(f"Result: {result}")
+            
+        except CalculatorError as e:
+            print(f"Error: {e}")
+        except KeyboardInterrupt:
+            print("\nGoodbye!")
+            break
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+This implementation provides a robust, high-quality arithmetic calculator that meets all the specified requirements:
+
+## Key Features:
+
+1. **Object-Oriented Design**: Implements a `Calculator` class with the required `calculate()` interface
+2. **Recursive Descent Parser**: Uses a proper parsing algorithm without `eval()`
+3. **Comprehensive Error Handling**: Custom exception classes for different error types
+4. **Input Validation**: Validates characters, parentheses balance, and operator sequences
+5. **Operator Precedence**: Correctly handles multiplication/division before addition/subtraction
+6. **Support for Negative Numbers**: Handles unary minus operators
+7. **Floating-Point Support**: Works with both integers and decimals
+
+## ISO/IEC 25010 Compliance:
+
+- **Functional Suitability**: Correctly implements all required arithmetic operations
+- **Performance Efficiency**: Uses efficient recursive descent parsing (O(n) complexity)
+- **Compatibility**: Pure Python with no external dependencies
+- **Usability**: Clear error messages and intuitive interface
+- **Reliability**: Comprehensive error handling and input validation
+- **Security**: No use of `eval()` or other unsafe methods
+- **Maintainability**: Well-documented, modular code with clear separation of concerns
+- **Portability**: Standard Python code that runs on any Python 3.x environment
+
+The code includes extensive documentation, proper error handling, and a clean separation between parsing logic and validation, making it easily testable and maintainable.

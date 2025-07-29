@@ -1,0 +1,162 @@
+```python
+import threading
+
+
+class Task:
+    """
+    Represents a single task in the todo list.
+    """
+    def __init__(self, task_id: int, name: str, description: str):
+        self.id = task_id
+        self.name = name
+        self.description = description
+        self.is_finished = False
+
+    def to_dict(self) -> dict:
+        """
+        Returns a dictionary representation of the task.
+        """
+        return {
+            "id": self.id,
+            "task_name": self.name,
+            "task_description": self.description,
+            "is_finished": self.is_finished
+        }
+
+
+class TaskManager:
+    """
+    Manages a collection of tasks in memory and provides
+    methods to operate on them in a thread-safe manner.
+    """
+    def __init__(self):
+        # Tasks are stored in a dict for O(1) access by id
+        self._tasks: dict[int, Task] = {}
+        self._next_id: int = 1  # auto-incrementing ID
+        self._lock = threading.Lock()  # thread safety
+
+    def add(self, task_name: str, task_description: str) -> int:
+        """
+        Add a new task and return its unique ID.
+
+        Raises:
+            ValueError: If task_name or task_description is empty.
+        """
+        if not isinstance(task_name, str) or not isinstance(task_description, str):
+            raise TypeError("Task name and description must be strings.")
+        if not task_name.strip():
+            raise ValueError("Task name must not be empty.")
+        if not task_description.strip():
+            raise ValueError("Task description must not be empty.")
+
+        with self._lock:
+            task_id = self._next_id
+            self._next_id += 1
+            task = Task(task_id, task_name.strip(), task_description.strip())
+            self._tasks[task_id] = task
+        return task_id
+
+    def remove(self, task_id: int) -> bool:
+        """
+        Remove a task by its ID.
+
+        Returns True if task was found and removed, else False.
+
+        Raises:
+            ValueError: If task_id is invalid (not positive int).
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise ValueError("Task ID must be a positive integer.")
+        with self._lock:
+            if task_id in self._tasks:
+                del self._tasks[task_id]
+                return True
+            else:
+                return False
+
+    def search(self, task_term: str) -> list[dict]:
+        """
+        Search for tasks containing task_term in their name or description.
+
+        Returns a list of matching task dictionaries.
+
+        Raises:
+            ValueError: If task_term is empty or not a string.
+        """
+        if not isinstance(task_term, str):
+            raise TypeError("Search term must be a string.")
+        term = task_term.strip().lower()
+        if not term:
+            raise ValueError("Search term must not be empty.")
+        with self._lock:
+            results = [
+                task.to_dict()
+                for task in self._tasks.values()
+                if term in task.name.lower() or term in task.description.lower()
+            ]
+        return results
+
+    def finish(self, task_id: int) -> bool:
+        """
+        Mark a task as finished by ID.
+
+        Returns True if operation succeeded, else False.
+
+        Raises:
+            ValueError: If task_id is invalid (not positive int).
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise ValueError("Task ID must be a positive integer.")
+        with self._lock:
+            task = self._tasks.get(task_id)
+            if task:
+                if task.is_finished:
+                    return False  # already finished
+                task.is_finished = True
+                return True
+            else:
+                return False
+
+    def get_all(self) -> list[dict]:
+        """
+        Retrieve all tasks in insertion order.
+
+        Returns a list of task dictionaries.
+        """
+        with self._lock:
+            return [task.to_dict() for task in self._tasks.values()]
+
+    def clear_all(self) -> bool:
+        """
+        Remove all tasks.
+
+        Returns True if any tasks were removed, False if already empty.
+        """
+        with self._lock:
+            if self._tasks:
+                self._tasks.clear()
+                return True
+            return False
+
+
+# Example testable usage (to be separated in test files or main guard)
+if __name__ == "__main__":
+    tm = TaskManager()
+    try:
+        id1 = tm.add("Buy groceries", "Milk, Bread, Eggs")
+        id2 = tm.add("Read book", "Finish reading chapter 4.")
+        print("All tasks:", tm.get_all())
+
+        tm.finish(id1)
+        print("After finishing task:", tm.get_all())
+
+        print("Search 'read':", tm.search("read"))
+
+        tm.remove(id2)
+        print("After removing task 2:", tm.get_all())
+
+        tm.clear_all()
+        print("After clearing all:", tm.get_all())
+    except Exception as e:
+        print("Error:", str(e))
+```

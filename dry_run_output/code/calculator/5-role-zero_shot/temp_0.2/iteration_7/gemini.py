@@ -1,0 +1,266 @@
+
+import re
+
+class Calculator:
+    """
+    A high-quality, maintainable calculator that evaluates arithmetic expressions.
+
+    This class implements a calculator that can parse and evaluate string-based
+    arithmetic expressions, supporting addition, subtraction, multiplication,
+    division, and parentheses. It adheres to standard operator precedence.
+
+    The evaluation is performed safely without using `eval()` by implementing the
+    Shunting-yard algorithm to convert the infix expression to Reverse Polish
+    Notation (RPN), which is then evaluated.
+
+    ISO/IEC 25010 Compliance:
+    - Functional Suitability: Correctly computes expressions.
+    - Performance Efficiency: Uses efficient O(n) algorithms.
+    - Maintainability: Modular design with clear separation of concerns.
+    - Reliability: Robust error handling for invalid input and math errors.
+    - Security: Avoids `eval()` to prevent code injection.
+    - Testability: Private methods can be individually unit-tested.
+    """
+
+    # Class-level constants for maintainability and clarity.
+    # Defines supported operators and their precedence.
+    # Higher number means higher precedence.
+    _OPERATORS = {
+        '+': 1,
+        '-': 1,
+        '*': 2,
+        '/': 2,
+    }
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates a given arithmetic expression string.
+
+        This is the public interface for the Calculator. It orchestrates the
+        tokenization, parsing, and evaluation of the expression.
+
+        Args:
+            expression: The arithmetic expression string to evaluate.
+                        (e.g., "3 + 4 * (2 - 1)")
+
+        Returns:
+            The result of the evaluation as a float.
+
+        Raises:
+            ValueError: If the expression is invalid (e.g., unbalanced
+                        parentheses, invalid characters, malformed expression).
+            ZeroDivisionError: If the expression attempts to divide by zero.
+        """
+        self._validate_expression(expression)
+        tokens = self._tokenize(expression)
+        rpn_queue = self._infix_to_rpn(tokens)
+        if not rpn_queue:
+            raise ValueError("Invalid expression: results in empty RPN queue")
+        result = self._evaluate_rpn(rpn_queue)
+        return result
+
+    def _validate_expression(self, expression: str) -> None:
+        """Performs initial validation on the raw expression string."""
+        if not isinstance(expression, str):
+            raise TypeError("Expression must be a string.")
+        
+        # Check for invalid characters.
+        # Allowed: digits, dots, operators, parentheses, and whitespace.
+        allowed_chars = r"[\d\.\s\+\-\*\/\(\)]+"
+        if not re.fullmatch(allowed_chars, expression):
+            raise ValueError("Expression contains invalid characters.")
+
+        # Check for balanced parentheses.
+        if expression.count('(') != expression.count(')'):
+            raise ValueError("Mismatched parentheses in expression.")
+
+    def _tokenize(self, expression: str) -> list[str]:
+        """
+        Converts the expression string into a list of tokens.
+
+        This method handles numbers (integers, floats) and operators,
+        and correctly interprets unary minus (e.g., '-5' or '(-5)').
+
+        Args:
+            expression: The validated expression string.
+
+        Returns:
+            A list of tokens (numbers as strings, operators, parentheses).
+        """
+        # Add spaces around operators and parentheses to simplify splitting.
+        # This regex looks for operators or parentheses and adds a space on both sides.
+        expression = re.sub(r'([+\-*/()])', r' \1 ', expression)
+        tokens = expression.split()
+
+        # Handle unary minus. A minus is unary if it's the first token,
+        # or if it follows an operator or an opening parenthesis.
+        processed_tokens = []
+        for i, token in enumerate(tokens):
+            if token == '-':
+                is_unary = (i == 0) or (tokens[i - 1] in self._OPERATORS or tokens[i - 1] == '(')
+                if is_unary:
+                    # Combine with the next token, which must be a number.
+                    try:
+                        next_token = tokens[i + 1]
+                        # This is a lookahead check, not part of the main loop.
+                        # The next token will be skipped in the next iteration.
+                        processed_tokens.append(f"-{next_token}")
+                        tokens[i + 1] = '' # Mark next token as consumed
+                    except (IndexError, ValueError):
+                        raise ValueError("Invalid use of unary minus.")
+                else:
+                    processed_tokens.append(token)
+            elif token: # Append non-empty tokens
+                processed_tokens.append(token)
+        
+        return processed_tokens
+
+    def _infix_to_rpn(self, tokens: list[str]) -> list[str]:
+        """
+        Converts a token list from infix to Reverse Polish Notation (RPN).
+
+        This method implements the Shunting-yard algorithm.
+
+        Args:
+            tokens: A list of tokens from the _tokenize method.
+
+        Returns:
+            A list of tokens in RPN order.
+        
+        Raises:
+            ValueError: If the expression has mismatched parentheses.
+        """
+        output_queue = []
+        operator_stack = []
+
+        for token in tokens:
+            if token.replace('.', '', 1).replace('-', '', 1).isdigit():
+                output_queue.append(token)
+            elif token in self._OPERATORS:
+                # While stack has operators of higher or equal precedence, pop them.
+                while (operator_stack and operator_stack[-1] in self._OPERATORS and
+                       self._OPERATORS[operator_stack[-1]] >= self._OPERATORS[token]):
+                    output_queue.append(operator_stack.pop())
+                operator_stack.append(token)
+            elif token == '(':
+                operator_stack.append(token)
+            elif token == ')':
+                while operator_stack and operator_stack[-1] != '(':
+                    output_queue.append(operator_stack.pop())
+                if not operator_stack or operator_stack[-1] != '(':
+                    # This case should be caught by initial validation,
+                    # but is included for algorithmic completeness.
+                    raise ValueError("Mismatched parentheses.")
+                operator_stack.pop()  # Discard the '('
+
+        # Pop any remaining operators from the stack to the queue.
+        while operator_stack:
+            op = operator_stack.pop()
+            if op == '(':
+                raise ValueError("Mismatched parentheses.")
+            output_queue.append(op)
+
+        return output_queue
+
+    def _evaluate_rpn(self, rpn_queue: list[str]) -> float:
+        """
+        Evaluates a token queue in Reverse Polish Notation (RPN).
+
+        Args:
+            rpn_queue: A list of tokens in RPN order.
+
+        Returns:
+            The final calculated result as a float.
+
+        Raises:
+            ValueError: If the RPN queue is malformed.
+            ZeroDivisionError: If division by zero occurs.
+        """
+        operand_stack = []
+
+        for token in rpn_queue:
+            if token.replace('.', '', 1).replace('-', '', 1).isdigit():
+                operand_stack.append(float(token))
+            elif token in self._OPERATORS:
+                if len(operand_stack) < 2:
+                    raise ValueError("Invalid expression: insufficient operands for operator.")
+                
+                # Pop operands in reverse order
+                right_operand = operand_stack.pop()
+                left_operand = operand_stack.pop()
+
+                if token == '+':
+                    result = left_operand + right_operand
+                elif token == '-':
+                    result = left_operand - right_operand
+                elif token == '*':
+                    result = left_operand * right_operand
+                elif token == '/':
+                    if right_operand == 0:
+                        raise ZeroDivisionError("Division by zero is not allowed.")
+                    result = left_operand / right_operand
+                
+                operand_stack.append(result)
+            else:
+                # This should not happen with a valid token list.
+                raise ValueError(f"Unknown token in RPN queue: {token}")
+
+        if len(operand_stack) != 1:
+            raise ValueError("Malformed expression: stack should have 1 item at the end.")
+
+        return operand_stack[0]
+
+
+# --- Main execution block for demonstration ---
+if __name__ == "__main__":
+    calculator = Calculator()
+
+    print("--- High-Quality Python Calculator ---")
+    print("Enter an arithmetic expression or 'exit' to quit.")
+    print("Supported operations: +, -, *, /, ()")
+    print("-" * 35)
+
+    # Example test cases to demonstrate correctness
+    test_expressions = [
+        "5 + 3",
+        "10 - 4 * 2",
+        "(10 - 4) * 2",
+        "3.5 * (2 + 3)",
+        "10 / 2 / 5",
+        "10 / (2 * 5)",
+        "-5 + 10",
+        "5 * -2",
+        "5 * (-2 + 1)",
+        "1 / 3",
+        # Error cases
+        "5 + (3 * 2",
+        "5 & 3",
+        "5 / 0",
+        "5 * * 3"
+    ]
+
+    print("\n--- Running Pre-defined Test Cases ---\n")
+    for expr in test_expressions:
+        try:
+            result = calculator.calculate(expr)
+            print(f"Expression: '{expr}'\nResult: {result}\n")
+        except (ValueError, ZeroDivisionError, TypeError) as e:
+            print(f"Expression: '{expr}'\nError: {e}\n")
+    
+    print("\n--- Interactive Mode ---\n")
+    while True:
+        try:
+            user_input = input("calc> ")
+            if user_input.lower() == 'exit':
+                break
+            if not user_input:
+                continue
+            
+            result = calculator.calculate(user_input)
+            print(f"Result: {result}")
+
+        except (ValueError, ZeroDivisionError, TypeError) as e:
+            print(f"Error: {e}")
+        except KeyboardInterrupt:
+            print("\nExiting.")
+            break

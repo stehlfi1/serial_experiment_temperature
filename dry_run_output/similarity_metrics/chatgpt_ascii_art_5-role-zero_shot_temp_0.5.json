@@ -1,0 +1,27 @@
+{
+  "model": "chatgpt",
+  "challenge": "ascii_art",
+  "prompt": "5-role-zero_shot",
+  "generated_at": "2025-07-12T18:54:24.910242",
+  "analysis_summary": {
+    "iterations_analyzed": 2,
+    "pairwise_comparisons": 1,
+    "temperature_params": {
+      "temperature": 0.5,
+      "top_k": null,
+      "top_p": null,
+      "temperature_folder": "temp_0.5"
+    }
+  },
+  "similarities": {
+    "iter_1_vs_2": {
+      "ast_edit_distance": 240,
+      "tsed": 245.0,
+      "node_histogram_distance": 0.084,
+      "subtree_overlap_ratio": 0.312,
+      "jaccard_identifiers": 0.5909,
+      "jaccard_tokens": 0.6731,
+      "jaccard_ast_names": 0.7083
+    }
+  }
+}

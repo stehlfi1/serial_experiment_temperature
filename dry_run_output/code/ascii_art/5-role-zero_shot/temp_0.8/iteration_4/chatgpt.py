@@ -1,0 +1,162 @@
+
+"""
+ascii_art.py
+
+A console-based 2D ASCII ART application adhering to ISO/IEC 25010 standards regarding 
+code quality, maintainability, and correctness. The AsciiArt class supports drawing
+various shapes using a user-defined, single, printable, non-whitespace ASCII symbol.
+
+Author: Senior Software Developer
+"""
+
+import string
+
+
+class AsciiArt:
+    """
+    A class providing methods to generate ASCII art for basic shapes.
+    
+    Methods:
+        draw_square(width: int, symbol: str) -> str
+        draw_rectangle(width: int, height: int, symbol: str) -> str
+        draw_parallelogram(width: int, height: int, symbol: str) -> str
+        draw_triangle(width: int, height: int, symbol: str) -> str
+        draw_pyramid(height: int, symbol: str) -> str
+    """
+
+    def __init__(self):
+        """Initialize the AsciiArt class instance."""
+        pass  # No internal state required
+
+    @staticmethod
+    def _validate_symbol(symbol: str):
+        """
+        Validates that the symbol is a single, printable, non-whitespace character.
+
+        :param symbol: The symbol to validate.
+        :raises ValueError: If symbol is invalid.
+        """
+        if len(symbol) != 1:
+            raise ValueError("Symbol must be a single character.")
+        if symbol.isspace():
+            raise ValueError("Symbol must not be a whitespace character.")
+        if symbol not in string.printable:
+            raise ValueError("Symbol must be a printable ASCII character.")
+
+    @staticmethod
+    def _validate_positive_int(value: int, name: str):
+        """
+        Validates that a value is a positive integer.
+
+        :param value: The value to validate.
+        :param name: Name of the parameter for error messages.
+        :raises ValueError: If value is not a positive integer.
+        """
+        if not isinstance(value, int):
+            raise TypeError(f"{name} must be an integer.")
+        if value <= 0:
+            raise ValueError(f"{name} must be a positive integer.")
+
+    def draw_square(self, width: int, symbol: str) -> str:
+        """
+        Draws a square, filled with the specified symbol.
+
+        :param width: The width (and height) of the square.
+        :param symbol: The single character to use for drawing.
+        :return: A multi-line string of the square.
+        """
+        self._validate_positive_int(width, "width")
+        self._validate_symbol(symbol)
+        # Each line is 'width' symbols, repeated 'width' times
+        line = symbol * width
+        return '\n'.join([line for _ in range(width)])
+
+    def draw_rectangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a rectangle, filled with the specified symbol.
+
+        :param width: The width of the rectangle.
+        :param height: The height of the rectangle.
+        :param symbol: The single character to use for drawing.
+        :return: A multi-line string of the rectangle.
+        """
+        self._validate_positive_int(width, "width")
+        self._validate_positive_int(height, "height")
+        self._validate_symbol(symbol)
+        line = symbol * width
+        return '\n'.join([line for _ in range(height)])
+
+    def draw_parallelogram(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a left-aligned parallelogram, filled with the specified symbol.
+
+        Each row starts with spaces, increasing by one each row.
+
+        :param width: The width of the parallelogram.
+        :param height: The height of the parallelogram.
+        :param symbol: The single character to use for drawing.
+        :return: A multi-line string of the parallelogram.
+        """
+        self._validate_positive_int(width, "width")
+        self._validate_positive_int(height, "height")
+        self._validate_symbol(symbol)
+        lines = []
+        for i in range(height):
+            # Each row is indented i spaces, then width symbols
+            line = (' ' * i) + (symbol * width)
+            lines.append(line)
+        return '\n'.join(lines)
+
+    def draw_triangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a left-aligned right-angled triangle.
+
+        The triangle grows diagonally to the right from the top-left corner. 
+        The maximum width and height are constrained by the parameters.
+
+        :param width: The maximum width of the triangle's base.
+        :param height: The height of the triangle.
+        :param symbol: The single character to use for drawing.
+        :return: A multi-line string of the triangle.
+        """
+        self._validate_positive_int(width, "width")
+        self._validate_positive_int(height, "height")
+        self._validate_symbol(symbol)
+        lines = []
+        # The number of symbols per row increases with each row, up to 'width'
+        for i in range(height):
+            num_symbols = min(width, i + 1)
+            line = symbol * num_symbols
+            lines.append(line)
+        return '\n'.join(lines)
+
+    def draw_pyramid(self, height: int, symbol: str) -> str:
+        """
+        Draws a symmetrical pyramid.
+
+        Each row is centered, and the number of symbols per row increases by 2.
+
+        :param height: The height of the pyramid.
+        :param symbol: The single character to use for drawing.
+        :return: A multi-line string of the pyramid.
+        """
+        self._validate_positive_int(height, "height")
+        self._validate_symbol(symbol)
+        lines = []
+        max_width = 2 * height - 1  # The widest row
+        for i in range(height):
+            num_symbols = 2 * i + 1
+            num_spaces = height - i - 1
+            line = (' ' * num_spaces) + (symbol * num_symbols) + (' ' * num_spaces)
+            lines.append(line)
+        return '\n'.join(lines)
+
+
+# Example usage (for testing purpose only):
+if __name__ == "__main__":
+    art = AsciiArt()
+    print("Square:\n" + art.draw_square(4, '#'))
+    print("\nRectangle:\n" + art.draw_rectangle(6, 3, '*'))
+    print("\nParallelogram:\n" + art.draw_parallelogram(5, 4, '@'))
+    print("\nRight-angled Triangle:\n" + art.draw_triangle(5, 5, '+'))
+    print("\nPyramid:\n" + art.draw_pyramid(4, '$'))

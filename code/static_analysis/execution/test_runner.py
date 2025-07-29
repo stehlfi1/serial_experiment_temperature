@@ -27,59 +27,7 @@ class TestResultParser:
                 "errors": [line for line in lines if "error" in line.lower()]
             }
     
-    @staticmethod
-    def parse_code_length_output(output: str) -> Dict[str, Any]:
-        lines = output.strip().split('\n')
-        
-        for line in lines:
-            if "Number of lines:" in line:
-                try:
-                    line_count = int(line.split(":")[1].strip())
-                    return {
-                        "lines": line_count,
-                        "status": "success"
-                    }
-                except (ValueError, IndexError):
-                    pass
-        
-        return {
-            "lines": 0,
-            "status": "error",
-            "error": "Could not parse line count"
-        }
     
-    @staticmethod
-    def parse_modularity_output(output: str) -> Dict[str, Any]:
-        lines = output.strip().split('\n')
-        result = {"status": "success"}
-        
-        for line in lines:
-            if "Functions:" in line:
-                try:
-                    result["functions"] = int(line.split(":")[1].strip())
-                except (ValueError, IndexError):
-                    pass
-            elif "Classes:" in line:
-                try:
-                    result["classes"] = int(line.split(":")[1].strip())
-                except (ValueError, IndexError):
-                    pass
-            elif "Methods:" in line:
-                try:
-                    result["methods"] = int(line.split(":")[1].strip())
-                except (ValueError, IndexError):
-                    pass
-            elif "Modularity score:" in line:
-                try:
-                    result["score"] = float(line.split(":")[1].strip())
-                except (ValueError, IndexError):
-                    pass
-        
-        if "score" not in result:
-            result["status"] = "error"
-            result["error"] = "Could not parse modularity score"
-        
-        return result
     
     @staticmethod
     def parse_functional_completeness_output(output: str) -> Dict[str, Any]:
@@ -176,8 +124,6 @@ class TestRunner:
         self.advanced_runner = AdvancedTestRunner()
         self.test_mapping = {
             "1_code_compilability": TestResultParser.parse_compilability_output,
-            "2_code_length_adaptive": TestResultParser.parse_code_length_output,
-            "3_modularity_adaptive": TestResultParser.parse_modularity_output,
             "4_functional_completeness_adaptive": TestResultParser.parse_functional_completeness_output,
             "5_functional_correctness": TestResultParser.parse_functional_correctness_output
         }
@@ -189,8 +135,6 @@ class TestRunner:
         # Map legacy test names to actual file names
         test_name_mappings = {
             "1_code_compilability": "1_code_compilability",
-            "2_code_length_adaptive": "2_code_length", 
-            "3_modularity_adaptive": "3_modularity",
             "4_functional_completeness_adaptive": "4_functional_completeness",
             "5_functional_correctness": "5_functional_correctness"
         }
@@ -210,7 +154,7 @@ class TestRunner:
                 self.tests_dir / challenge / f"{actual_test_name}.py",
                 self.tests_dir / f"{actual_test_name}.py"
             ]
-        elif test_name in ["2_code_length_adaptive", "3_modularity_adaptive", "4_functional_completeness_adaptive"]:
+        elif test_name in ["4_functional_completeness_adaptive"]:
             # For legacy adaptive tests, try legacy location first, then challenge-specific
             search_paths = [
                 self.tests_dir / "metrics" / "legacy" / f"{test_name}.py",
@@ -233,19 +177,27 @@ class TestRunner:
                 break
         
         if not test_file:
-            return {
+            result = {
                 "status": "error",
                 "error": f"Test file not found: {test_name}",
                 "execution_time": 0
             }
+            # Remove execution_time from all results except functional_correctness
+            if test_name != "5_functional_correctness":
+                result.pop("execution_time", None)
+            return result
         
         model_file = code_dir / f"{model}.py"
         if not model_file.exists():
-            return {
+            result = {
                 "status": "error", 
                 "error": f"Model file not found: {model}.py",
                 "execution_time": 0
             }
+            # Remove execution_time from all results except functional_correctness
+            if test_name != "5_functional_correctness":
+                result.pop("execution_time", None)
+            return result
         
         test_copy = code_dir / f"{test_name}.py"
         
@@ -290,33 +242,52 @@ class TestRunner:
                 if parser:
                     result = parser(process.stdout)
                     result["execution_time"] = execution_time
+                    # Remove execution_time from all results except functional_correctness
+                    if test_name != "5_functional_correctness":
+                        result.pop("execution_time", None)
                     return result
                 else:
-                    return {
+                    result = {
                         "status": "success",
                         "output": process.stdout.strip(),
                         "execution_time": execution_time
                     }
+                    # Remove execution_time from all results except functional_correctness
+                    if test_name != "5_functional_correctness":
+                        result.pop("execution_time", None)
+                    return result
             else:
-                return {
+                result = {
                     "status": "failed",
                     "output": process.stdout.strip(),
                     "error": process.stderr.strip(),
                     "execution_time": execution_time
                 }
+                # Remove execution_time from all results except functional_correctness
+                if test_name != "5_functional_correctness":
+                    result.pop("execution_time", None)
+                return result
         
         except subprocess.TimeoutExpired:
-            return {
+            result = {
                 "status": "timeout",
                 "error": "Test timed out after 30 seconds",
                 "execution_time": 30.0
             }
+            # Remove execution_time from all results except functional_correctness
+            if test_name != "5_functional_correctness":
+                result.pop("execution_time", None)
+            return result
         except Exception as e:
-            return {
+            result = {
                 "status": "error",
                 "error": str(e),
                 "execution_time": time.time() - start_time
             }
+            # Remove execution_time from all results except functional_correctness
+            if test_name != "5_functional_correctness":
+                result.pop("execution_time", None)
+            return result
         finally:
             if test_copy.exists():
                 test_copy.unlink()
@@ -370,12 +341,9 @@ class TestRunner:
         return {
             "complexity_analysis": {
                 "cyclomatic_complexity": advanced_metrics.cyclomatic_complexity,
-                "cyclomatic_complexity_per_function": advanced_metrics.cyclomatic_complexity_per_function,
                 "cognitive_complexity": advanced_metrics.cognitive_complexity,
-                "cognitive_complexity_per_function": advanced_metrics.cognitive_complexity_per_function,
                 "max_nesting_depth": advanced_metrics.max_nesting_depth,
-                "avg_nesting_depth": advanced_metrics.avg_nesting_depth,
-                "nesting_depth_per_function": advanced_metrics.nesting_depth_per_function
+                "avg_nesting_depth": advanced_metrics.avg_nesting_depth
             },
             "halstead_analysis": {
                 "volume": advanced_metrics.halstead_volume,
@@ -398,21 +366,6 @@ class TestRunner:
                 "abc_condition_count": advanced_metrics.abc_condition_count,
                 "abc_magnitude": advanced_metrics.abc_magnitude
             },
-            "size_analysis": {
-                "logical_lines_of_code": advanced_metrics.logical_lines_of_code,
-                "physical_lines_of_code": advanced_metrics.physical_lines_of_code,
-                "comment_lines": advanced_metrics.comment_lines,
-                "blank_lines": advanced_metrics.blank_lines,
-                "code_to_comment_ratio": advanced_metrics.code_to_comment_ratio,
-                "function_count": advanced_metrics.function_count,
-                "class_count": advanced_metrics.class_count,
-                "method_count": advanced_metrics.method_count,
-                "methods_per_class": advanced_metrics.methods_per_class,
-                "parameters_per_function": advanced_metrics.parameters_per_function,
-                "avg_parameters_per_function": advanced_metrics.avg_parameters_per_function,
-                "wmc_per_class": advanced_metrics.wmc_per_class,
-                "avg_wmc": advanced_metrics.avg_wmc
-            },
             "code_style_analysis": {
                 "naming_convention_score": advanced_metrics.naming_convention_score,
                 "simple_function_ratio": advanced_metrics.simple_function_ratio,
@@ -431,48 +384,26 @@ class TestRunner:
                 "node_types": advanced_metrics.ast_node_types,
                 "unique_node_types": advanced_metrics.ast_unique_node_types
             },
-            "control_flow_analysis": {
-                "loop_count": advanced_metrics.loop_count,
-                "conditional_count": advanced_metrics.conditional_count,
-                "comprehension_count": advanced_metrics.comprehension_count
+            "size_analysis": {
+                "lines": advanced_metrics.physical_lines_of_code,  # Map legacy code_length 
+                "logical_lines_of_code": advanced_metrics.logical_lines_of_code,
+                "physical_lines_of_code": advanced_metrics.physical_lines_of_code,
+                "comment_lines": advanced_metrics.comment_lines,
+                "blank_lines": advanced_metrics.blank_lines,
+                "code_to_comment_ratio": advanced_metrics.code_to_comment_ratio,
+                "function_count": advanced_metrics.function_count,
+                "class_count": advanced_metrics.class_count,
+                "method_count": advanced_metrics.method_count,
+                "avg_parameters_per_function": advanced_metrics.avg_parameters_per_function,
+                "avg_wmc": advanced_metrics.avg_wmc
             },
-            "oop_metrics": {
-                "depth_of_inheritance": advanced_metrics.depth_of_inheritance,
+            "modularity_oop": {
+                "functions": advanced_metrics.function_count,  # Map from legacy modularity
+                "classes": advanced_metrics.class_count,       # Map from legacy modularity
+                "methods": advanced_metrics.method_count,      # Map from legacy modularity
+                "score": 2.0,  # Placeholder - will need calculation logic
                 "max_dit": advanced_metrics.max_dit,
-                "avg_dit": advanced_metrics.avg_dit,
-                "children_per_class": advanced_metrics.children_per_class,
-                "max_noc": advanced_metrics.max_noc,
-                "avg_noc": advanced_metrics.avg_noc,
-                "coupling_per_class": advanced_metrics.coupling_per_class,
-                "max_cbo": advanced_metrics.max_cbo,
-                "avg_cbo": advanced_metrics.avg_cbo
-            },
-            "code_patterns": {
-                "lambda_count": advanced_metrics.lambda_count,
-                "generator_count": advanced_metrics.generator_count,
-                "decorator_count": advanced_metrics.decorator_count,
-                "docstring_count": advanced_metrics.docstring_count,
-                "return_statement_count": advanced_metrics.return_statement_count,
-                "raise_statement_count": advanced_metrics.raise_statement_count,
-                "assert_statement_count": advanced_metrics.assert_statement_count
-            },
-            "variable_usage": {
-                "variable_count": advanced_metrics.variable_count,
-                "global_variable_count": advanced_metrics.global_variable_count,
-                "nonlocal_variable_count": advanced_metrics.nonlocal_variable_count
-            },
-            "operator_distribution": advanced_metrics.operator_distribution,
-            "literal_usage": {
-                "string_literal_count": advanced_metrics.string_literal_count,
-                "number_literal_count": advanced_metrics.number_literal_count,
-                "boolean_literal_count": advanced_metrics.boolean_literal_count
-            },
-            "import_analysis": {
-                "import_count": advanced_metrics.import_count,
-                "from_import_count": advanced_metrics.from_import_count,
-                "unique_imports": advanced_metrics.unique_imports,
-                "stdlib_imports": advanced_metrics.stdlib_imports,
-                "third_party_imports": advanced_metrics.third_party_imports
+                "avg_dit": advanced_metrics.avg_dit
             },
             "status": "success"
         }

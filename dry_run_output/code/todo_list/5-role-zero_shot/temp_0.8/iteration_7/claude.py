@@ -1,0 +1,413 @@
+
+"""
+High-Quality Todo List Application
+A console-based task management system following ISO/IEC 25010 standards.
+"""
+
+from typing import Dict, List, Optional
+import re
+from datetime import datetime
+
+
+class Task:
+    """
+    Represents a single task with all its properties.
+    
+    This class encapsulates task data and provides a clean interface
+    for task manipulation while ensuring data integrity.
+    """
+    
+    def __init__(self, task_id: int, name: str, description: str) -> None:
+        """
+        Initialize a new task.
+        
+        Args:
+            task_id: Unique identifier for the task
+            name: Task name (must be non-empty)
+            description: Task description (must be non-empty)
+            
+        Raises:
+            ValueError: If name or description is empty or whitespace-only
+        """
+        if not name or not name.strip():
+            raise ValueError("Task name cannot be empty or whitespace-only")
+        if not description or not description.strip():
+            raise ValueError("Task description cannot be empty or whitespace-only")
+            
+        self._id = task_id
+        self._name = name.strip()
+        self._description = description.strip()
+        self._is_finished = False
+        self._created_at = datetime.now()
+        self._finished_at: Optional[datetime] = None
+    
+    @property
+    def id(self) -> int:
+        """Get task ID."""
+        return self._id
+    
+    @property
+    def name(self) -> str:
+        """Get task name."""
+        return self._name
+    
+    @property
+    def description(self) -> str:
+        """Get task description."""
+        return self._description
+    
+    @property
+    def is_finished(self) -> bool:
+        """Get task completion status."""
+        return self._is_finished
+    
+    @property
+    def created_at(self) -> datetime:
+        """Get task creation timestamp."""
+        return self._created_at
+    
+    @property
+    def finished_at(self) -> Optional[datetime]:
+        """Get task completion timestamp."""
+        return self._finished_at
+    
+    def finish(self) -> None:
+        """Mark task as completed."""
+        if not self._is_finished:
+            self._is_finished = True
+            self._finished_at = datetime.now()
+    
+    def to_dict(self) -> Dict:
+        """
+        Convert task to dictionary representation.
+        
+        Returns:
+            Dictionary containing task information in the required format
+        """
+        return {
+            'id': self._id,
+            'task_name': self._name,
+            'task_description': self._description,
+            'is_finished': self._is_finished
+        }
+    
+    def matches_search_term(self, search_term: str) -> bool:
+        """
+        Check if task matches the given search term.
+        
+        Args:
+            search_term: Term to search for (case-insensitive)
+            
+        Returns:
+            True if task name or description contains the search term
+        """
+        if not search_term or not search_term.strip():
+            return False
+            
+        search_term = search_term.strip().lower()
+        return (search_term in self._name.lower() or 
+                search_term in self._description.lower())
+
+
+class TaskManager:
+    """
+    High-performance task management system with comprehensive error handling.
+    
+    This class provides efficient task operations while maintaining data integrity
+    and following ISO/IEC 25010 quality standards for reliability, performance,
+    and maintainability.
+    """
+    
+    def __init__(self) -> None:
+        """Initialize the TaskManager with empty task storage."""
+        self._tasks: Dict[int, Task] = {}
+        self._next_id: int = 1
+        self._task_count: int = 0
+    
+    def _validate_task_id(self, task_id: int) -> None:
+        """
+        Validate task ID and check if task exists.
+        
+        Args:
+            task_id: Task identifier to validate
+            
+        Raises:
+            TypeError: If task_id is not an integer
+            ValueError: If task_id is invalid or task doesn't exist
+        """
+        if not isinstance(task_id, int):
+            raise TypeError("Task ID must be an integer")
+        if task_id <= 0:
+            raise ValueError("Task ID must be a positive integer")
+        if task_id not in self._tasks:
+            raise ValueError(f"Task with ID {task_id} does not exist")
+    
+    def _validate_string_input(self, value: str, field_name: str) -> None:
+        """
+        Validate string input for task fields.
+        
+        Args:
+            value: String value to validate
+            field_name: Name of the field for error messages
+            
+        Raises:
+            TypeError: If value is not a string
+            ValueError: If value is empty or whitespace-only
+        """
+        if not isinstance(value, str):
+            raise TypeError(f"{field_name} must be a string")
+        if not value or not value.strip():
+            raise ValueError(f"{field_name} cannot be empty or whitespace-only")
+    
+    def add(self, task_name: str, task_description: str) -> int:
+        """
+        Add a new task to the todo list.
+        
+        Args:
+            task_name: Name of the task (must be non-empty string)
+            task_description: Description of the task (must be non-empty string)
+            
+        Returns:
+            Unique ID of the created task
+            
+        Raises:
+            TypeError: If inputs are not strings
+            ValueError: If task_name or task_description is empty/whitespace-only
+            
+        Time Complexity: O(1)
+        Space Complexity: O(1)
+        """
+        # Validate inputs
+        self._validate_string_input(task_name, "Task name")
+        self._validate_string_input(task_description, "Task description")
+        
+        # Create and store task
+        task_id = self._next_id
+        task = Task(task_id, task_name, task_description)
+        self._tasks[task_id] = task
+        
+        # Update internal state
+        self._next_id += 1
+        self._task_count += 1
+        
+        return task_id
+    
+    def remove(self, task_id: int) -> bool:
+        """
+        Remove a task from the todo list.
+        
+        Args:
+            task_id: ID of the task to remove
+            
+        Returns:
+            True if task was successfully removed, False otherwise
+            
+        Raises:
+            TypeError: If task_id is not an integer
+            ValueError: If task_id is invalid
+            
+        Time Complexity: O(1)
+        Space Complexity: O(1)
+        """
+        try:
+            self._validate_task_id(task_id)
+            del self._tasks[task_id]
+            self._task_count -= 1
+            return True
+        except (TypeError, ValueError):
+            return False
+    
+    def search(self, task_term: str) -> List[Dict]:
+        """
+        Search for tasks by name or description.
+        
+        Args:
+            task_term: Search term to look for (case-insensitive)
+            
+        Returns:
+            List of dictionaries containing matching task information
+            
+        Raises:
+            TypeError: If task_term is not a string
+            
+        Time Complexity: O(n) where n is the number of tasks
+        Space Complexity: O(k) where k is the number of matching tasks
+        """
+        if not isinstance(task_term, str):
+            raise TypeError("Search term must be a string")
+        
+        # Return empty list for empty search terms
+        if not task_term or not task_term.strip():
+            return []
+        
+        # Find matching tasks
+        matching_tasks = []
+        for task in self._tasks.values():
+            if task.matches_search_term(task_term):
+                matching_tasks.append(task.to_dict())
+        
+        # Sort by task ID for consistent ordering
+        return sorted(matching_tasks, key=lambda x: x['id'])
+    
+    def finish(self, task_id: int) -> bool:
+        """
+        Mark a task as completed.
+        
+        Args:
+            task_id: ID of the task to mark as finished
+            
+        Returns:
+            True if task was successfully marked as finished, False otherwise
+            
+        Raises:
+            TypeError: If task_id is not an integer
+            ValueError: If task_id is invalid
+            
+        Time Complexity: O(1)
+        Space Complexity: O(1)
+        """
+        try:
+            self._validate_task_id(task_id)
+            self._tasks[task_id].finish()
+            return True
+        except (TypeError, ValueError):
+            return False
+    
+    def get_all(self) -> List[Dict]:
+        """
+        Retrieve all tasks with their details.
+        
+        Returns:
+            List of dictionaries containing all task information,
+            sorted by task ID for consistent ordering
+            
+        Time Complexity: O(n log n) where n is the number of tasks
+        Space Complexity: O(n)
+        """
+        if not self._tasks:
+            return []
+        
+        # Convert all tasks to dictionaries and sort by ID
+        all_tasks = [task.to_dict() for task in self._tasks.values()]
+        return sorted(all_tasks, key=lambda x: x['id'])
+    
+    def clear_all(self) -> bool:
+        """
+        Delete all tasks from the todo list.
+        
+        Returns:
+            True indicating successful clearing of all tasks
+            
+        Time Complexity: O(1)
+        Space Complexity: O(1)
+        """
+        self._tasks.clear()
+        self._task_count = 0
+        # Note: _next_id is not reset to maintain unique IDs across sessions
+        return True
+    
+    def get_task_count(self) -> int:
+        """
+        Get the current number of tasks.
+        
+        Returns:
+            Number of tasks currently stored
+        """
+        return self._task_count
+    
+    def get_statistics(self) -> Dict:
+        """
+        Get statistics about the current task list.
+        
+        Returns:
+            Dictionary containing task statistics
+        """
+        if not self._tasks:
+            return {
+                'total_tasks': 0,
+                'completed_tasks': 0,
+                'pending_tasks': 0,
+                'completion_rate': 0.0
+            }
+        
+        completed_count = sum(1 for task in self._tasks.values() if task.is_finished)
+        total_count = len(self._tasks)
+        pending_count = total_count - completed_count
+        completion_rate = (completed_count / total_count) * 100 if total_count > 0 else 0.0
+        
+        return {
+            'total_tasks': total_count,
+            'completed_tasks': completed_count,
+            'pending_tasks': pending_count,
+            'completion_rate': round(completion_rate, 2)
+        }
+
+
+def main():
+    """
+    Demonstration of the TaskManager functionality.
+    
+    This function showcases the various operations and error handling
+    capabilities of the TaskManager class.
+    """
+    # Initialize the task manager
+    task_manager = TaskManager()
+    
+    print("=== Todo List Application Demo ===\n")
+    
+    try:
+        # Add some tasks
+        print("Adding tasks...")
+        id1 = task_manager.add("Buy groceries", "Get milk, bread, and eggs from the store")
+        id2 = task_manager.add("Complete project", "Finish the Python todo list application")
+        id3 = task_manager.add("Exercise", "Go for a 30-minute run in the park")
+        
+        print(f"Added task {id1}: Buy groceries")
+        print(f"Added task {id2}: Complete project")
+        print(f"Added task {id3}: Exercise")
+        
+        # Display all tasks
+        print("\n--- All Tasks ---")
+        all_tasks = task_manager.get_all()
+        for task in all_tasks:
+            status = "✓" if task['is_finished'] else "○"
+            print(f"{status} [{task['id']}] {task['task_name']}: {task['task_description']}")
+        
+        # Mark a task as finished
+        print(f"\nMarking task {id2} as finished...")
+        task_manager.finish(id2)
+        
+        # Search for tasks
+        print("\nSearching for 'project'...")
+        search_results = task_manager.search("project")
+        for task in search_results:
+            status = "✓" if task['is_finished'] else "○"
+            print(f"{status} [{task['id']}] {task['task_name']}: {task['task_description']}")
+        
+        # Display statistics
+        print("\n--- Task Statistics ---")
+        stats = task_manager.get_statistics()
+        print(f"Total tasks: {stats['total_tasks']}")
+        print(f"Completed: {stats['completed_tasks']}")
+        print(f"Pending: {stats['pending_tasks']}")
+        print(f"Completion rate: {stats['completion_rate']}%")
+        
+        # Remove a task
+        print(f"\nRemoving task {id1}...")
+        task_manager.remove(id1)
+        
+        # Display final state
+        print("\n--- Final Task List ---")
+        final_tasks = task_manager.get_all()
+        for task in final_tasks:
+            status = "✓" if task['is_finished'] else "○"
+            print(f"{status} [{task['id']}] {task['task_name']}: {task['task_description']}")
+        
+    except Exception as e:
+        print(f"Error: {e}")
+    
+    print("\n=== Demo completed ===")
+
+
+if __name__ == "__main__":
+    main()

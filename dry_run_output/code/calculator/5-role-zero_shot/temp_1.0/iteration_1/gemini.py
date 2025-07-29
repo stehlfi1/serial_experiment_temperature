@@ -1,0 +1,187 @@
+
+import operator
+
+class Calculator:
+    """
+    A robust, safe, and efficient console-based calculator.
+
+    This class evaluates arithmetic expressions from a string, supporting addition,
+    subtraction, multiplication, and division, as well as parentheses for
+    grouping. It adheres to standard operator precedence.
+
+    The implementation uses a classic two-stack algorithm to parse and evaluate
+    the expression, ensuring both safety (by avoiding `eval()`) and
+    performance efficiency.
+
+    Attributes:
+        _operators (dict): A mapping of operator symbols to their corresponding
+                           functions from the `operator` module.
+        _precedence (dict): A mapping of operator symbols to their precedence level.
+    """
+
+    def __init__(self):
+        """Initializes the Calculator with supported operations and precedence."""
+        self._operators = {
+            '+': operator.add,
+            '-': operator.sub,
+            '*': operator.mul,
+            '/': operator.truediv,
+        }
+        self._precedence = {'+': 1, '-': 1, '*': 2, '/': 2}
+
+    def _apply_operator(self, operators: list, values: list):
+        """
+        Applies an operator to the top two values on the stack.
+
+        Pops one operator and two operands, computes the result, and pushes it
+        back onto the values stack. It also handles the DivisionByZero error.
+
+        Args:
+            operators (list): The stack of operators.
+            values (list): The stack of numerical values (operands).
+
+        Raises:
+            ZeroDivisionError: If a division by zero is attempted.
+        """
+        try:
+            op = operators.pop()
+            right = values.pop()
+            left = values.pop()
+            result = self._operators[op](left, right)
+            values.append(result)
+        except ZeroDivisionError:
+            # Re-raise for specific handling at a higher level
+            raise ZeroDivisionError("Error: Division by zero.")
+        except IndexError:
+            # Catches errors like "5 *" or "+ 5"
+            raise ValueError("Invalid expression syntax.")
+
+
+    def _tokenize(self, expression: str) -> list:
+        """
+        Converts an infix expression string into a list of tokens.
+
+        This method handles multi-digit numbers, floating-point numbers,
+        and unary minus (e.g., "-5" or "3 * -5").
+
+        Args:
+            expression (str): The string expression to tokenize.
+
+        Returns:
+            list: A list of tokens (numbers as floats, operators as strings).
+
+        Raises:
+            ValueError: If an unrecognized character is found.
+        """
+        tokens = []
+        i = 0
+        # Prepend a '0' if the expression starts with a unary minus
+        # or a unary minus follows an opening parenthesis.
+        # This transforms expressions like "-5 + 2" into "0 - 5 + 2".
+        expression = expression.replace("(-", "(0-").replace("(-", "(0-")
+        if expression.startswith("-"):
+            expression = "0" + expression
+
+        while i < len(expression):
+            char = expression[i]
+            if char.isspace():
+                i += 1
+                continue
+            elif char.isdigit() or char == '.':
+                num_str = ""
+                while i < len(expression) and (expression[i].isdigit() or expression[i] == '.'):
+                    num_str += expression[i]
+                    i += 1
+                try:
+                    tokens.append(float(num_str))
+                except ValueError:
+                    raise ValueError(f"Invalid number format: '{num_str}'")
+                continue # To avoid incrementing 'i' again at the end
+            elif char in self._operators or char in '()':
+                tokens.append(char)
+            else:
+                raise ValueError(f"Invalid character in expression: '{char}'")
+            i += 1
+        return tokens
+
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates a mathematical expression provided as a string.
+
+        Args:
+            expression (str): The mathematical expression to evaluate.
+                              Example: "3 + 5 * (2 - 8)"
+
+        Returns:
+            float: The result of the evaluation.
+
+        Raises:
+            ValueError: If the expression is invalid (e.g., unbalanced
+                        parentheses, invalid syntax).
+            ZeroDivisionError: If the expression contains a division by zero.
+        """
+        tokens = self._tokenize(expression)
+        values_stack = []
+        ops_stack = []
+
+        for token in tokens:
+            if isinstance(token, float):
+                values_stack.append(token)
+            elif token == '(':
+                ops_stack.append(token)
+            elif token == ')':
+                while ops_stack and ops_stack[-1] != '(':
+                    self._apply_operator(ops_stack, values_stack)
+                if not ops_stack or ops_stack.pop() != '(':
+                    raise ValueError("Mismatched or unbalanced parentheses.")
+            elif token in self._operators:
+                while (ops_stack and ops_stack[-1] != '(' and
+                       self._precedence.get(ops_stack[-1], 0) >= self._precedence.get(token, 0)):
+                    self._apply_operator(ops_stack, values_stack)
+                ops_stack.append(token)
+
+        # Process any remaining operators on the stack
+        while ops_stack:
+            if ops_stack[-1] == '(':
+                raise ValueError("Mismatched or unbalanced parentheses.")
+            self._apply_operator(ops_stack, values_stack)
+
+        if len(values_stack) != 1 or ops_stack:
+            raise ValueError("Invalid expression format.")
+
+        return values_stack[0]
+
+def main():
+    """
+    Main function to run the interactive calculator console.
+    """
+    print("Welcome to the Console Calculator!")
+    print("Enter 'exit' or 'quit' to close the program.")
+    calculator = Calculator()
+
+    while True:
+        try:
+            expression = input(">>> ")
+            if expression.lower() in ('exit', 'quit'):
+                print("Exiting calculator. Goodbye!")
+                break
+            
+            if not expression:
+                continue
+
+            result = calculator.calculate(expression)
+            # Format to int if the result is a whole number
+            if result == int(result):
+                print(f"= {int(result)}")
+            else:
+                print(f"= {result:.4f}") # Print floats with reasonable precision
+
+        except (ValueError, ZeroDivisionError) as e:
+            print(f"Error: {e}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+
+if __name__ == "__main__":
+    main()
+

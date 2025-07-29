@@ -1,0 +1,254 @@
+Of course. Here is a high-quality Python implementation of a console-based to-do list application, designed according to your specifications and adhering to the principles of the ISO/IEC 25010 standard.
+
+### Explanation of ISO/IEC 25010 Adherence
+
+This implementation addresses the key characteristics of the ISO/IEC 25010 quality model:
+
+*   **Functional Suitability:** The code provides all requested functions (`add`, `remove`, etc.) and behaves as expected, ensuring correctness and completeness.
+*   **Performance Efficiency:** By using a dictionary (`self._tasks`) with the task ID as the key, core operations like adding, removing, finishing, and retrieving a task by its ID are performed in average O(1) time complexity. The search operation is O(n), which is appropriate for this use case.
+*   **Maintainability:**
+    *   **Modularity:** The logic is encapsulated within the `TaskManager` class. A `Task` `dataclass` is used to cleanly structure task data, separating the data model from the management logic.
+    *   **Reusability:** The `TaskManager` class is self-contained and can be easily imported and used in other contexts (e.g., a web API, a GUI application).
+    *   **Testability:** The class has no external dependencies (like files or databases), making it straightforward to unit test.
+*   **Reliability:**
+    *   **Fault Tolerance:** Invalid inputs (e.g., empty strings, non-existent IDs) are handled gracefully through explicit validation and conditional checks, preventing crashes and returning meaningful feedback (errors or boolean status).
+*   **Security:**
+    *   **Input Validation:** The code includes robust validation at the entry point of each public method to protect the system's internal state from invalid data, as required by the "Safety" characteristic.
+*   **Usability (for the developer):**
+    *   **Readability and Documentation:** The code is written with clear variable names, comprehensive docstrings (following PEP 257), and type hints, making the API easy to understand and use correctly.
+
+---
+
+```python
+"""
+A high-quality, maintainable implementation of a Todo List Task Manager.
+
+This module provides a TaskManager class that adheres to the principles of the
+ISO/IEC 25010 standard for software quality, focusing on reliability,
+performance, and maintainability.
+"""
+
+import dataclasses
+from typing import Dict, List, Any
+
+# Using a dataclass provides type safety, immutability benefits (if frozen),
+# and a clear, self-documenting structure for our core data model.
+@dataclasses.dataclass
+class Task:
+    """Represents a single task in the to-do list."""
+    id: int
+    name: str
+    description: str
+    is_finished: bool = False
+
+
+class TaskManager:
+    """
+    Manages a collection of tasks in memory.
+
+    This class provides a complete interface to add, remove, search, finish,
+    and retrieve tasks, with a focus on performance and robust error handling.
+    """
+
+    def __init__(self) -> None:
+        """Initializes the TaskManager with an in-memory storage."""
+        self._tasks: Dict[int, Task] = {}
+        self._next_id: int = 1
+
+    def _task_to_dict(self, task: Task) -> Dict[str, Any]:
+        """
+        Converts a Task object to a dictionary for consistent external representation.
+        
+        This helper method promotes modularity by decoupling the internal data
+        structure (Task dataclass) from the public-facing API format (dict).
+
+        Args:
+            task: The Task object to convert.
+
+        Returns:
+            A dictionary representation of the task.
+        """
+        return dataclasses.asdict(task)
+
+    def add(self, task_name: str, task_description: str) -> int:
+        """
+        Adds a new task to the list.
+
+        Args:
+            task_name: The name of the task. Must be a non-empty string.
+            task_description: A detailed description of the task.
+
+        Returns:
+            The unique ID of the newly created task.
+
+        Raises:
+            ValueError: If task_name is an empty string.
+        """
+        if not isinstance(task_name, str) or not task_name.strip():
+            raise ValueError("Task name cannot be empty.")
+        if not isinstance(task_description, str):
+            # Enforcing type safety for description as well.
+            raise ValueError("Task description must be a string.")
+
+        task_id = self._next_id
+        new_task = Task(
+            id=task_id,
+            name=task_name.strip(),
+            description=task_description.strip()
+        )
+        self._tasks[task_id] = new_task
+        self._next_id += 1
+        return task_id
+
+    def remove(self, task_id: int) -> bool:
+        """
+        Removes a task by its unique ID.
+
+        Args:
+            task_id: The ID of the task to remove.
+
+        Returns:
+            True if the task was successfully removed, False otherwise.
+            
+        Raises:
+            ValueError: If task_id is not a positive integer.
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise ValueError("Task ID must be a positive integer.")
+            
+        if task_id in self._tasks:
+            del self._tasks[task_id]
+            return True
+        return False
+
+    def search(self, search_term: str) -> List[Dict[str, Any]]:
+        """
+        Searches for tasks by a search term in their name or description.
+
+        The search is case-insensitive.
+
+        Args:
+            search_term: The term to search for. Must be a non-empty string.
+
+        Returns:
+            A list of dictionaries, where each dictionary represents a matching task.
+            Returns an empty list if no tasks match.
+
+        Raises:
+            ValueError: If search_term is an empty string.
+        """
+        if not isinstance(search_term, str) or not search_term.strip():
+            raise ValueError("Search term cannot be empty.")
+
+        lower_term = search_term.lower()
+        
+        # A list comprehension is both readable and efficient for this operation.
+        matching_tasks = [
+            self._task_to_dict(task)
+            for task in self._tasks.values()
+            if lower_term in task.name.lower() or lower_term in task.description.lower()
+        ]
+        return matching_tasks
+
+    def finish(self, task_id: int) -> bool:
+        """
+        Marks a task as finished.
+
+        Args:
+            task_id: The ID of the task to mark as finished.
+
+        Returns:
+            True if the task was successfully marked as finished, False otherwise.
+            
+        Raises:
+            ValueError: If task_id is not a positive integer.
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise ValueError("Task ID must be a positive integer.")
+            
+        task = self._tasks.get(task_id)
+        if task:
+            task.is_finished = True
+            return True
+        return False
+
+    def get_all(self) -> List[Dict[str, Any]]:
+        """
+        Retrieves all tasks.
+
+        Returns:
+            A list of dictionaries, where each dictionary represents a task.
+            The list is sorted by task ID for consistent ordering.
+        """
+        sorted_tasks = sorted(self._tasks.values(), key=lambda t: t.id)
+        return [self._task_to_dict(task) for task in sorted_tasks]
+
+    def clear_all(self) -> bool:
+        """
+        Deletes all tasks from the list.
+
+        Returns:
+            True, indicating the operation was successful.
+        """
+        self._tasks.clear()
+        self._next_id = 1  # Reset the ID counter
+        return True
+
+
+# --- Demonstration of Usage ---
+if __name__ == "__main__":
+    # This block demonstrates how the TaskManager class can be used.
+    # It also serves as a basic integration test.
+    
+    print("--- Initializing Task Manager ---")
+    manager = TaskManager()
+
+    print("\n--- Adding Tasks ---")
+    try:
+        id1 = manager.add("Buy groceries", "Milk, Bread, Cheese")
+        print(f"Added task 'Buy groceries' with ID: {id1}")
+        id2 = manager.add("Code review", "Review the new feature branch for project X.")
+        print(f"Added task 'Code review' with ID: {id2}")
+        id3 = manager.add("Plan weekend trip", "Research destinations and book hotel.")
+        print(f"Added task 'Plan weekend trip' with ID: {id3}")
+        
+        # Test invalid input
+        print("\nAttempting to add a task with an empty name...")
+        manager.add("", "This should fail.")
+    except ValueError as e:
+        print(f"Caught expected error: {e}")
+
+    print("\n--- Current Tasks ---")
+    print(manager.get_all())
+
+    print("\n--- Finishing a Task ---")
+    success = manager.finish(id2)
+    print(f"Marking task {id2} as finished: {'Success' if success else 'Failed'}")
+    
+    print("\n--- Searching for 'review' ---")
+    results = manager.search("review")
+    print(f"Search results: {results}")
+    
+    print("\n--- Searching for 'trip' ---")
+    results = manager.search("trip")
+    print(f"Search results: {results}")
+
+    print("\n--- Removing a Task ---")
+    success = manager.remove(id1)
+    print(f"Removing task {id1}: {'Success' if success else 'Failed'}")
+    
+    # Try to remove a non-existent task
+    print("Attempting to remove non-existent task 99...")
+    success = manager.remove(99)
+    print(f"Removing task 99: {'Success' if success else 'Failed'}")
+
+    print("\n--- Current Tasks After Modifications ---")
+    print(manager.get_all())
+
+    print("\n--- Clearing All Tasks ---")
+    manager.clear_all()
+    print("All tasks cleared.")
+
+    print("\n--- Final Task List ---")
+    print(manager.get_all())
+```

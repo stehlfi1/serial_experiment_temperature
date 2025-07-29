@@ -1,0 +1,284 @@
+
+"""
+A module for generating 2D ASCII art shapes.
+
+This module provides the AsciiArt class, which implements methods to draw
+various geometric shapes using a specified character. The implementation adheres
+to high-quality code standards, focusing on correctness, efficiency, and
+maintainability as outlined by ISO/IEC 25010.
+
+Author: AI Assistant (Senior Software Developer)
+Version: 1.0.0
+"""
+
+import math
+
+class AsciiArt:
+    """
+    A class to generate various 2D ASCII art shapes.
+
+    This class provides a suite of methods for drawing filled geometric shapes
+    like squares, rectangles, and pyramids. It is designed with a focus on
+    modularity, reusability, and safety, ensuring that all inputs are
+    validated before processing.
+
+    ISO/IEC 25010 Compliance Notes:
+    - Functional Suitability: Provides correct shape-drawing functions.
+    - Performance Efficiency: Uses efficient string joining over concatenation.
+    - Reliability: Implements robust validation to handle faulty inputs gracefully.
+    - Usability (for developers): Features a clean, well-documented API.
+    - Maintainability: Code is modular, readable, and well-commented.
+    - Portability: Uses only standard Python libraries.
+    """
+
+    def _validate_symbol(self, symbol: str) -> None:
+        """
+        Validates the symbol to be a single, non-whitespace character.
+
+        Args:
+            symbol (str): The symbol to validate.
+
+        Raises:
+            ValueError: If the symbol is not a single character or is whitespace.
+        """
+        if not isinstance(symbol, str) or len(symbol) != 1:
+            raise ValueError("Symbol must be a single character string.")
+        if symbol.isspace():
+            raise ValueError("Symbol cannot be a whitespace character.")
+
+    def _validate_dimension(self, value: int, name: str) -> None:
+        """
+        Validates that a dimension (e.g., width, height) is a non-negative integer.
+
+        Args:
+            value (int): The dimension value to validate.
+            name (str): The name of the dimension for the error message.
+
+        Raises:
+            TypeError: If the value is not an integer.
+            ValueError: If the value is negative.
+        """
+        if not isinstance(value, int):
+            raise TypeError(f"{name.capitalize()} must be an integer.")
+        if value < 0:
+            raise ValueError(f"{name.capitalize()} cannot be negative.")
+
+    def draw_square(self, width: int, symbol: str) -> str:
+        """
+        Draws a filled square of a given width.
+
+        This method is a specialized case of draw_rectangle.
+
+        Args:
+            width (int): The width and height of the square. Must be non-negative.
+            symbol (str): The single character used to draw the square.
+
+        Returns:
+            str: A multi-line string representing the ASCII square.
+
+        Raises:
+            ValueError: For invalid width or symbol inputs.
+            TypeError: If width is not an integer.
+        """
+        self._validate_dimension(width, "width")
+        # A square is a rectangle with equal width and height.
+        # This delegation improves maintainability (DRY principle).
+        return self.draw_rectangle(width, width, symbol)
+
+    def draw_rectangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled rectangle of given width and height.
+
+        Args:
+            width (int): The width of the rectangle. Must be non-negative.
+            height (int): The height of the rectangle. Must be non-negative.
+            symbol (str): The single character used to draw the rectangle.
+
+        Returns:
+            str: A multi-line string representing the ASCII rectangle.
+
+        Raises:
+            ValueError: For invalid width, height, or symbol inputs.
+            TypeError: If width or height are not integers.
+        """
+        self._validate_dimension(width, "width")
+        self._validate_dimension(height, "height")
+        self._validate_symbol(symbol)
+
+        if width == 0 or height == 0:
+            return ""
+
+        # Efficiently create one row.
+        row = symbol * width
+        # Create a list of rows and join them with newlines.
+        # This is more performant than repeated string concatenation in a loop.
+        rows = [row] * height
+        return "\n".join(rows)
+
+    def draw_parallelogram(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled parallelogram that slants to the right.
+
+        Each subsequent row is indented by one additional space.
+
+        Args:
+            width (int): The width of the parallelogram's top/bottom edge. Must be non-negative.
+            height (int): The height of the parallelogram. Must be non-negative.
+            symbol (str): The single character used to draw the shape.
+
+        Returns:
+            str: A multi-line string representing the ASCII parallelogram.
+
+        Raises:
+            ValueError: For invalid width, height, or symbol inputs.
+            TypeError: If width or height are not integers.
+        """
+        self._validate_dimension(width, "width")
+        self._validate_dimension(height, "height")
+        self._validate_symbol(symbol)
+        
+        if width == 0 or height == 0:
+            return ""
+
+        rows = []
+        row_content = symbol * width
+        for i in range(height):
+            padding = " " * i
+            rows.append(padding + row_content)
+        
+        return "\n".join(rows)
+
+    def draw_triangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled, right-angled triangle.
+
+        The triangle grows from a single point at the top-left, expanding
+        to the specified width at the base over the given height.
+
+        Args:
+            width (int): The final width of the triangle's base. Must be non-negative.
+            height (int): The height of the triangle. Must be non-negative.
+            symbol (str): The single character used to draw the shape.
+
+        Returns:
+            str: A multi-line string representing the ASCII triangle.
+
+        Raises:
+            ValueError: For invalid width, height, or symbol inputs.
+            TypeError: If width or height are not integers.
+        """
+        self._validate_dimension(width, "width")
+        self._validate_dimension(height, "height")
+        self._validate_symbol(symbol)
+
+        if width == 0 or height == 0:
+            return ""
+
+        rows = []
+        for i in range(height):
+            # Calculate the number of symbols for the current row using a linear
+            # scaling factor. math.ceil ensures the triangle starts with at least
+            # one symbol and reaches the full width on the final row.
+            # This correctly handles various width/height aspect ratios.
+            current_width = math.ceil((i + 1) * width / height)
+            rows.append(symbol * current_width)
+            
+        return "\n".join(rows)
+
+    def draw_pyramid(self, height: int, symbol: str) -> str:
+        """
+        Draws a filled, symmetrical pyramid.
+
+        Args:
+            height (int): The height of the pyramid. Must be non-negative.
+            symbol (str): The single character used to draw the shape.
+
+        Returns:
+            str: A multi-line string representing the ASCII pyramid.
+
+        Raises:
+            ValueError: For invalid height or symbol inputs.
+            TypeError: If height is not an integer.
+        """
+        self._validate_dimension(height, "height")
+        self._validate_symbol(symbol)
+        
+        if height == 0:
+            return ""
+
+        rows = []
+        # The base of a symmetrical pyramid of `height` has `2 * height - 1` blocks.
+        base_width = 2 * height - 1
+        for i in range(height):
+            # Number of symbols in the current row.
+            num_symbols = 2 * i + 1
+            # Calculate left padding to center the symbols.
+            padding = " " * ((base_width - num_symbols) // 2)
+            row_content = symbol * num_symbols
+            rows.append(padding + row_content)
+            
+        return "\n".join(rows)
+
+
+if __name__ == "__main__":
+    # This block demonstrates the usage of the AsciiArt class.
+    # It also serves as a simple visual test harness.
+    
+    art = AsciiArt()
+    
+    print("--- ASCII Art Shape Generator ---")
+    
+    try:
+        print("\n[+] Square (5x5, '#')")
+        print(art.draw_square(5, "#"))
+
+        print("\n[+] Rectangle (8x4, '@')")
+        print(art.draw_rectangle(8, 4, "@"))
+        
+        print("\n[+] Parallelogram (10x5, '=')")
+        print(art.draw_parallelogram(10, 5, "="))
+
+        print("\n[+] Right-angled Triangle (width=10, height=5, '*')")
+        print(art.draw_triangle(10, 5, "*"))
+        
+        print("\n[+] Right-angled Triangle (width=6, height=12, '+')")
+        print(art.draw_triangle(6, 12, "+"))
+
+        print("\n[+] Pyramid (height=6, '^')")
+        print(art.draw_pyramid(6, "^"))
+        
+        print("\n--- Testing Edge Cases ---")
+        print("\n[+] Square (width=0)")
+        print(f"Result: '{art.draw_square(0, 'X')}' (should be empty string)")
+        
+        print("\n[+] Rectangle (width=5, height=0)")
+        print(f"Result: '{art.draw_rectangle(5, 0, 'X')}' (should be empty string)")
+
+        print("\n--- Testing Error Handling ---")
+        try:
+            print("\n[!] Attempting to draw with negative width...")
+            art.draw_square(-3, "!")
+        except ValueError as e:
+            print(f"Successfully caught error: {e}")
+            
+        try:
+            print("\n[!] Attempting to draw with multi-character symbol...")
+            art.draw_rectangle(4, 4, "XX")
+        except ValueError as e:
+            print(f"Successfully caught error: {e}")
+            
+        try:
+            print("\n[!] Attempting to draw with whitespace symbol...")
+            art.draw_pyramid(5, " ")
+        except ValueError as e:
+            print(f"Successfully caught error: {e}")
+
+        try:
+            print("\n[!] Attempting to draw with non-integer dimension...")
+            art.draw_triangle(5.5, 3, "%")
+        except TypeError as e:
+            print(f"Successfully caught error: {e}")
+
+    except (ValueError, TypeError) as e:
+        print(f"\nAn unexpected error occurred during demonstration: {e}")
+

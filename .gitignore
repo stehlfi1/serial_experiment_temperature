@@ -176,7 +176,6 @@ cython_debug/
 # Experimental data and generated code
 archive/
 generated/
-dry_run_output/
 dry_run_output_backup/
 CLAUDE.md
 FUTURE_METRICS_TODO.md

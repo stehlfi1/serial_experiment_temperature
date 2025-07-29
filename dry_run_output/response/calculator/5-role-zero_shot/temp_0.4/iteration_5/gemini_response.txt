@@ -1,0 +1,238 @@
+Of course. As a senior software developer, I understand the importance of creating code that is not only functional but also robust, maintainable, and secure, aligning with the principles of the ISO/IEC 25010 standard.
+
+Here is a high-quality Python implementation of a console-based calculator.
+
+### Design Rationale (ISO/IEC 25010 Alignment)
+
+Before presenting the code, here is a brief explanation of how the design adheres to the requested quality characteristics:
+
+*   **Functional Suitability (Correctness):** The implementation uses a combination of two classic computer science algorithms: a **tokenizer** to parse the input string and the **Shunting-yard algorithm** to convert the infix expression to Reverse Polish Notation (RPN). RPN is then evaluated. This approach correctly handles operator precedence and parentheses without ambiguity.
+*   **Performance Efficiency:** The tokenizer, Shunting-yard algorithm, and RPN evaluation all operate in linear time (O(n)), where n is the length of the expression. This is highly efficient for this task.
+*   **Maintainability (Modularity & Readability):**
+    *   The logic is separated into private helper methods: `_tokenize`, `_to_rpn` (Shunting-yard), and `_evaluate_rpn`. Each method has a single, clear responsibility.
+    *   Class-level constants (`_OPERATORS`, `_PRECEDENCE`) are used for easy configuration and clarity.
+    *   Code is documented with type hints and comprehensive docstrings explaining the purpose, parameters, and return values of each method.
+*   **Reliability (Maturity & Fault Tolerance):**
+    *   The code explicitly handles and raises standard Python exceptions for specific failure modes: `ValueError` for malformed expressions (e.g., invalid characters, unbalanced parentheses) and `ZeroDivisionError` for illegal mathematical operations.
+    *   Input is sanitized and validated at multiple stages.
+*   **Security (Safety):** The most critical security requirement—avoiding `eval()`—is met. By parsing the expression manually, we prevent arbitrary code execution vulnerabilities that `eval()` would introduce.
+*   **Usability & Portability:** The code is written in standard Python 3 with no external dependencies, making it highly portable. The `Calculator` class provides a simple, clear interface (`calculate()`).
+
+---
+
+### Calculator Implementation
+
+```python
+import re
+
+class Calculator:
+    """
+    A robust, console-based arithmetic calculator that evaluates string expressions.
+
+    This calculator adheres to standard operator precedence, supports parentheses,
+    and handles integers, floating-point numbers, and negative values.
+
+    It is implemented with a focus on safety and maintainability, using a
+    tokenizer and the Shunting-yard algorithm to parse and evaluate expressions
+    without using Python's `eval()` function.
+
+    ISO/IEC 25010 Principles Applied:
+    - Functional Suitability: Correctly computes expressions with precedence and parentheses.
+    - Performance Efficiency: O(n) time complexity.
+    - Maintainability: Modular design with clear, documented helper methods.
+    - Reliability: Robust error handling for invalid input and operations.
+    - Security: Avoids `eval()` to prevent code injection vulnerabilities.
+    """
+
+    def __init__(self):
+        """Initializes the Calculator, defining operators and their precedence."""
+        self._OPERATORS = {'+', '-', '*', '/'}
+        self._PRECEDENCE = {'+': 1, '-': 1, '*': 2, '/': 2}
+
+    def _is_number(self, token: str) -> bool:
+        """Checks if a token can be converted to a float."""
+        try:
+            float(token)
+            return True
+        except ValueError:
+            return False
+
+    def _tokenize(self, expression: str) -> list[str]:
+        """
+        Converts an infix expression string into a list of tokens.
+
+        This method handles numbers (including floats and negatives), operators,
+        and parentheses. It also performs initial validation for invalid characters.
+
+        Args:
+            expression: The mathematical expression string.
+
+        Returns:
+            A list of tokens (numbers, operators, parentheses).
+
+        Raises:
+            ValueError: If the expression contains invalid characters.
+        """
+        if not expression:
+            raise ValueError("Expression cannot be empty.")
+
+        # Use regex to find all numbers, operators, and parentheses
+        # This pattern correctly handles floating point numbers and separates all symbols.
+        token_regex = r'(\d+\.?\d*|\.\d+|[+\-*/()])'
+        tokens = re.findall(token_regex, expression.replace(" ", ""))
+
+        # Check for any characters that were not tokenized
+        if "".join(tokens) != expression.replace(" ", ""):
+            raise ValueError("Expression contains invalid characters.")
+            
+        # Handle unary minus: e.g., -5 or (-5)
+        # We convert it by prepending a 0, e.g., -5 -> 0-5
+        processed_tokens = []
+        for i, token in enumerate(tokens):
+            if token == '-' and (i == 0 or tokens[i-1] in self._OPERATORS or tokens[i-1] == '('):
+                processed_tokens.append('0')
+            processed_tokens.append(token)
+            
+        return processed_tokens
+
+    def _to_rpn(self, tokens: list[str]) -> list[str]:
+        """
+        Converts a list of infix tokens to Reverse Polish Notation (RPN)
+        using the Shunting-yard algorithm.
+
+        Args:
+            tokens: A list of tokens from the _tokenize method.
+
+        Returns:
+            A list of tokens in RPN order.
+
+        Raises:
+            ValueError: If the expression has mismatched parentheses.
+        """
+        output_queue = []
+        operator_stack = []
+
+        for token in tokens:
+            if self._is_number(token):
+                output_queue.append(token)
+            elif token in self._OPERATORS:
+                while (operator_stack and
+                       operator_stack[-1] in self._OPERATORS and
+                       self._PRECEDENCE[operator_stack[-1]] >= self._PRECEDENCE[token]):
+                    output_queue.append(operator_stack.pop())
+                operator_stack.append(token)
+            elif token == '(':
+                operator_stack.append(token)
+            elif token == ')':
+                while operator_stack and operator_stack[-1] != '(':
+                    output_queue.append(operator_stack.pop())
+                if not operator_stack or operator_stack[-1] != '(':
+                    raise ValueError("Mismatched parentheses in expression.")
+                operator_stack.pop()  # Discard the '('
+
+        while operator_stack:
+            operator = operator_stack.pop()
+            if operator == '(':
+                raise ValueError("Mismatched parentheses in expression.")
+            output_queue.append(operator)
+
+        return output_queue
+
+    def _evaluate_rpn(self, rpn_tokens: list[str]) -> float:
+        """
+        Evaluates a token list in Reverse Polish Notation (RPN).
+
+        Args:
+            rpn_tokens: A list of tokens in RPN order.
+
+        Returns:
+            The final calculated result as a float.
+
+        Raises:
+            ValueError: If the expression is malformed.
+            ZeroDivisionError: If division by zero is attempted.
+        """
+        value_stack = []
+        for token in rpn_tokens:
+            if self._is_number(token):
+                value_stack.append(float(token))
+            elif token in self._OPERATORS:
+                if len(value_stack) < 2:
+                    raise ValueError("Invalid expression: insufficient operands for operator.")
+                
+                operand2 = value_stack.pop()
+                operand1 = value_stack.pop()
+
+                if token == '+':
+                    value_stack.append(operand1 + operand2)
+                elif token == '-':
+                    value_stack.append(operand1 - operand2)
+                elif token == '*':
+                    value_stack.append(operand1 * operand2)
+                elif token == '/':
+                    if operand2 == 0:
+                        raise ZeroDivisionError("Division by zero is not allowed.")
+                    value_stack.append(operand1 / operand2)
+
+        if len(value_stack) != 1:
+            raise ValueError("Invalid expression: too many operands.")
+
+        return value_stack[0]
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates a mathematical expression provided as a string.
+
+        This is the main public method that orchestrates the tokenization,
+        conversion to RPN, and final evaluation.
+
+        Args:
+            expression: The mathematical expression to evaluate.
+
+        Returns:
+            The result of the calculation as a float.
+
+        Raises:
+            ValueError: For invalid expressions (e.g., bad characters,
+                        mismatched parentheses).
+            ZeroDivisionError: For division by zero.
+        """
+        try:
+            tokens = self._tokenize(expression)
+            rpn_tokens = self._to_rpn(tokens)
+            result = self._evaluate_rpn(rpn_tokens)
+            return result
+        except (ValueError, ZeroDivisionError) as e:
+            # Re-raise exceptions to be handled by the caller
+            raise e
+        except Exception as e:
+            # Catch any other unexpected errors and wrap them
+            raise ValueError(f"An unexpected error occurred: {e}")
+
+
+if __name__ == '__main__':
+    """
+    Main execution block to demonstrate the Calculator's functionality.
+    Provides a simple command-line interface for users to enter expressions.
+    """
+    calculator = Calculator()
+    print("--- High-Quality Python Calculator ---")
+    print("Enter an arithmetic expression or 'exit' to quit.")
+    print("Supported operations: +, -, *, / and parentheses ().")
+    print("Example: 3.5 * (2 + 3) - 1 / 2\n")
+
+    while True:
+        try:
+            user_input = input(">> ")
+            if user_input.lower() == 'exit':
+                break
+            
+            result = calculator.calculate(user_input)
+            print(f"Result: {result}")
+
+        except (ValueError, ZeroDivisionError) as e:
+            print(f"Error: {e}")
+        except KeyboardInterrupt:
+            print("\nExiting calculator.")
+            break
+```

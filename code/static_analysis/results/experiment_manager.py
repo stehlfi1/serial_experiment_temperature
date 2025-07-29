@@ -75,8 +75,6 @@ class ExperimentManager:
     def _parse_metrics(self, metrics_data: Dict[str, Any]) -> TestMetrics:
         return TestMetrics(
             compilability=metrics_data.get("compilability", {}),
-            code_length=metrics_data.get("code_length", {}),
-            modularity=metrics_data.get("modularity", {}),
             functional_completeness=metrics_data.get("functional_completeness", {}),
             functional_correctness=metrics_data.get("functional_correctness"),
             quality=metrics_data.get("quality"),

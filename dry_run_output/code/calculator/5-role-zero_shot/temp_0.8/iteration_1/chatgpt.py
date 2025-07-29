@@ -1,0 +1,238 @@
+
+from typing import List, Union
+
+class Calculator:
+    """
+    A console-based arithmetic calculator supporting +, -, *, /, parentheses,
+    and both integer and floating-point numbers (including negative values).
+
+    Conforms to ISO/IEC 25010 qualities: correctness, performance,
+    modularity, safety, testability, readability, and documentation.
+    """
+
+    # Supported operators and their precedence/associativity
+    _OPERATORS = {
+        '+': {'precedence': 1, 'associativity': 'L'},
+        '-': {'precedence': 1, 'associativity': 'L'},
+        '*': {'precedence': 2, 'associativity': 'L'},
+        '/': {'precedence': 2, 'associativity': 'L'},
+    }
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluate an arithmetic expression.
+
+        Parameters:
+            expression (str): The arithmetic expression to evaluate.
+
+        Returns:
+            float: The result of the evaluation.
+
+        Raises:
+            ValueError: If the expression is invalid, contains invalid characters,
+                        has unbalanced parentheses, or division by zero.
+        """
+        tokens = self._tokenize(expression)
+        postfix = self._to_postfix(tokens)
+        result = self._evaluate_postfix(postfix)
+        return result
+
+    def _tokenize(self, expr: str) -> List[Union[str, float]]:
+        """
+        Converts the expression to a list of tokens (numbers, operators, parentheses).
+
+        Raises ValueError for invalid characters, malformed numbers, or unbalanced parentheses.
+        """
+        tokens = []
+        i = 0
+        length = len(expr)
+        paren_count = 0
+        last_token = None
+
+        while i < length:
+            char = expr[i]
+
+            # Skip whitespace
+            if char.isspace():
+                i += 1
+                continue
+
+            # Number (support for negative and floating point)
+            if char.isdigit() or (char == '.' and i + 1 < length and expr[i + 1].isdigit()) \
+               or (char == '-' and (
+                    last_token in (None, '(', '+', '-', '*', '/') or (i == 0)
+                ) and (
+                    (i + 1 < length and (expr[i + 1].isdigit() or expr[i + 1] == '.'))
+                )):
+                num_str = ''
+                if char == '-':
+                    num_str += '-'
+                    i += 1
+                    if i >= length:
+                        raise ValueError("Invalid number at the end of expression.")
+                    char = expr[i]
+
+                dot_count = 0
+                while i < length and (expr[i].isdigit() or expr[i] == '.'):
+                    if expr[i] == '.':
+                        dot_count += 1
+                        if dot_count > 1:
+                            raise ValueError(f"Malformed number: multiple decimals in {num_str + expr[i]}")
+                    num_str += expr[i]
+                    i += 1
+                try:
+                    number = float(num_str)
+                except ValueError:
+                    raise ValueError(f"Malformed number: {num_str}")
+                tokens.append(number)
+                last_token = 'number'
+                continue
+
+            # Parentheses
+            if char == '(':
+                tokens.append('(')
+                paren_count += 1
+                last_token = '('
+                i += 1
+                continue
+            if char == ')':
+                tokens.append(')')
+                paren_count -= 1
+                if paren_count < 0:
+                    raise ValueError("Unbalanced parentheses detected.")
+                last_token = ')'
+                i += 1
+                continue
+
+            # Operators
+            if char in self._OPERATORS:
+                # Prevent two consecutive operators (except unary minus, handled above)
+                if last_token in self._OPERATORS and char != '-':
+                    raise ValueError(f"Consecutive operators: {last_token}{char}")
+                tokens.append(char)
+                last_token = char
+                i += 1
+                continue
+
+            # Invalid character
+            raise ValueError(f"Invalid character detected: '{char}'")
+
+        if paren_count != 0:
+            raise ValueError("Unbalanced parentheses detected.")
+
+        return tokens
+
+    def _to_postfix(self, tokens: List[Union[str, float]]) -> List[Union[str, float]]:
+        """
+        Converts the list of tokens from infix to postfix notation (Shunting Yard Algorithm).
+
+        Raises ValueError for syntax errors (e.g. misplaced operators or parentheses).
+        """
+        output = []
+        stack = []
+        last_token_type = None
+
+        for token in tokens:
+            if isinstance(token, float):
+                output.append(token)
+                last_token_type = 'number'
+            elif token in self._OPERATORS:
+                while stack:
+                    top = stack[-1]
+                    if top in self._OPERATORS:
+                        curr = self._OPERATORS[token]
+                        top_op = self._OPERATORS[top]
+                        if (curr['associativity'] == 'L' and curr['precedence'] <= top_op['precedence']) or \
+                           (curr['associativity'] == 'R' and curr['precedence'] < top_op['precedence']):
+                            output.append(stack.pop())
+                            continue
+                    break
+                stack.append(token)
+                last_token_type = 'operator'
+            elif token == '(':
+                stack.append(token)
+                last_token_type = '('
+            elif token == ')':
+                found_left_paren = False
+                while stack:
+                    top = stack.pop()
+                    if top == '(':
+                        found_left_paren = True
+                        break
+                    output.append(top)
+                if not found_left_paren:
+                    raise ValueError("Mismatched parentheses in expression.")
+                last_token_type = ')'
+            else:
+                raise ValueError(f"Unknown token: {token}")
+
+        while stack:
+            top = stack.pop()
+            if top == '(' or top == ')':
+                raise ValueError("Mismatched parentheses in expression.")
+            output.append(top)
+
+        return output
+
+    def _evaluate_postfix(self, postfix: List[Union[str, float]]) -> float:
+        """
+        Evaluates a postfix (RPN) list of tokens.
+
+        Raises ValueError for division by zero, or malformed syntax.
+        """
+        stack = []
+        for token in postfix:
+            if isinstance(token, float):
+                stack.append(token)
+            elif token in self._OPERATORS:
+                if len(stack) < 2:
+                    raise ValueError("Malformed expression: insufficient operands.")
+                b = stack.pop()
+                a = stack.pop()
+                result = self._apply_operator(a, b, token)
+                stack.append(result)
+            else:
+                raise ValueError(f"Unknown token in evaluation: {token}")
+
+        if len(stack) != 1:
+            raise ValueError("Malformed expression: too many operands.")
+
+        return stack[0]
+
+    def _apply_operator(self, a: float, b: float, op: str) -> float:
+        """
+        Applies a binary operator to two floats, with division by zero protection.
+        """
+        if op == '+':
+            return a + b
+        elif op == '-':
+            return a - b
+        elif op == '*':
+            return a * b
+        elif op == '/':
+            if b == 0:
+                raise ValueError("Division by zero.")
+            return a / b
+        else:
+            raise ValueError(f"Unsupported operator: {op}")
+
+# Example usage & simple test cases:
+if __name__ == '__main__':
+    calc = Calculator()
+    examples = [
+        "3 + 4 * 2 / (1 - 5)",
+        "-2.5 + ((6 - 3) * 2.0)",
+        "(1 + 2) * (3 + 4)",
+        "10 / 2 + 3.5",
+        "5 + -3 * (2 + 1)",
+        "-(3 + 2) * 4",  # should raise error, as unary minus before parenthesis not supported
+        "4 / 0",         # should raise error: division by zero
+        "2 + (3 * 4",    # should raise error: unbalanced parenthesis
+        "2 + $5",        # should raise error: invalid character
+    ]
+    for expr in examples:
+        try:
+            result = calc.calculate(expr)
+            print(f"{expr} = {result}")
+        except Exception as e:
+            print(f"{expr!r} -> Error: {e}")

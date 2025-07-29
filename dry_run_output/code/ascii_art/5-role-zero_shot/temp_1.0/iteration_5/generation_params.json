@@ -1,0 +1,26 @@
+{
+  "generation_timestamp": "2025-06-14T04:53:40.259600",
+  "models": {
+    "chatgpt": {
+      "temperature": 1.0,
+      "top_k": null,
+      "top_p": null,
+      "model_id": "openai/gpt-4.1",
+      "provider": "openai"
+    },
+    "claude": {
+      "temperature": 1.0,
+      "top_k": null,
+      "top_p": null,
+      "model_id": "anthropic/claude-sonnet-4",
+      "provider": "anthropic"
+    },
+    "gemini": {
+      "temperature": 1.0,
+      "top_k": null,
+      "top_p": null,
+      "model_id": "google/gemini-2.5-pro",
+      "provider": "google"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "model": "gemini",
+  "challenge": "ascii_art",
+  "prompt": "5-role-zero_shot",
+  "generated_at": "2025-07-12T23:13:24.336345",
+  "analysis_summary": {
+    "error": "Need at least 2 iterations, found 0",
+    "temperature_params": {
+      "temperature": 0.5,
+      "top_k": null,
+      "top_p": null,
+      "temperature_folder": "temp_0.5"
+    }
+  }
+}

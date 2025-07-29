@@ -1,0 +1,233 @@
+```python
+import sys
+from typing import List, Dict
+
+
+class TaskNotFoundError(Exception):
+    """Custom exception raised when a task with given ID is not found."""
+
+
+class InvalidInputError(Exception):
+    """Custom exception raised for invalid input parameters."""
+
+
+class Task:
+    """
+    Represents a single task in the todo list.
+    """
+
+    def __init__(self, task_id: int, name: str, description: str):
+        """
+        Initialize a new task.
+
+        :param task_id: Unique identifier for the task.
+        :param name: Name/title of the task.
+        :param description: Detailed description of the task.
+        """
+        self.id = task_id
+        self.name = name
+        self.description = description
+        self.is_finished = False
+
+    def to_dict(self) -> Dict:
+        """
+        Converts the Task object to a dictionary.
+
+        :return: Dictionary representation of the task.
+        """
+        return {
+            "id": self.id,
+            "task_name": self.name,
+            "task_description": self.description,
+            "is_finished": self.is_finished
+        }
+
+
+class TaskManager:
+    """
+    Manages a collection of tasks, supporting add, remove, search, finish, get_all, and clear_all operations.
+    """
+
+    def __init__(self):
+        """
+        Initialize the TaskManager with in-memory storage and ID counter.
+        """
+        self._tasks: Dict[int, Task] = {}
+        self._next_id: int = 1
+
+    def _validate_task_id(self, task_id: int):
+        if not isinstance(task_id, int) or task_id < 1:
+            raise InvalidInputError("Task ID must be a positive integer.")
+        if task_id not in self._tasks:
+            raise TaskNotFoundError(f"No task with ID {task_id} exists.")
+
+    def _validate_non_empty_string(self, value: str, field_name: str):
+        if not isinstance(value, str) or not value.strip():
+            raise InvalidInputError(f"{field_name} must be a non-empty string.")
+
+    def add(self, task_name: str, task_description: str) -> int:
+        """
+        Add a new task.
+        
+        :param task_name: Name of the task (non-empty string).
+        :param task_description: Description of the task (non-empty string).
+        :return: Unique integer ID of the created task.
+        """
+        self._validate_non_empty_string(task_name, "Task name")
+        self._validate_non_empty_string(task_description, "Task description")
+
+        task_id = self._next_id
+        self._tasks[task_id] = Task(task_id, task_name.strip(), task_description.strip())
+        self._next_id += 1
+        return task_id
+
+    def remove(self, task_id: int) -> bool:
+        """
+        Remove a task by its ID.
+
+        :param task_id: Unique integer ID of task to remove.
+        :return: True if removal was successful.
+        :raises: InvalidInputError or TaskNotFoundError for invalid or nonexistent ID.
+        """
+        self._validate_task_id(task_id)
+        del self._tasks[task_id]
+        return True
+
+    def search(self, task_term: str) -> List[Dict]:
+        """
+        Search for tasks by a term in their name or description. Case-insensitive.
+
+        :param task_term: Term to search for (non-empty string).
+        :return: List of matching tasks as dictionaries.
+        """
+        self._validate_non_empty_string(task_term, "Search term")
+        term_lower = task_term.lower()
+        matches = [
+            task.to_dict()
+            for task in self._tasks.values()
+            if term_lower in task.name.lower() or term_lower in task.description.lower()
+        ]
+        return matches
+
+    def finish(self, task_id: int) -> bool:
+        """
+        Mark a task as finished/completed by its ID.
+
+        :param task_id: Unique integer ID of the task.
+        :return: True if operation succeeds.
+        :raises: InvalidInputError or TaskNotFoundError for invalid or nonexistent ID.
+        """
+        self._validate_task_id(task_id)
+        self._tasks[task_id].is_finished = True
+        return True
+
+    def get_all(self) -> List[Dict]:
+        """
+        Retrieve all the tasks managed by TaskManager.
+
+        :return: List of all tasks as dictionaries.
+        """
+        # Sorting by ID provides a deterministic order
+        return [self._tasks[tid].to_dict() for tid in sorted(self._tasks.keys())]
+
+    def clear_all(self) -> bool:
+        """
+        Remove all tasks from the todo list.
+
+        :return: True if operation succeeds.
+        """
+        self._tasks.clear()
+        return True
+
+
+def main():
+    """
+    Simple console interface to interact with TaskManager.
+    """
+    manager = TaskManager()
+
+    def print_menu():
+        print("\nTodo List App")
+        print("1. Add Task")
+        print("2. Remove Task")
+        print("3. Search Tasks")
+        print("4. Finish Task")
+        print("5. Get All Tasks")
+        print("6. Clear All Tasks")
+        print("0. Exit")
+
+    while True:
+        print_menu()
+        choice = input("Enter your choice: ").strip()
+        try:
+            if choice == "1":
+                name = input("Task name: ")
+                desc = input("Task description: ")
+                task_id = manager.add(name, desc)
+                print(f"Task added with ID {task_id}.")
+
+            elif choice == "2":
+                task_id_str = input("Enter task ID to remove: ")
+                if not task_id_str.isdigit():
+                    raise InvalidInputError("ID must be a positive integer.")
+                if manager.remove(int(task_id_str)):
+                    print("Task removed successfully.")
+
+            elif choice == "3":
+                term = input("Enter search term: ")
+                results = manager.search(term)
+                if results:
+                    print("Matching tasks:")
+                    for t in results:
+                        print(t)
+                else:
+                    print("No tasks match the search term.")
+
+            elif choice == "4":
+                task_id_str = input("Enter task ID to finish: ")
+                if not task_id_str.isdigit():
+                    raise InvalidInputError("ID must be a positive integer.")
+                if manager.finish(int(task_id_str)):
+                    print("Task marked as finished.")
+
+            elif choice == "5":
+                tasks = manager.get_all()
+                if tasks:
+                    for t in tasks:
+                        print(t)
+                else:
+                    print("No tasks found.")
+
+            elif choice == "6":
+                confirm = input("Are you sure you want to clear all tasks? (yes/no): ")
+                if confirm.lower() == "yes":
+                    if manager.clear_all():
+                        print("All tasks cleared.")
+                else:
+                    print("Operation cancelled.")
+
+            elif choice == "0":
+                print("Exiting application.")
+                break
+
+            else:
+                print("Invalid choice. Please enter a number from 0 to 6.")
+
+        except (InvalidInputError, TaskNotFoundError) as e:
+            print(f"Error: {e}")
+        except (KeyboardInterrupt, EOFError):
+            print("\nExiting application.")
+            break
+
+if __name__ == "__main__":
+    main()
+```
+**Key Aspects of the Implementation:**
+- **OOP and Modularity**: TaskManager encapsulates all task-related operations. A separate `Task` class represents individual tasks.
+- **Validation & Error Handling**: Input validation is performed using custom exceptions, ensuring robust and safe code.
+- **Efficiency**: Dictionary-based storage allows fast lookups, insertions, and deletions by task_id.
+- **ISO/IEC 25010 Qualities**: Maintainability (clear structure & docstrings), correctness (strict validation), safety (well-managed state & errors), testability (simple pure methods), performance (hash lookups).
+- **Console Interface**: For demonstration, a simple interactive loop is provided, easily removed or replaced for automated testing.
+- **Readability & Documentation**: Each method is documented, and code follows clear formatting.
+
+**Note**: For production, persistent storage, async patterns, or more advanced CLI parsing would be recommended.

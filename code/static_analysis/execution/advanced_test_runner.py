@@ -60,19 +60,19 @@ class AdvancedTestRunner:
             # Map to AdvancedMetrics dataclass
             metrics = AdvancedMetrics()
             
-            # Map complexity data
+            # Map complexity data (consolidated - arrays removed for output efficiency)
             complexity_data = complexity_result["data"]["cyclomatic_complexity"]
             metrics.cyclomatic_complexity = complexity_data["total"]
-            metrics.cyclomatic_complexity_per_function = complexity_data["per_function"]
+            # Skip per_function arrays - not needed in consolidated output
             
             cognitive_data = complexity_result["data"]["cognitive_complexity"]
             metrics.cognitive_complexity = cognitive_data["total"]
-            metrics.cognitive_complexity_per_function = cognitive_data["per_function"]
+            # Skip per_function arrays - not needed in consolidated output
             
             nesting_data = complexity_result["data"]["nesting_depth"]
             metrics.max_nesting_depth = nesting_data["max_overall"]
             metrics.avg_nesting_depth = nesting_data["average"]
-            metrics.nesting_depth_per_function = nesting_data["per_function"]
+            # Skip per_function arrays - not needed in consolidated output
             
             # Map complexity distribution data
             distribution_data = complexity_data["distribution"]
@@ -107,14 +107,13 @@ class AdvancedTestRunner:
             metrics.blank_lines = size_data["lines"]["blank"]
             metrics.code_to_comment_ratio = size_data["lines"]["code_to_comment_ratio"]
             
-            # Function and class metrics
+            # Function and class metrics (consolidated - arrays removed for output efficiency)
             metrics.function_count = size_data["functions"]["count"]
             metrics.class_count = size_data["classes"]["count"]
             metrics.method_count = size_data["functions"]["method_count"]
-            metrics.methods_per_class = size_data["classes"]["methods_per_class"]
-            metrics.parameters_per_function = size_data["functions"]["parameters_per_function"]
+            # Skip array fields - not needed in consolidated output:
+            # - methods_per_class, parameters_per_function, wmc_per_class
             metrics.avg_parameters_per_function = size_data["functions"]["avg_parameters_per_function"]
-            metrics.wmc_per_class = size_data["classes"]["wmc_per_class"]
             metrics.avg_wmc = size_data["classes"]["avg_wmc"]
             
             # Import metrics
@@ -146,9 +145,9 @@ class AdvancedTestRunner:
     
     def _calculate_structure_metrics(self, metrics: AdvancedMetrics):
         """Calculate structural and OOP metrics."""
-        # Inheritance metrics
+        # Inheritance metrics (consolidated - arrays removed for output efficiency)  
         if self.analyzer.inheritance_depths:
-            metrics.depth_of_inheritance = self.analyzer.inheritance_depths.copy()
+            # Skip depth_of_inheritance array - not needed in consolidated output
             metrics.max_dit = max(self.analyzer.inheritance_depths)
             metrics.avg_dit = sum(self.analyzer.inheritance_depths) / len(self.analyzer.inheritance_depths)
         

@@ -1,0 +1,423 @@
+{
+  "model": "gemini",
+  "challenge": "calculator",
+  "prompt": "5-role-zero_shot",
+  "generated_at": "2025-07-12T18:54:24.889083",
+  "analysis_summary": {
+    "iterations_analyzed": 10,
+    "pairwise_comparisons": 45,
+    "temperature_params": {
+      "temperature": 1.0,
+      "top_k": null,
+      "top_p": null,
+      "temperature_folder": "temp_1.0"
+    }
+  },
+  "similarities": {
+    "iter_1_vs_2": {
+      "ast_edit_distance": 182,
+      "tsed": 195.0,
+      "node_histogram_distance": 0.2267,
+      "subtree_overlap_ratio": 0.1321,
+      "jaccard_identifiers": 0.356,
+      "jaccard_tokens": 0.4459,
+      "jaccard_ast_names": 0.3766
+    },
+    "iter_1_vs_3": {
+      "ast_edit_distance": 1051,
+      "tsed": 1115.0,
+      "node_histogram_distance": 0.2841,
+      "subtree_overlap_ratio": 0.1626,
+      "jaccard_identifiers": 0.4143,
+      "jaccard_tokens": 0.4938,
+      "jaccard_ast_names": 0.4412
+    },
+    "iter_1_vs_4": {
+      "ast_edit_distance": 249,
+      "tsed": 264.0,
+      "node_histogram_distance": 0.2802,
+      "subtree_overlap_ratio": 0.1868,
+      "jaccard_identifiers": 0.4008,
+      "jaccard_tokens": 0.4903,
+      "jaccard_ast_names": 0.3974
+    },
+    "iter_1_vs_5": {
+      "ast_edit_distance": 152,
+      "tsed": 167.0,
+      "node_histogram_distance": 0.3073,
+      "subtree_overlap_ratio": 0.1622,
+      "jaccard_identifiers": 0.3625,
+      "jaccard_tokens": 0.4551,
+      "jaccard_ast_names": 0.4412
+    },
+    "iter_1_vs_6": {
+      "ast_edit_distance": 490,
+      "tsed": 524.0,
+      "node_histogram_distance": 0.3481,
+      "subtree_overlap_ratio": 0.1562,
+      "jaccard_identifiers": 0.348,
+      "jaccard_tokens": 0.4282,
+      "jaccard_ast_names": 0.4583
+    },
+    "iter_1_vs_7": {
+      "ast_edit_distance": 184,
+      "tsed": 201.0,
+      "node_histogram_distance": 0.2194,
+      "subtree_overlap_ratio": 0.2404,
+      "jaccard_identifiers": 0.4043,
+      "jaccard_tokens": 0.5051,
+      "jaccard_ast_names": 0.5556
+    },
+    "iter_1_vs_8": {
+      "ast_edit_distance": 211,
+      "tsed": 225.0,
+      "node_histogram_distance": 0.2101,
+      "subtree_overlap_ratio": 0.1571,
+      "jaccard_identifiers": 0.375,
+      "jaccard_tokens": 0.4638,
+      "jaccard_ast_names": 0.4
+    },
+    "iter_1_vs_9": {
+      "ast_edit_distance": 225,
+      "tsed": 239.0,
+      "node_histogram_distance": 0.2007,
+      "subtree_overlap_ratio": 0.1749,
+      "jaccard_identifiers": 0.3908,
+      "jaccard_tokens": 0.4749,
+      "jaccard_ast_names": 0.4559
+    },
+    "iter_1_vs_10": {
+      "ast_edit_distance": 204,
+      "tsed": 222.0,
+      "node_histogram_distance": 0.3041,
+      "subtree_overlap_ratio": 0.1695,
+      "jaccard_identifiers": 0.3827,
+      "jaccard_tokens": 0.4771,
+      "jaccard_ast_names": 0.411
+    },
+    "iter_2_vs_3": {
+      "ast_edit_distance": 868,
+      "tsed": 909.0,
+      "node_histogram_distance": 0.172,
+      "subtree_overlap_ratio": 0.2068,
+      "jaccard_identifiers": 0.4286,
+      "jaccard_tokens": 0.5107,
+      "jaccard_ast_names": 0.4054
+    },
+    "iter_2_vs_4": {
+      "ast_edit_distance": 295,
+      "tsed": 310.0,
+      "node_histogram_distance": 0.1477,
+      "subtree_overlap_ratio": 0.2231,
+      "jaccard_identifiers": 0.3937,
+      "jaccard_tokens": 0.489,
+      "jaccard_ast_names": 0.4744
+    },
+    "iter_2_vs_5": {
+      "ast_edit_distance": 265,
+      "tsed": 279.0,
+      "node_histogram_distance": 0.1892,
+      "subtree_overlap_ratio": 0.2595,
+      "jaccard_identifiers": 0.4752,
+      "jaccard_tokens": 0.5512,
+      "jaccard_ast_names": 0.5758
+    },
+    "iter_2_vs_6": {
+      "ast_edit_distance": 868,
+      "tsed": 909.0,
+      "node_histogram_distance": 0.2329,
+      "subtree_overlap_ratio": 0.1969,
+      "jaccard_identifiers": 0.4185,
+      "jaccard_tokens": 0.487,
+      "jaccard_ast_names": 0.48
+    },
+    "iter_2_vs_7": {
+      "ast_edit_distance": 267,
+      "tsed": 281.0,
+      "node_histogram_distance": 0.1719,
+      "subtree_overlap_ratio": 0.2397,
+      "jaccard_identifiers": 0.4375,
+      "jaccard_tokens": 0.5233,
+      "jaccard_ast_names": 0.4857
+    },
+    "iter_2_vs_8": {
+      "ast_edit_distance": 259,
+      "tsed": 273.0,
+      "node_histogram_distance": 0.1257,
+      "subtree_overlap_ratio": 0.2622,
+      "jaccard_identifiers": 0.4807,
+      "jaccard_tokens": 0.5627,
+      "jaccard_ast_names": 0.4857
+    },
+    "iter_2_vs_9": {
+      "ast_edit_distance": 273,
+      "tsed": 287.0,
+      "node_histogram_distance": 0.1382,
+      "subtree_overlap_ratio": 0.1924,
+      "jaccard_identifiers": 0.4477,
+      "jaccard_tokens": 0.5284,
+      "jaccard_ast_names": 0.4189
+    },
+    "iter_2_vs_10": {
+      "ast_edit_distance": 288,
+      "tsed": 303.0,
+      "node_histogram_distance": 0.183,
+      "subtree_overlap_ratio": 0.2852,
+      "jaccard_identifiers": 0.4686,
+      "jaccard_tokens": 0.5497,
+      "jaccard_ast_names": 0.5352
+    },
+    "iter_3_vs_4": {
+      "ast_edit_distance": 326,
+      "tsed": 341.0,
+      "node_histogram_distance": 0.1607,
+      "subtree_overlap_ratio": 0.2108,
+      "jaccard_identifiers": 0.4397,
+      "jaccard_tokens": 0.5076,
+      "jaccard_ast_names": 0.4267
+    },
+    "iter_3_vs_5": {
+      "ast_edit_distance": 313,
+      "tsed": 329.0,
+      "node_histogram_distance": 0.1444,
+      "subtree_overlap_ratio": 0.1652,
+      "jaccard_identifiers": 0.4514,
+      "jaccard_tokens": 0.52,
+      "jaccard_ast_names": 0.4118
+    },
+    "iter_3_vs_6": {
+      "ast_edit_distance": 744,
+      "tsed": 791.0,
+      "node_histogram_distance": 0.1716,
+      "subtree_overlap_ratio": 0.2665,
+      "jaccard_identifiers": 0.4562,
+      "jaccard_tokens": 0.5212,
+      "jaccard_ast_names": 0.4714
+    },
+    "iter_3_vs_7": {
+      "ast_edit_distance": 297,
+      "tsed": 311.0,
+      "node_histogram_distance": 0.1876,
+      "subtree_overlap_ratio": 0.2792,
+      "jaccard_identifiers": 0.3992,
+      "jaccard_tokens": 0.48,
+      "jaccard_ast_names": 0.5238
+    },
+    "iter_3_vs_8": {
+      "ast_edit_distance": 287,
+      "tsed": 304.0,
+      "node_histogram_distance": 0.1877,
+      "subtree_overlap_ratio": 0.2125,
+      "jaccard_identifiers": 0.4213,
+      "jaccard_tokens": 0.4969,
+      "jaccard_ast_names": 0.4118
+    },
+    "iter_3_vs_9": {
+      "ast_edit_distance": 304,
+      "tsed": 318.0,
+      "node_histogram_distance": 0.1716,
+      "subtree_overlap_ratio": 0.2136,
+      "jaccard_identifiers": 0.4597,
+      "jaccard_tokens": 0.5222,
+      "jaccard_ast_names": 0.5156
+    },
+    "iter_3_vs_10": {
+      "ast_edit_distance": 319,
+      "tsed": 334.0,
+      "node_histogram_distance": 0.2105,
+      "subtree_overlap_ratio": 0.2219,
+      "jaccard_identifiers": 0.4392,
+      "jaccard_tokens": 0.5092,
+      "jaccard_ast_names": 0.4429
+    },
+    "iter_4_vs_5": {
+      "ast_edit_distance": 561,
+      "tsed": 598.0,
+      "node_histogram_distance": 0.1689,
+      "subtree_overlap_ratio": 0.2371,
+      "jaccard_identifiers": 0.4752,
+      "jaccard_tokens": 0.5472,
+      "jaccard_ast_names": 0.507
+    },
+    "iter_4_vs_6": {
+      "ast_edit_distance": 425,
+      "tsed": 449.0,
+      "node_histogram_distance": 0.1897,
+      "subtree_overlap_ratio": 0.2039,
+      "jaccard_identifiers": 0.3728,
+      "jaccard_tokens": 0.4429,
+      "jaccard_ast_names": 0.425
+    },
+    "iter_4_vs_7": {
+      "ast_edit_distance": 488,
+      "tsed": 518.0,
+      "node_histogram_distance": 0.1766,
+      "subtree_overlap_ratio": 0.2292,
+      "jaccard_identifiers": 0.4315,
+      "jaccard_tokens": 0.5098,
+      "jaccard_ast_names": 0.4267
+    },
+    "iter_4_vs_8": {
+      "ast_edit_distance": 483,
+      "tsed": 516.0,
+      "node_histogram_distance": 0.1802,
+      "subtree_overlap_ratio": 0.228,
+      "jaccard_identifiers": 0.4557,
+      "jaccard_tokens": 0.538,
+      "jaccard_ast_names": 0.4658
+    },
+    "iter_4_vs_9": {
+      "ast_edit_distance": 488,
+      "tsed": 520.0,
+      "node_histogram_distance": 0.1563,
+      "subtree_overlap_ratio": 0.1734,
+      "jaccard_identifiers": 0.4477,
+      "jaccard_tokens": 0.5248,
+      "jaccard_ast_names": 0.4595
+    },
+    "iter_4_vs_10": {
+      "ast_edit_distance": 593,
+      "tsed": 628.0,
+      "node_histogram_distance": 0.1055,
+      "subtree_overlap_ratio": 0.3368,
+      "jaccard_identifiers": 0.5064,
+      "jaccard_tokens": 0.5872,
+      "jaccard_ast_names": 0.6232
+    },
+    "iter_5_vs_6": {
+      "ast_edit_distance": 463,
+      "tsed": 489.0,
+      "node_histogram_distance": 0.2018,
+      "subtree_overlap_ratio": 0.1752,
+      "jaccard_identifiers": 0.4349,
+      "jaccard_tokens": 0.4956,
+      "jaccard_ast_names": 0.4928
+    },
+    "iter_5_vs_7": {
+      "ast_edit_distance": 314,
+      "tsed": 343.0,
+      "node_histogram_distance": 0.1777,
+      "subtree_overlap_ratio": 0.2422,
+      "jaccard_identifiers": 0.4561,
+      "jaccard_tokens": 0.5387,
+      "jaccard_ast_names": 0.5484
+    },
+    "iter_5_vs_8": {
+      "ast_edit_distance": 467,
+      "tsed": 496.0,
+      "node_histogram_distance": 0.1518,
+      "subtree_overlap_ratio": 0.3459,
+      "jaccard_identifiers": 0.513,
+      "jaccard_tokens": 0.5952,
+      "jaccard_ast_names": 0.7143
+    },
+    "iter_5_vs_9": {
+      "ast_edit_distance": 505,
+      "tsed": 535.0,
+      "node_histogram_distance": 0.1819,
+      "subtree_overlap_ratio": 0.1963,
+      "jaccard_identifiers": 0.524,
+      "jaccard_tokens": 0.6035,
+      "jaccard_ast_names": 0.5397
+    },
+    "iter_5_vs_10": {
+      "ast_edit_distance": 401,
+      "tsed": 435.0,
+      "node_histogram_distance": 0.1556,
+      "subtree_overlap_ratio": 0.2454,
+      "jaccard_identifiers": 0.5459,
+      "jaccard_tokens": 0.6194,
+      "jaccard_ast_names": 0.6032
+    },
+    "iter_6_vs_7": {
+      "ast_edit_distance": 454,
+      "tsed": 470.0,
+      "node_histogram_distance": 0.2525,
+      "subtree_overlap_ratio": 0.263,
+      "jaccard_identifiers": 0.375,
+      "jaccard_tokens": 0.4493,
+      "jaccard_ast_names": 0.5606
+    },
+    "iter_6_vs_8": {
+      "ast_edit_distance": 420,
+      "tsed": 445.0,
+      "node_histogram_distance": 0.2571,
+      "subtree_overlap_ratio": 0.1821,
+      "jaccard_identifiers": 0.4385,
+      "jaccard_tokens": 0.5045,
+      "jaccard_ast_names": 0.4714
+    },
+    "iter_6_vs_9": {
+      "ast_edit_distance": 403,
+      "tsed": 426.0,
+      "node_histogram_distance": 0.2519,
+      "subtree_overlap_ratio": 0.136,
+      "jaccard_identifiers": 0.3587,
+      "jaccard_tokens": 0.4327,
+      "jaccard_ast_names": 0.3867
+    },
+    "iter_6_vs_10": {
+      "ast_edit_distance": 477,
+      "tsed": 494.0,
+      "node_histogram_distance": 0.2198,
+      "subtree_overlap_ratio": 0.2156,
+      "jaccard_identifiers": 0.4022,
+      "jaccard_tokens": 0.4726,
+      "jaccard_ast_names": 0.5
+    },
+    "iter_7_vs_8": {
+      "ast_edit_distance": 308,
+      "tsed": 335.0,
+      "node_histogram_distance": 0.1254,
+      "subtree_overlap_ratio": 0.2942,
+      "jaccard_identifiers": 0.4483,
+      "jaccard_tokens": 0.5342,
+      "jaccard_ast_names": 0.5238
+    },
+    "iter_7_vs_9": {
+      "ast_edit_distance": 345,
+      "tsed": 373.0,
+      "node_histogram_distance": 0.1337,
+      "subtree_overlap_ratio": 0.2116,
+      "jaccard_identifiers": 0.4716,
+      "jaccard_tokens": 0.547,
+      "jaccard_ast_names": 0.4697
+    },
+    "iter_7_vs_10": {
+      "ast_edit_distance": 513,
+      "tsed": 535.0,
+      "node_histogram_distance": 0.1786,
+      "subtree_overlap_ratio": 0.2711,
+      "jaccard_identifiers": 0.487,
+      "jaccard_tokens": 0.5636,
+      "jaccard_ast_names": 0.4853
+    },
+    "iter_8_vs_9": {
+      "ast_edit_distance": 434,
+      "tsed": 467.0,
+      "node_histogram_distance": 0.1094,
+      "subtree_overlap_ratio": 0.2509,
+      "jaccard_identifiers": 0.4912,
+      "jaccard_tokens": 0.5775,
+      "jaccard_ast_names": 0.5397
+    },
+    "iter_8_vs_10": {
+      "ast_edit_distance": 269,
+      "tsed": 294.0,
+      "node_histogram_distance": 0.1768,
+      "subtree_overlap_ratio": 0.3046,
+      "jaccard_identifiers": 0.52,
+      "jaccard_tokens": 0.5993,
+      "jaccard_ast_names": 0.6032
+    },
+    "iter_9_vs_10": {
+      "ast_edit_distance": 305,
+      "tsed": 330.0,
+      "node_histogram_distance": 0.1972,
+      "subtree_overlap_ratio": 0.2465,
+      "jaccard_identifiers": 0.5734,
+      "jaccard_tokens": 0.6367,
+      "jaccard_ast_names": 0.5938
+    }
+  }
+}

@@ -1,0 +1,164 @@
+
+import threading
+
+
+class TaskValidationError(ValueError):
+    """Exception raised for invalid task input."""
+    pass
+
+
+class TaskNotFoundError(KeyError):
+    """Exception raised when a task ID does not exist."""
+    pass
+
+
+class Task:
+    """
+    Data class representing a task in the todo list.
+    """
+    __slots__ = ['id', 'name', 'description', 'is_finished']
+
+    def __init__(self, task_id: int, name: str, description: str):
+        self.id = task_id
+        self.name = name
+        self.description = description
+        self.is_finished = False
+
+    def to_dict(self) -> dict:
+        """
+        Returns a dictionary representation of the task.
+        """
+        return {
+            "id": self.id,
+            "task_name": self.name,
+            "task_description": self.description,
+            "is_finished": self.is_finished
+        }
+
+
+class TaskManager:
+    """
+    A class to manage a todo list with add, remove, search, finish, get_all, and clear_all operations,
+    ensuring correctness, safety, and efficiency.
+    """
+
+    def __init__(self):
+        # Internal task storage: {task_id: Task}
+        self._tasks: dict[int, Task] = {}
+        self._next_id: int = 1
+        self._lock = threading.Lock()  # Ensures thread-safety
+
+    def add(self, task_name: str, task_description: str) -> int:
+        """
+        Adds a new task.
+        :param task_name: Name of the task (must be non-empty)
+        :param task_description: Description of the task (must be non-empty)
+        :return: Unique task ID
+        :raises TaskValidationError: if inputs are invalid
+        """
+        task_name = task_name.strip()
+        task_description = task_description.strip()
+        if not task_name:
+            raise TaskValidationError("Task name cannot be empty.")
+        if not task_description:
+            raise TaskValidationError("Task description cannot be empty.")
+
+        with self._lock:
+            task_id = self._next_id
+            self._tasks[task_id] = Task(task_id, task_name, task_description)
+            self._next_id += 1
+        return task_id
+
+    def remove(self, task_id: int) -> bool:
+        """
+        Removes a task by its ID.
+        :param task_id: The unique ID of the task to remove
+        :return: True if removed, False otherwise
+        :raises ValueError: if task_id is not a positive integer
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise ValueError("Task ID must be a positive integer.")
+
+        with self._lock:
+            if task_id in self._tasks:
+                del self._tasks[task_id]
+                return True
+            else:
+                return False
+
+    def search(self, task_term: str) -> list[dict]:
+        """
+        Searches for tasks by name or description.
+        :param task_term: Search term (must be non-empty)
+        :return: List of matching tasks as dicts
+        :raises ValueError: if search term is empty
+        """
+        term = task_term.strip().lower()
+        if not term:
+            raise ValueError("Search term cannot be empty.")
+
+        results = []
+        with self._lock:
+            for task in self._tasks.values():
+                if term in task.name.lower() or term in task.description.lower():
+                    results.append(task.to_dict())
+        return results
+
+    def finish(self, task_id: int) -> bool:
+        """
+        Marks a task as finished/completed.
+        :param task_id: ID of the task to finish
+        :return: True if marked as finished, False if task does not exist or already finished
+        :raises ValueError: if task_id is not a positive integer
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise ValueError("Task ID must be a positive integer.")
+
+        with self._lock:
+            task = self._tasks.get(task_id)
+            if task and not task.is_finished:
+                task.is_finished = True
+                return True
+            return False
+
+    def get_all(self) -> list[dict]:
+        """
+        Retrieves all tasks as a list of dictionaries.
+        :return: List of all tasks with their details
+        """
+        with self._lock:
+            return [task.to_dict() for task in self._tasks.values()]
+
+    def clear_all(self) -> bool:
+        """
+        Deletes all tasks.
+        :return: True if tasks cleared
+        """
+        with self._lock:
+            self._tasks.clear()
+            return True
+
+
+# Optional: Simple test/demo of TaskManager functionality
+if __name__ == "__main__":
+    tm = TaskManager()
+
+    # Add tasks
+    tid1 = tm.add("Buy groceries", "Milk, eggs, bread")
+    tid2 = tm.add("Exercise", "30 minutes jogging")
+    print("Added tasks:", tm.get_all())
+
+    # Finish first task
+    tm.finish(tid1)
+    print("After finishing task 1:", tm.get_all())
+
+    # Search for tasks
+    print("Search for 'jog':", tm.search("jog"))
+
+    # Remove a task
+    tm.remove(tid2)
+    print("After removing task 2:", tm.get_all())
+
+    # Clear all tasks
+    tm.clear_all()
+    print("After clearing all:", tm.get_all())

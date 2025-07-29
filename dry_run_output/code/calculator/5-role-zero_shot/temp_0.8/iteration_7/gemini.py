@@ -1,0 +1,222 @@
+
+import re
+from typing import List, Union
+
+class Calculator:
+    """
+    A high-quality, safe, and efficient calculator that evaluates arithmetic
+    expressions from a string.
+
+    This class adheres to the ISO/IEC 25010 standard for software quality,
+    focusing on functional suitability, reliability, performance, and maintainability.
+
+    It uses the Shunting-yard algorithm to correctly handle operator precedence
+    and parentheses without using the unsafe `eval()` function.
+    """
+
+    # Define operator properties for precedence and associativity
+    _OPERATORS = {
+        '+': {'precedence': 1, 'assoc': 'L'},
+        '-': {'precedence': 1, 'assoc': 'L'},
+        '*': {'precedence': 2, 'assoc': 'L'},
+        '/': {'precedence': 2, 'assoc': 'L'},
+    }
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates a mathematical expression provided as a string.
+
+        Args:
+            expression: The mathematical expression string. It can contain
+                        integers, floats, operators (+, -, *, /), and
+                        parentheses.
+
+        Returns:
+            The result of the evaluation as a float.
+
+        Raises:
+            ValueError: If the expression is malformed, contains invalid
+                        characters, or has mismatched parentheses.
+            ZeroDivisionError: If the expression attempts to divide by zero.
+        """
+        try:
+            tokens = self._tokenize(expression)
+            rpn_tokens = self._to_rpn(tokens)
+            result = self._evaluate_rpn(rpn_tokens)
+            return result
+        except (ValueError, ZeroDivisionError) as e:
+            # Re-raise exceptions to be handled by the caller.
+            # This maintains a clean interface.
+            raise e
+        except Exception:
+            # Catch any other unexpected errors and wrap them in a ValueError.
+            raise ValueError("Invalid or malformed expression")
+
+    def _tokenize(self, expression: str) -> List[Union[float, str]]:
+        """
+        Converts the input string into a list of numbers and operators.
+
+        This tokenizer correctly handles floating-point numbers, negative numbers,
+        and ensures that only valid characters are present.
+
+        Args:
+            expression: The raw expression string.
+
+        Returns:
+            A list of tokens (floats for numbers, strings for operators/parentheses).
+
+        Raises:
+            ValueError: If an invalid character is found in the expression.
+        """
+        # Regex to find numbers (including floats), operators, and parentheses
+        token_regex = re.compile(r"(\d+\.?\d*|\.\d+|[+\-*/()])")
+        tokens = token_regex.findall(expression)
+
+        # Check for invalid characters by comparing the length of the joined tokens
+        # with the original expression (after removing whitespace).
+        if "".join(tokens) != expression.replace(" ", ""):
+            raise ValueError("Expression contains invalid characters")
+
+        # Process tokens to handle unary minus and convert numbers to floats
+        processed_tokens = []
+        for i, token in enumerate(tokens):
+            if token == '-' and (i == 0 or tokens[i-1] in self._OPERATORS or tokens[i-1] == '('):
+                # This is a unary minus (e.g., "-5" or "3 * -5")
+                # We represent it by pushing 0 and then a subtraction operation.
+                # This simplifies the RPN evaluation logic.
+                processed_tokens.append(0.0)
+                processed_tokens.append(token)
+            elif token in self._OPERATORS or token in "()":
+                processed_tokens.append(token)
+            else:
+                processed_tokens.append(float(token))
+                
+        return processed_tokens
+
+    def _to_rpn(self, tokens: List[Union[float, str]]) -> List[Union[float, str]]:
+        """
+        Converts a list of infix tokens to Reverse Polish Notation (RPN)
+        using the Shunting-yard algorithm.
+
+        Args:
+            tokens: A list of tokens from the _tokenize method.
+
+        Returns:
+            A list of tokens in RPN order.
+
+        Raises:
+            ValueError: For mismatched parentheses.
+        """
+        output_queue = []
+        operator_stack = []
+
+        for token in tokens:
+            if isinstance(token, float):
+                output_queue.append(token)
+            elif token in self._OPERATORS:
+                op1 = token
+                while (operator_stack and operator_stack[-1] in self._OPERATORS and
+                       (self._OPERATORS[operator_stack[-1]]['precedence'] > self._OPERATORS[op1]['precedence'] or
+                        (self._OPERATORS[operator_stack[-1]]['precedence'] == self._OPERATORS[op1]['precedence'] and
+                         self._OPERATORS[op1]['assoc'] == 'L'))):
+                    output_queue.append(operator_stack.pop())
+                operator_stack.append(op1)
+            elif token == '(':
+                operator_stack.append(token)
+            elif token == ')':
+                while operator_stack and operator_stack[-1] != '(':
+                    output_queue.append(operator_stack.pop())
+                
+                if not operator_stack or operator_stack[-1] != '(':
+                    raise ValueError("Mismatched parentheses in expression")
+                operator_stack.pop() # Discard the '('
+
+        while operator_stack:
+            op = operator_stack.pop()
+            if op == '(':
+                raise ValueError("Mismatched parentheses in expression")
+            output_queue.append(op)
+            
+        return output_queue
+
+    def _evaluate_rpn(self, rpn_tokens: List[Union[float, str]]) -> float:
+        """
+        Evaluates a token list in Reverse Polish Notation (RPN).
+
+        Args:
+            rpn_tokens: A list of tokens in RPN order.
+
+        Returns:
+            The final calculated result as a float.
+
+        Raises:
+            ValueError: If the expression is malformed (e.g., not enough operands).
+            ZeroDivisionError: If division by zero is attempted.
+        """
+        operand_stack = []
+
+        for token in rpn_tokens:
+            if isinstance(token, float):
+                operand_stack.append(token)
+            elif token in self._OPERATORS:
+                if len(operand_stack) < 2:
+                    raise ValueError("Malformed expression: insufficient operands for operator")
+                
+                operand2 = operand_stack.pop()
+                operand1 = operand_stack.pop()
+
+                if token == '+':
+                    result = operand1 + operand2
+                elif token == '-':
+                    result = operand1 - operand2
+                elif token == '*':
+                    result = operand1 * operand2
+                elif token == '/':
+                    if operand2 == 0:
+                        raise ZeroDivisionError("Division by zero is not allowed")
+                    result = operand1 / operand2
+                
+                operand_stack.append(result)
+
+        if len(operand_stack) != 1:
+            raise ValueError("Malformed expression: too many operands")
+            
+        return operand_stack[0]
+
+
+if __name__ == "__main__":
+    """
+    Main execution block to demonstrate the Calculator's functionality
+    and robustness.
+    """
+    calculator = Calculator()
+
+    # A list of test expressions covering various cases
+    test_expressions = [
+        # --- Correctness Tests ---
+        "3 + 5 * (10 - 4)",          # Precedence and parentheses
+        "100 / 4 / 5",               # Left-associativity
+        "2.5 * 4",                   # Floating point numbers
+        "-5 + 10",                   # Leading negative number
+        "10 * -2",                   # Negative number after operator
+        "10 + ( -2 * 5 )",           # Negative number in parentheses
+        "(1 + 2) * 3",               # Basic parentheses
+        "10",                        # Single number
+
+        # --- Error Handling Tests ---
+        "5 / 0",                     # Division by zero
+        "1 + 2)",                    # Mismatched parentheses
+        "(1 + 2",                    # Mismatched parentheses
+        "5 * (2 + )",                # Malformed expression
+        "5 +",                       # Incomplete expression
+        "5 & 4",                     # Invalid character
+    ]
+
+    print("--- Running Calculator Tests ---")
+    for expr in test_expressions:
+        try:
+            result = calculator.calculate(expr)
+            print(f'Expression: "{expr}"\nResult: {result}\n')
+        except (ValueError, ZeroDivisionError) as e:
+            print(f'Expression: "{expr}"\nError: {type(e).__name__} - {e}\n')
+

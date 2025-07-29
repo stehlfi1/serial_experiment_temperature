@@ -1,0 +1,44 @@
+{
+  "experiment_id": "96fd9678-8195-4d46-8008-04798d8c3f02",
+  "timestamp": "2025-05-16T00:03:04.296223",
+  "config": {
+    "models": [
+      {
+        "name": "claude",
+        "provider": "anthropic",
+        "model_id": "anthropic/claude-sonnet-4",
+        "temperature": 1.0,
+        "top_p": null,
+        "top_k": null
+      },
+      {
+        "name": "gemini",
+        "provider": "google",
+        "model_id": "google/gemini-2.5-pro",
+        "temperature": 1.0,
+        "top_p": null,
+        "top_k": null
+      },
+      {
+        "name": "chatgpt",
+        "provider": "openai",
+        "model_id": "openai/gpt-4.1",
+        "temperature": 1.0,
+        "top_p": null,
+        "top_k": null
+      }
+    ],
+    "challenges": [
+      "calculator",
+      "ascii_art",
+      "todo_list"
+    ],
+    "prompts": [
+      "5-role-zero_shot"
+    ],
+    "iterations": 10,
+    "test_groups": []
+  },
+  "output_dir": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/static_analysis/experiment_1752616984",
+  "status": "completed"
+}

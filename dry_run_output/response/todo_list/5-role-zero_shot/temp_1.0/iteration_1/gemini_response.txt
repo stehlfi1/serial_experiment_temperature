@@ -1,0 +1,283 @@
+Of course. As a senior software developer, I will create a high-quality Python implementation for a console-based To-Do list application. The design will prioritize the principles outlined in the ISO/IEC 25010 standard, focusing on maintainability, reliability, performance efficiency, and security through robust validation.
+
+### Design Rationale
+
+1.  **Modularity & Testability:**
+    *   A `Task` dataclass is defined to represent the task data structure. This provides type safety, immutability for certain fields (if needed), and a clean, self-documenting way to handle task objects.
+    *   The `TaskManager` class encapsulates all business logic, separating the application's core functionality from any potential user interface. This makes the core logic highly reusable and easy to unit test independently.
+
+2.  **Performance Efficiency:**
+    *   The primary data store is a Python dictionary (`self._tasks`). This structure is chosen for its excellent performance characteristics for the required operations:
+        *   **Lookup by ID:** `O(1)` average time complexity.
+        *   **Insertion (Add):** `O(1)` average time complexity.
+        *   **Deletion (Remove):** `O(1)` average time complexity.
+    *   This is significantly more efficient than using a list, which would require `O(n)` for lookups and deletions by ID.
+
+3.  **Reliability & Safety (Error Handling):**
+    *   Input validation is performed at the beginning of each method to "fail fast." This prevents invalid data from entering the system.
+    *   Specific, built-in exception types like `ValueError` (for bad data) and `KeyError` (for non-existent IDs) are used. This allows the calling code to handle different error conditions gracefully and precisely.
+    *   A unique, auto-incrementing ID is managed internally, ensuring no duplicate IDs can be created.
+
+4.  **Readability & Maintainability:**
+    *   The code is fully type-hinted, which improves clarity and allows for static analysis.
+    *   Comprehensive docstrings are provided for the classes and methods, explaining their purpose, parameters, return values, and potential exceptions, adhering to the Google Python Style Guide.
+    *   Variable and method names are descriptive and follow Python's PEP 8 conventions.
+
+Here is the implementation:
+
+```python
+import dataclasses
+import typing
+
+# --- Data Model (Modularity) ---
+
+@dataclasses.dataclass
+class Task:
+    """
+    Represents a single task in the to-do list.
+
+    Using a dataclass provides type hints, a standard representation,
+    and reduces boilerplate code.
+    """
+    id: int
+    name: str
+    description: str
+    is_finished: bool = False
+
+    def to_dict(self) -> dict[str, typing.Any]:
+        """Converts the Task object to a dictionary."""
+        return dataclasses.asdict(self)
+
+# --- Core Logic (Modularity, Performance, Reliability) ---
+
+class TaskManager:
+    """
+    Manages a collection of tasks with high performance and reliability.
+
+    This class encapsulates all the logic for adding, removing, searching,
+    and modifying tasks, adhering to the ISO/IEC 25010 standard for
+    software quality.
+    """
+
+    def __init__(self) -> None:
+        """
+        Initializes the TaskManager.
+        
+        The internal data structure is a dictionary for O(1) lookups.
+        An internal counter ensures unique task IDs.
+        """
+        self._tasks: dict[int, Task] = {}
+        self._next_id: int = 1
+
+    def add(self, task_name: str, task_description: str) -> int:
+        """
+        Adds a new task to the manager.
+
+        Args:
+            task_name: The name of the task. Cannot be an empty string.
+            task_description: A detailed description of the task.
+
+        Returns:
+            The unique ID of the newly created task.
+
+        Raises:
+            ValueError: If task_name is empty or not a string.
+            TypeError: If inputs are not of type string.
+        """
+        if not isinstance(task_name, str) or not isinstance(task_description, str):
+            raise TypeError("Task name and description must be strings.")
+        if not task_name.strip():
+            raise ValueError("Task name cannot be empty.")
+
+        task_id = self._next_id
+        new_task = Task(
+            id=task_id,
+            name=task_name.strip(),
+            description=task_description.strip()
+        )
+        self._tasks[task_id] = new_task
+        self._next_id += 1
+        return task_id
+
+    def remove(self, task_id: int) -> bool:
+        """
+        Removes a task by its ID.
+
+        Args:
+            task_id: The unique ID of the task to remove.
+
+        Returns:
+            True if the task was successfully removed.
+
+        Raises:
+            ValueError: If task_id is not a positive integer.
+            KeyError: If no task with the given ID exists.
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise ValueError("Task ID must be a positive integer.")
+        if task_id not in self._tasks:
+            raise KeyError(f"Task with ID {task_id} not found.")
+
+        del self._tasks[task_id]
+        return True
+
+    def search(self, search_term: str) -> list[dict]:
+        """
+        Searches for tasks by a term in their name or description.
+
+        The search is case-insensitive.
+
+        Args:
+            search_term: The string to search for.
+
+        Returns:
+            A list of task dictionaries that match the search term.
+            Returns an empty list if the search term is empty or no matches are found.
+
+        Raises:
+            TypeError: If search_term is not a string.
+        """
+        if not isinstance(search_term, str):
+            raise TypeError("Search term must be a string.")
+        
+        if not search_term.strip():
+            return []
+            
+        lower_term = search_term.lower()
+        
+        results = [
+            task.to_dict() for task in self._tasks.values()
+            if lower_term in task.name.lower() or lower_term in task.description.lower()
+        ]
+        return results
+
+    def finish(self, task_id: int) -> bool:
+        """
+        Marks a task as completed.
+
+        Args:
+            task_id: The unique ID of the task to mark as finished.
+
+        Returns:
+            True if the task's status was successfully updated.
+
+        Raises:
+            ValueError: If task_id is not a positive integer.
+            KeyError: If no task with the given ID exists.
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise ValueError("Task ID must be a positive integer.")
+        if task_id not in self._tasks:
+            raise KeyError(f"Task with ID {task_id} not found.")
+
+        self._tasks[task_id].is_finished = True
+        return True
+
+    def get_all(self) -> list[dict]:
+        """
+        Retrieves all tasks.
+
+        Returns:
+            A list containing all task dictionaries.
+        """
+        return [task.to_dict() for task in self._tasks.values()]
+
+    def clear_all(self) -> bool:
+        """
+        Deletes all tasks from the manager.
+
+        This action is irreversible and also resets the task ID counter.
+
+        Returns:
+            True, indicating all tasks have been cleared.
+        """
+        self._tasks.clear()
+        self._next_id = 1
+        print("All tasks have been cleared.")
+        return True
+
+# --- Example Usage (Demonstration & Testability) ---
+
+if __name__ == "__main__":
+    # This block demonstrates how to use the TaskManager class.
+    # It also serves as a basic integration test.
+
+    manager = TaskManager()
+    print("TaskManager Initialized.\n")
+
+    # 1. Add tasks
+    print("--- Adding Tasks ---")
+    try:
+        id1 = manager.add("Buy groceries", "Milk, Bread, Cheese")
+        print(f"Added task 'Buy groceries' with ID: {id1}")
+        
+        id2 = manager.add("Finish report", "Complete the Q3 financial report for the board meeting.")
+        print(f"Added task 'Finish report' with ID: {id2}")
+        
+        id3 = manager.add("Book flight", "Book a flight to New York for the conference.")
+        print(f"Added task 'Book flight' with ID: {id3}")
+        
+        # Add a task with leading/trailing spaces to test stripping
+        id4 = manager.add("  Clean the house  ", "   Vacuum and dust all rooms.   ")
+        print(f"Added task 'Clean the house' with ID: {id4}")
+
+    except (ValueError, TypeError) as e:
+        print(f"Error adding task: {e}")
+    print("\n")
+
+    # 2. Get all tasks
+    print("--- Getting All Tasks ---")
+    all_tasks = manager.get_all()
+    print("Current tasks:")
+    for task in all_tasks:
+        print(f"  - {task}")
+    print("\n")
+
+    # 3. Finish a task
+    print("--- Finishing a Task ---")
+    try:
+        manager.finish(id2)
+        print(f"Task {id2} ('Finish report') marked as finished.")
+    except (KeyError, ValueError) as e:
+        print(f"Error finishing task: {e}")
+    print("\n")
+
+    # 4. Search for tasks
+    print("--- Searching for Tasks ---")
+    search_results = manager.search("report")
+    print("Search results for 'report':")
+    for task in search_results:
+        print(f"  - {task}")
+    print("\n")
+
+    # 5. Remove a task
+    print("--- Removing a Task ---")
+    try:
+        manager.remove(id3)
+        print(f"Task {id3} ('Book flight') removed.")
+    except (KeyError, ValueError) as e:
+        print(f"Error removing task: {e}")
+    print("\n")
+
+    # 6. Get all tasks again to see changes
+    print("--- Getting All Tasks After Modifications ---")
+    all_tasks = manager.get_all()
+    print("Current tasks:")
+    for task in all_tasks:
+        print(f"  - {task}")
+    print("\n")
+
+    # 7. Demonstrate error handling for a non-existent task
+    print("--- Demonstrating Error Handling ---")
+    try:
+        manager.remove(999)
+    except KeyError as e:
+        print(f"Successfully caught expected error: {e}")
+    print("\n")
+
+    # 8. Clear all tasks
+    print("--- Clearing All Tasks ---")
+    manager.clear_all()
+    all_tasks = manager.get_all()
+    print(f"\nTasks remaining: {len(all_tasks)}")
+```

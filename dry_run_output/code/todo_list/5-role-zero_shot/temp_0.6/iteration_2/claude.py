@@ -1,0 +1,488 @@
+
+"""
+High-Quality Todo List Application
+
+A console-based todo list application implementing ISO/IEC 25010 standards
+for software quality. Provides comprehensive task management functionality
+with robust error handling and efficient data operations.
+
+Author: Senior Software Developer
+Version: 1.0.0
+"""
+
+from typing import List, Dict, Optional
+import threading
+from dataclasses import dataclass, asdict
+from datetime import datetime
+
+
+@dataclass
+class Task:
+    """
+    Represents a single task in the todo list.
+    
+    Attributes:
+        id (int): Unique identifier for the task
+        task_name (str): Name/title of the task
+        task_description (str): Detailed description of the task
+        is_finished (bool): Completion status of the task
+        created_at (datetime): Timestamp when task was created
+    """
+    id: int
+    task_name: str
+    task_description: str
+    is_finished: bool = False
+    created_at: datetime = None
+    
+    def __post_init__(self):
+        """Initialize created_at timestamp if not provided."""
+        if self.created_at is None:
+            self.created_at = datetime.now()
+    
+    def to_dict(self) -> Dict:
+        """
+        Convert task to dictionary format for external consumption.
+        
+        Returns:
+            Dict: Task data excluding internal timestamp
+        """
+        task_dict = asdict(self)
+        # Remove internal timestamp for cleaner external interface
+        task_dict.pop('created_at', None)
+        return task_dict
+
+
+class TaskValidationError(ValueError):
+    """Custom exception for task validation errors."""
+    pass
+
+
+class TaskNotFoundError(KeyError):
+    """Custom exception for task not found errors."""
+    pass
+
+
+class TaskManager:
+    """
+    Thread-safe task management system for todo list operations.
+    
+    Provides comprehensive CRUD operations with efficient data access,
+    input validation, and error handling following ISO/IEC 25010 standards.
+    """
+    
+    def __init__(self):
+        """
+        Initialize TaskManager with empty task storage.
+        
+        Uses dictionary for O(1) lookups and maintains thread safety.
+        """
+        self._tasks: Dict[int, Task] = {}
+        self._next_id: int = 1
+        self._lock = threading.RLock()  # Reentrant lock for thread safety
+    
+    def _validate_task_input(self, task_name: str, task_description: str) -> None:
+        """
+        Validate task input parameters.
+        
+        Args:
+            task_name (str): Task name to validate
+            task_description (str): Task description to validate
+            
+        Raises:
+            TaskValidationError: If inputs are invalid
+            TypeError: If inputs are not strings
+        """
+        if not isinstance(task_name, str) or not isinstance(task_description, str):
+            raise TypeError("Task name and description must be strings")
+        
+        if not task_name.strip():
+            raise TaskValidationError("Task name cannot be empty or whitespace only")
+        
+        if not task_description.strip():
+            raise TaskValidationError("Task description cannot be empty or whitespace only")
+        
+        if len(task_name.strip()) > 100:
+            raise TaskValidationError("Task name cannot exceed 100 characters")
+        
+        if len(task_description.strip()) > 500:
+            raise TaskValidationError("Task description cannot exceed 500 characters")
+    
+    def _validate_task_id(self, task_id: int) -> None:
+        """
+        Validate task ID parameter.
+        
+        Args:
+            task_id (int): Task ID to validate
+            
+        Raises:
+            TypeError: If task_id is not an integer
+            TaskValidationError: If task_id is invalid
+        """
+        if not isinstance(task_id, int):
+            raise TypeError("Task ID must be an integer")
+        
+        if task_id <= 0:
+            raise TaskValidationError("Task ID must be a positive integer")
+    
+    def _task_exists(self, task_id: int) -> bool:
+        """
+        Check if task exists in storage.
+        
+        Args:
+            task_id (int): Task ID to check
+            
+        Returns:
+            bool: True if task exists, False otherwise
+        """
+        return task_id in self._tasks
+    
+    def add(self, task_name: str, task_description: str) -> int:
+        """
+        Add a new task to the todo list.
+        
+        Args:
+            task_name (str): Name of the task (1-100 characters)
+            task_description (str): Description of the task (1-500 characters)
+            
+        Returns:
+            int: Unique ID of the created task
+            
+        Raises:
+            TypeError: If parameters are not strings
+            TaskValidationError: If parameters are invalid
+        """
+        self._validate_task_input(task_name, task_description)
+        
+        with self._lock:
+            task_id = self._next_id
+            task = Task(
+                id=task_id,
+                task_name=task_name.strip(),
+                task_description=task_description.strip()
+            )
+            self._tasks[task_id] = task
+            self._next_id += 1
+            
+        return task_id
+    
+    def remove(self, task_id: int) -> bool:
+        """
+        Remove a task from the todo list.
+        
+        Args:
+            task_id (int): ID of the task to remove
+            
+        Returns:
+            bool: True if task was removed, False if task not found
+            
+        Raises:
+            TypeError: If task_id is not an integer
+            TaskValidationError: If task_id is invalid
+        """
+        self._validate_task_id(task_id)
+        
+        with self._lock:
+            if self._task_exists(task_id):
+                del self._tasks[task_id]
+                return True
+            return False
+    
+    def search(self, search_term: str) -> List[Dict]:
+        """
+        Search for tasks by name or description.
+        
+        Performs case-insensitive substring matching on both task name
+        and description fields.
+        
+        Args:
+            search_term (str): Term to search for
+            
+        Returns:
+            List[Dict]: List of matching tasks in dictionary format
+            
+        Raises:
+            TypeError: If search_term is not a string
+            TaskValidationError: If search_term is empty
+        """
+        if not isinstance(search_term, str):
+            raise TypeError("Search term must be a string")
+        
+        search_term = search_term.strip()
+        if not search_term:
+            raise TaskValidationError("Search term cannot be empty or whitespace only")
+        
+        search_term_lower = search_term.lower()
+        matching_tasks = []
+        
+        with self._lock:
+            for task in self._tasks.values():
+                if (search_term_lower in task.task_name.lower() or 
+                    search_term_lower in task.task_description.lower()):
+                    matching_tasks.append(task.to_dict())
+        
+        # Sort by task ID for consistent ordering
+        return sorted(matching_tasks, key=lambda x: x['id'])
+    
+    def finish(self, task_id: int) -> bool:
+        """
+        Mark a task as completed.
+        
+        Args:
+            task_id (int): ID of the task to mark as finished
+            
+        Returns:
+            bool: True if task was marked as finished, False if task not found
+            
+        Raises:
+            TypeError: If task_id is not an integer
+            TaskValidationError: If task_id is invalid
+        """
+        self._validate_task_id(task_id)
+        
+        with self._lock:
+            if self._task_exists(task_id):
+                self._tasks[task_id].is_finished = True
+                return True
+            return False
+    
+    def get_all(self) -> List[Dict]:
+        """
+        Retrieve all tasks from the todo list.
+        
+        Returns:
+            List[Dict]: List of all tasks in dictionary format,
+                       sorted by task ID for consistent ordering
+        """
+        with self._lock:
+            all_tasks = [task.to_dict() for task in self._tasks.values()]
+        
+        return sorted(all_tasks, key=lambda x: x['id'])
+    
+    def clear_all(self) -> bool:
+        """
+        Remove all tasks from the todo list.
+        
+        Returns:
+            bool: Always returns True to indicate successful operation
+        """
+        with self._lock:
+            self._tasks.clear()
+            self._next_id = 1
+        
+        return True
+    
+    def get_task_count(self) -> int:
+        """
+        Get the total number of tasks.
+        
+        Returns:
+            int: Total number of tasks in the system
+        """
+        with self._lock:
+            return len(self._tasks)
+    
+    def get_completed_count(self) -> int:
+        """
+        Get the number of completed tasks.
+        
+        Returns:
+            int: Number of completed tasks
+        """
+        with self._lock:
+            return sum(1 for task in self._tasks.values() if task.is_finished)
+
+
+def main():
+    """
+    Console interface for the Todo List application.
+    
+    Provides an interactive menu system for users to manage their tasks
+    with comprehensive error handling and user feedback.
+    """
+    task_manager = TaskManager()
+    
+    def print_menu():
+        """Display the main menu options."""
+        print("\n" + "="*50)
+        print("         TODO LIST MANAGER")
+        print("="*50)
+        print("1. Add Task")
+        print("2. Remove Task")
+        print("3. Search Tasks")
+        print("4. Mark Task as Finished")
+        print("5. View All Tasks")
+        print("6. Clear All Tasks")
+        print("7. Show Statistics")
+        print("8. Exit")
+        print("="*50)
+    
+    def display_task(task: Dict) -> None:
+        """
+        Display a single task in formatted output.
+        
+        Args:
+            task (Dict): Task dictionary to display
+        """
+        status = "✓ COMPLETED" if task['is_finished'] else "○ PENDING"
+        print(f"ID: {task['id']} | {status}")
+        print(f"Name: {task['task_name']}")
+        print(f"Description: {task['task_description']}")
+        print("-" * 40)
+    
+    def display_tasks(tasks: List[Dict]) -> None:
+        """
+        Display multiple tasks in formatted output.
+        
+        Args:
+            tasks (List[Dict]): List of task dictionaries to display
+        """
+        if not tasks:
+            print("No tasks found.")
+            return
+        
+        print(f"\nFound {len(tasks)} task(s):")
+        print("=" * 40)
+        for task in tasks:
+            display_task(task)
+    
+    def get_user_input(prompt: str) -> str:
+        """
+        Get user input with error handling.
+        
+        Args:
+            prompt (str): Prompt to display to user
+            
+        Returns:
+            str: User input string
+        """
+        try:
+            return input(prompt).strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nOperation cancelled by user.")
+            return ""
+    
+    def get_integer_input(prompt: str) -> Optional[int]:
+        """
+        Get integer input from user with validation.
+        
+        Args:
+            prompt (str): Prompt to display to user
+            
+        Returns:
+            Optional[int]: Parsed integer or None if invalid
+        """
+        user_input = get_user_input(prompt)
+        if not user_input:
+            return None
+        
+        try:
+            return int(user_input)
+        except ValueError:
+            print("Error: Please enter a valid number.")
+            return None
+    
+    # Main application loop
+    while True:
+        try:
+            print_menu()
+            choice = get_user_input("Enter your choice (1-8): ")
+            
+            if choice == "1":  # Add Task
+                print("\n--- Add New Task ---")
+                name = get_user_input("Enter task name: ")
+                if not name:
+                    continue
+                
+                description = get_user_input("Enter task description: ")
+                if not description:
+                    continue
+                
+                try:
+                    task_id = task_manager.add(name, description)
+                    print(f"✓ Task added successfully with ID: {task_id}")
+                except (TaskValidationError, TypeError) as e:
+                    print(f"Error: {e}")
+            
+            elif choice == "2":  # Remove Task
+                print("\n--- Remove Task ---")
+                task_id = get_integer_input("Enter task ID to remove: ")
+                if task_id is None:
+                    continue
+                
+                try:
+                    if task_manager.remove(task_id):
+                        print(f"✓ Task {task_id} removed successfully.")
+                    else:
+                        print(f"Error: Task with ID {task_id} not found.")
+                except (TaskValidationError, TypeError) as e:
+                    print(f"Error: {e}")
+            
+            elif choice == "3":  # Search Tasks
+                print("\n--- Search Tasks ---")
+                search_term = get_user_input("Enter search term: ")
+                if not search_term:
+                    continue
+                
+                try:
+                    results = task_manager.search(search_term)
+                    display_tasks(results)
+                except (TaskValidationError, TypeError) as e:
+                    print(f"Error: {e}")
+            
+            elif choice == "4":  # Mark Task as Finished
+                print("\n--- Mark Task as Finished ---")
+                task_id = get_integer_input("Enter task ID to mark as finished: ")
+                if task_id is None:
+                    continue
+                
+                try:
+                    if task_manager.finish(task_id):
+                        print(f"✓ Task {task_id} marked as completed.")
+                    else:
+                        print(f"Error: Task with ID {task_id} not found.")
+                except (TaskValidationError, TypeError) as e:
+                    print(f"Error: {e}")
+            
+            elif choice == "5":  # View All Tasks
+                print("\n--- All Tasks ---")
+                all_tasks = task_manager.get_all()
+                display_tasks(all_tasks)
+            
+            elif choice == "6":  # Clear All Tasks
+                print("\n--- Clear All Tasks ---")
+                confirm = get_user_input("Are you sure you want to delete all tasks? (yes/no): ")
+                if confirm.lower() in ['yes', 'y']:
+                    task_manager.clear_all()
+                    print("✓ All tasks have been cleared.")
+                else:
+                    print("Operation cancelled.")
+            
+            elif choice == "7":  # Show Statistics
+                print("\n--- Task Statistics ---")
+                total = task_manager.get_task_count()
+                completed = task_manager.get_completed_count()
+                pending = total - completed
+                print(f"Total Tasks: {total}")
+                print(f"Completed: {completed}")
+                print(f"Pending: {pending}")
+                if total > 0:
+                    completion_rate = (completed / total) * 100
+                    print(f"Completion Rate: {completion_rate:.1f}%")
+            
+            elif choice == "8":  # Exit
+                print("\nThank you for using Todo List Manager!")
+                break
+            
+            else:
+                print("Error: Invalid choice. Please enter a number between 1 and 8.")
+        
+        except KeyboardInterrupt:
+            print("\n\nApplication interrupted by user. Goodbye!")
+            break
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            print("Please try again or contact support if the issue persists.")
+
+
+if __name__ == "__main__":
+    main()

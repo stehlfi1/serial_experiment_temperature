@@ -1,0 +1,4196 @@
+{
+  "metadata": {
+    "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+    "timestamp": "2025-07-14T04:23:50.004518",
+    "config": {
+      "models": [
+        {
+          "name": "claude",
+          "provider": "anthropic",
+          "model_id": "anthropic/claude-sonnet-4",
+          "temperature": 1.0,
+          "top_p": null,
+          "top_k": null
+        },
+        {
+          "name": "gemini",
+          "provider": "google",
+          "model_id": "google/gemini-2.5-pro",
+          "temperature": 1.0,
+          "top_p": null,
+          "top_k": null
+        },
+        {
+          "name": "chatgpt",
+          "provider": "openai",
+          "model_id": "openai/gpt-4.1",
+          "temperature": 1.0,
+          "top_p": null,
+          "top_k": null
+        },
+        {
+          "name": "claude",
+          "provider": "anthropic",
+          "model_id": "anthropic/claude-sonnet-4",
+          "temperature": 0.5,
+          "top_p": null,
+          "top_k": null
+        },
+        {
+          "name": "chatgpt",
+          "provider": "openai",
+          "model_id": "openai/gpt-4.1",
+          "temperature": 0.5,
+          "top_p": null,
+          "top_k": null
+        }
+      ],
+      "challenges": [
+        "calculator",
+        "ascii_art"
+      ],
+      "prompts": [
+        "5-role-zero_shot"
+      ],
+      "iterations": 10,
+      "test_groups": []
+    },
+    "output_dir": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/static_analysis/experiment_1752459830",
+    "status": "completed"
+  },
+  "results": [
+    {
+      "result_id": "43a68a34-a5d7-407c-ae04-4eeb0d679535",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "claude",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 1,
+      "timestamp": "2025-07-14T04:23:50.005230",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 2,
+            "cyclomatic_complexity_per_function": [
+              1,
+              1,
+              1,
+              3,
+              8,
+              12,
+              8,
+              3,
+              13,
+              13,
+              6,
+              6,
+              7
+            ],
+            "cognitive_complexity": 181,
+            "cognitive_complexity_per_function": [
+              0,
+              0,
+              0,
+              3,
+              13,
+              44,
+              13,
+              2,
+              23,
+              45,
+              11,
+              15,
+              11
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 2.6153846153846154,
+            "nesting_depth_per_function": [
+              0,
+              0,
+              0,
+              1,
+              4,
+              5,
+              3,
+              1,
+              2,
+              6,
+              4,
+              5,
+              3
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 2550.207718258567,
+            "difficulty": 38.79661016949153,
+            "effort": 98939.41469650612,
+            "time": 5496.6341498058955,
+            "bugs": 0.8500692394195224,
+            "length": 412,
+            "vocabulary": 73,
+            "operators": 14,
+            "operands": 59,
+            "operator_count": 85,
+            "operand_count": 327
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 37.29637722759534,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 301,
+            "physical_lines_of_code": 425,
+            "comment_lines": 26,
+            "blank_lines": 98,
+            "code_to_comment_ratio": 11.576923076923077,
+            "function_count": 1,
+            "class_count": 3,
+            "method_count": 12,
+            "methods_per_class": [
+              0,
+              2,
+              12
+            ],
+            "parameters_per_function": [
+              0
+            ],
+            "avg_parameters_per_function": 0.0,
+            "wmc_per_class": [
+              0.0,
+              12.615384615384615,
+              75.6923076923077
+            ],
+            "avg_wmc": 29.435897435897434
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.6825396825396826,
+            "simple_function_ratio": 0.38461538461538464,
+            "complex_function_ratio": 0.23076923076923078,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_1/claude.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "a1e76f50-6621-4e21-998c-48fc04061945",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "gemini",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 1,
+      "timestamp": "2025-07-14T04:23:50.005251",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 2,
+            "cyclomatic_complexity_per_function": [
+              1,
+              3,
+              12,
+              17,
+              7
+            ],
+            "cognitive_complexity": 111,
+            "cognitive_complexity_per_function": [
+              0,
+              2,
+              38,
+              57,
+              13
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 2.8,
+            "nesting_depth_per_function": [
+              0,
+              1,
+              4,
+              6,
+              3
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 993.0064501104839,
+            "difficulty": 22.72727272727273,
+            "effort": 22568.32841160191,
+            "time": 1253.7960228667728,
+            "bugs": 0.331002150036828,
+            "length": 183,
+            "vocabulary": 43,
+            "operators": 10,
+            "operands": 33,
+            "operator_count": 33,
+            "operand_count": 150
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 53.81115886424567,
+            "maintainability_rank": "C",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 147,
+            "physical_lines_of_code": 188,
+            "comment_lines": 7,
+            "blank_lines": 34,
+            "code_to_comment_ratio": 21.0,
+            "function_count": 1,
+            "class_count": 1,
+            "method_count": 4,
+            "methods_per_class": [
+              4
+            ],
+            "parameters_per_function": [
+              0
+            ],
+            "avg_parameters_per_function": 0.0,
+            "wmc_per_class": [
+              32.0
+            ],
+            "avg_wmc": 32.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.8285714285714286,
+            "simple_function_ratio": 0.4,
+            "complex_function_ratio": 0.4,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_1/gemini.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "3fb91149-bf0a-44e1-bc60-1b0643f18cf9",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "chatgpt",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 1,
+      "timestamp": "2025-07-14T04:23:50.005273",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 4,
+            "cyclomatic_complexity_per_function": [
+              1,
+              13,
+              6,
+              9,
+              2,
+              15,
+              11
+            ],
+            "cognitive_complexity": 186,
+            "cognitive_complexity_per_function": [
+              0,
+              50,
+              9,
+              25,
+              1,
+              54,
+              41
+            ],
+            "max_nesting_depth": 8,
+            "avg_nesting_depth": 4.142857142857143,
+            "nesting_depth_per_function": [
+              0,
+              7,
+              3,
+              4,
+              1,
+              6,
+              8
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1764.1995000054653,
+            "difficulty": 43.61538461538461,
+            "effort": 76946.2397310076,
+            "time": 4274.79109616709,
+            "bugs": 0.5880665000018218,
+            "length": 308,
+            "vocabulary": 53,
+            "operators": 14,
+            "operands": 39,
+            "operator_count": 65,
+            "operand_count": 243
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 44.50754614553938,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 211,
+            "physical_lines_of_code": 243,
+            "comment_lines": 7,
+            "blank_lines": 25,
+            "code_to_comment_ratio": 30.142857142857142,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 7,
+            "methods_per_class": [
+              7
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              57.0
+            ],
+            "avg_wmc": 57.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.85,
+            "simple_function_ratio": 0.2857142857142857,
+            "complex_function_ratio": 0.42857142857142855,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_1/chatgpt.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "85a86a50-1bb7-4402-a589-1709f9be19e7",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "claude",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 6,
+      "timestamp": "2025-07-14T04:23:50.005286",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 2,
+            "cyclomatic_complexity_per_function": [
+              1,
+              3,
+              1,
+              4,
+              5,
+              8,
+              8,
+              2,
+              3,
+              13,
+              15,
+              2,
+              7,
+              6,
+              7
+            ],
+            "cognitive_complexity": 166,
+            "cognitive_complexity_per_function": [
+              0,
+              3,
+              0,
+              3,
+              10,
+              22,
+              15,
+              1,
+              2,
+              22,
+              48,
+              1,
+              12,
+              15,
+              11
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 2.4,
+            "nesting_depth_per_function": [
+              0,
+              1,
+              0,
+              1,
+              4,
+              4,
+              3,
+              1,
+              1,
+              2,
+              6,
+              1,
+              4,
+              5,
+              3
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 2436.0,
+            "difficulty": 40.78431372549019,
+            "effort": 99350.58823529411,
+            "time": 5519.477124183006,
+            "bugs": 0.812,
+            "length": 406,
+            "vocabulary": 64,
+            "operators": 13,
+            "operands": 51,
+            "operator_count": 86,
+            "operand_count": 320
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 35.41858108599688,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 343,
+            "physical_lines_of_code": 466,
+            "comment_lines": 24,
+            "blank_lines": 99,
+            "code_to_comment_ratio": 14.291666666666666,
+            "function_count": 1,
+            "class_count": 1,
+            "method_count": 14,
+            "methods_per_class": [
+              14
+            ],
+            "parameters_per_function": [
+              0
+            ],
+            "avg_parameters_per_function": 0.0,
+            "wmc_per_class": [
+              79.33333333333334
+            ],
+            "avg_wmc": 79.33333333333334
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.8301886792452831,
+            "simple_function_ratio": 0.5333333333333333,
+            "complex_function_ratio": 0.13333333333333333,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_6/claude.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "9ff459b0-c6db-4769-b917-2ce00c104595",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "gemini",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 6,
+      "timestamp": "2025-07-14T04:23:50.005297",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 9,
+            "cyclomatic_complexity_per_function": [
+              4,
+              11,
+              15,
+              8
+            ],
+            "cognitive_complexity": 125,
+            "cognitive_complexity_per_function": [
+              3,
+              32,
+              54,
+              17
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 3.5,
+            "nesting_depth_per_function": [
+              1,
+              4,
+              6,
+              3
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1374.7009090951676,
+            "difficulty": 26.32142857142857,
+            "effort": 36184.09178582637,
+            "time": 2010.2273214347983,
+            "bugs": 0.4582336363650559,
+            "length": 240,
+            "vocabulary": 53,
+            "operators": 11,
+            "operands": 42,
+            "operator_count": 39,
+            "operand_count": 201
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 46.18341935108582,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 192,
+            "physical_lines_of_code": 253,
+            "comment_lines": 14,
+            "blank_lines": 47,
+            "code_to_comment_ratio": 13.714285714285714,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 4,
+            "methods_per_class": [
+              4
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              38.0
+            ],
+            "avg_wmc": 38.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.813953488372093,
+            "simple_function_ratio": 0.25,
+            "complex_function_ratio": 0.5,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_6/gemini.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "33120b59-f269-434d-85b9-655a056bad60",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "chatgpt",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 6,
+      "timestamp": "2025-07-14T04:23:50.005308",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 4,
+            "cyclomatic_complexity_per_function": [
+              1,
+              15,
+              12,
+              16,
+              11
+            ],
+            "cognitive_complexity": 202,
+            "cognitive_complexity_per_function": [
+              0,
+              58,
+              38,
+              59,
+              41
+            ],
+            "max_nesting_depth": 8,
+            "avg_nesting_depth": 5.0,
+            "nesting_depth_per_function": [
+              0,
+              6,
+              5,
+              6,
+              8
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1693.9383960627254,
+            "difficulty": 43.875,
+            "effort": 74321.54712725208,
+            "time": 4128.974840402893,
+            "bugs": 0.5646461320209084,
+            "length": 293,
+            "vocabulary": 55,
+            "operators": 15,
+            "operands": 40,
+            "operator_count": 59,
+            "operand_count": 234
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 44.8731652735014,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 209,
+            "physical_lines_of_code": 255,
+            "comment_lines": 13,
+            "blank_lines": 33,
+            "code_to_comment_ratio": 16.076923076923077,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 5,
+            "methods_per_class": [
+              5
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              55.0
+            ],
+            "avg_wmc": 55.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.8292682926829268,
+            "simple_function_ratio": 0.2,
+            "complex_function_ratio": 0.8,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_6/chatgpt.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "d574a623-dbba-41aa-84f7-bebc4fbfefdb",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "claude",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 8,
+      "timestamp": "2025-07-14T04:23:50.005323",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 2,
+            "cyclomatic_complexity_per_function": [
+              1,
+              3,
+              12,
+              10,
+              22,
+              2,
+              13,
+              6,
+              6,
+              7
+            ],
+            "cognitive_complexity": 206,
+            "cognitive_complexity_per_function": [
+              0,
+              2,
+              40,
+              17,
+              68,
+              1,
+              40,
+              11,
+              15,
+              11
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 3.3,
+            "nesting_depth_per_function": [
+              0,
+              1,
+              5,
+              3,
+              5,
+              1,
+              6,
+              4,
+              5,
+              3
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 2300.11343230048,
+            "difficulty": 42.81521739130435,
+            "effort": 98479.85662860425,
+            "time": 5471.103146033569,
+            "bugs": 0.7667044774334932,
+            "length": 391,
+            "vocabulary": 59,
+            "operators": 13,
+            "operands": 46,
+            "operator_count": 88,
+            "operand_count": 303
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 38.71796394036612,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 285,
+            "physical_lines_of_code": 385,
+            "comment_lines": 20,
+            "blank_lines": 80,
+            "code_to_comment_ratio": 14.25,
+            "function_count": 1,
+            "class_count": 1,
+            "method_count": 9,
+            "methods_per_class": [
+              9
+            ],
+            "parameters_per_function": [
+              0
+            ],
+            "avg_parameters_per_function": 0.0,
+            "wmc_per_class": [
+              73.8
+            ],
+            "avg_wmc": 73.8
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.7916666666666666,
+            "simple_function_ratio": 0.3,
+            "complex_function_ratio": 0.3,
+            "very_complex_function_ratio": 0.1
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_8/claude.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "bb93639b-dc39-4abb-abff-72f4d418431f",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "gemini",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 8,
+      "timestamp": "2025-07-14T04:23:50.005339",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 6,
+            "cyclomatic_complexity_per_function": [
+              1,
+              9,
+              17,
+              10,
+              2
+            ],
+            "cognitive_complexity": 125,
+            "cognitive_complexity_per_function": [
+              0,
+              17,
+              64,
+              32,
+              1
+            ],
+            "max_nesting_depth": 7,
+            "avg_nesting_depth": 3.4,
+            "nesting_depth_per_function": [
+              0,
+              3,
+              6,
+              7,
+              1
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1236.0045055606647,
+            "difficulty": 30.39189189189189,
+            "effort": 37564.51531089101,
+            "time": 2086.9175172717228,
+            "bugs": 0.4120015018535549,
+            "length": 219,
+            "vocabulary": 50,
+            "operators": 13,
+            "operands": 37,
+            "operator_count": 46,
+            "operand_count": 173
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 50.38005992012164,
+            "maintainability_rank": "C",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 160,
+            "physical_lines_of_code": 211,
+            "comment_lines": 8,
+            "blank_lines": 43,
+            "code_to_comment_ratio": 20.0,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 5,
+            "methods_per_class": [
+              5
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              39.0
+            ],
+            "avg_wmc": 39.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.7631578947368421,
+            "simple_function_ratio": 0.4,
+            "complex_function_ratio": 0.2,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_8/gemini.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "973d8b4a-bb49-483c-9f6a-6a70dd9a0928",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "chatgpt",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 8,
+      "timestamp": "2025-07-14T04:23:50.005352",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 7,
+            "cyclomatic_complexity_per_function": [
+              1,
+              7,
+              14,
+              6,
+              20,
+              13
+            ],
+            "cognitive_complexity": 231,
+            "cognitive_complexity_per_function": [
+              0,
+              15,
+              36,
+              11,
+              99,
+              55
+            ],
+            "max_nesting_depth": 9,
+            "avg_nesting_depth": 4.666666666666667,
+            "nesting_depth_per_function": [
+              0,
+              3,
+              4,
+              4,
+              8,
+              9
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 2132.3050822264363,
+            "difficulty": 46.29545454545455,
+            "effort": 98716.0330112557,
+            "time": 5484.224056180872,
+            "bugs": 0.7107683607421454,
+            "length": 364,
+            "vocabulary": 58,
+            "operators": 14,
+            "operands": 44,
+            "operator_count": 73,
+            "operand_count": 291
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 40.54461848464025,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 243,
+            "physical_lines_of_code": 283,
+            "comment_lines": 13,
+            "blank_lines": 27,
+            "code_to_comment_ratio": 18.692307692307693,
+            "function_count": 0,
+            "class_count": 6,
+            "method_count": 6,
+            "methods_per_class": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              6
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              61.0
+            ],
+            "avg_wmc": 10.166666666666666
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.62,
+            "simple_function_ratio": 0.16666666666666666,
+            "complex_function_ratio": 0.5,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_8/chatgpt.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "57568301-fa49-4734-b3b9-c949a79ee40b",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "claude",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 9,
+      "timestamp": "2025-07-14T04:23:50.005363",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 2,
+            "cyclomatic_complexity_per_function": [
+              1,
+              1,
+              1,
+              4,
+              8,
+              7,
+              15,
+              13,
+              6,
+              6,
+              7
+            ],
+            "cognitive_complexity": 157,
+            "cognitive_complexity_per_function": [
+              0,
+              0,
+              0,
+              4,
+              22,
+              11,
+              37,
+              45,
+              11,
+              15,
+              11
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 2.8181818181818183,
+            "nesting_depth_per_function": [
+              0,
+              0,
+              0,
+              1,
+              6,
+              2,
+              4,
+              6,
+              4,
+              5,
+              3
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 2085.3159711786666,
+            "difficulty": 34.95283018867924,
+            "effort": 72887.69503034867,
+            "time": 4049.316390574926,
+            "bugs": 0.6951053237262222,
+            "length": 345,
+            "vocabulary": 66,
+            "operators": 13,
+            "operands": 53,
+            "operator_count": 60,
+            "operand_count": 285
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 40.406463347082294,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 265,
+            "physical_lines_of_code": 350,
+            "comment_lines": 8,
+            "blank_lines": 77,
+            "code_to_comment_ratio": 33.125,
+            "function_count": 1,
+            "class_count": 7,
+            "method_count": 10,
+            "methods_per_class": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              10
+            ],
+            "parameters_per_function": [
+              0
+            ],
+            "avg_parameters_per_function": 0.0,
+            "wmc_per_class": [
+              12.545454545454545,
+              12.545454545454545,
+              12.545454545454545,
+              12.545454545454545,
+              12.545454545454545,
+              12.545454545454545,
+              62.72727272727273
+            ],
+            "avg_wmc": 19.714285714285715
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.5901639344262295,
+            "simple_function_ratio": 0.36363636363636365,
+            "complex_function_ratio": 0.18181818181818182,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_9/claude.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "2210b157-d157-4d28-8914-1a370cf6ebdd",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "gemini",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 9,
+      "timestamp": "2025-07-14T04:23:50.005373",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 7,
+            "cyclomatic_complexity_per_function": [
+              10,
+              15,
+              11,
+              5
+            ],
+            "cognitive_complexity": 135,
+            "cognitive_complexity_per_function": [
+              23,
+              54,
+              41,
+              5
+            ],
+            "max_nesting_depth": 8,
+            "avg_nesting_depth": 4.5,
+            "nesting_depth_per_function": [
+              3,
+              6,
+              8,
+              1
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1251.031600161539,
+            "difficulty": 33.05714285714286,
+            "effort": 41355.53032534002,
+            "time": 2297.52946251889,
+            "bugs": 0.4170105333871797,
+            "length": 224,
+            "vocabulary": 48,
+            "operators": 13,
+            "operands": 35,
+            "operator_count": 46,
+            "operand_count": 178
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 50.60154950154846,
+            "maintainability_rank": "C",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 155,
+            "physical_lines_of_code": 211,
+            "comment_lines": 10,
+            "blank_lines": 46,
+            "code_to_comment_ratio": 15.5,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 4,
+            "methods_per_class": [
+              4
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              41.0
+            ],
+            "avg_wmc": 41.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.7222222222222222,
+            "simple_function_ratio": 0.25,
+            "complex_function_ratio": 0.5,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_9/gemini.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "a2638bc5-c900-4e6b-b3ab-5bfe44ff4727",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "chatgpt",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 9,
+      "timestamp": "2025-07-14T04:23:50.005383",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 4,
+            "cyclomatic_complexity_per_function": [
+              2,
+              23,
+              15,
+              7,
+              2
+            ],
+            "cognitive_complexity": 133,
+            "cognitive_complexity_per_function": [
+              1,
+              59,
+              51,
+              15,
+              1
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 3.2,
+            "nesting_depth_per_function": [
+              1,
+              4,
+              6,
+              4,
+              1
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1669.524583611358,
+            "difficulty": 36.59090909090909,
+            "effort": 61089.42226396105,
+            "time": 3393.8567924422805,
+            "bugs": 0.5565081945371193,
+            "length": 285,
+            "vocabulary": 58,
+            "operators": 14,
+            "operands": 44,
+            "operator_count": 55,
+            "operand_count": 230
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 46.07187739233855,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 195,
+            "physical_lines_of_code": 245,
+            "comment_lines": 19,
+            "blank_lines": 31,
+            "code_to_comment_ratio": 10.263157894736842,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 5,
+            "methods_per_class": [
+              5
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              49.0
+            ],
+            "avg_wmc": 49.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.7555555555555555,
+            "simple_function_ratio": 0.4,
+            "complex_function_ratio": 0.4,
+            "very_complex_function_ratio": 0.2
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_9/chatgpt.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "9dc3f340-c20d-49bd-8130-8394e68b3819",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "claude",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 7,
+      "timestamp": "2025-07-14T04:23:50.005393",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 2,
+            "cyclomatic_complexity_per_function": [
+              1,
+              1,
+              11,
+              6,
+              11,
+              1,
+              13,
+              13,
+              1,
+              3,
+              7
+            ],
+            "cognitive_complexity": 182,
+            "cognitive_complexity_per_function": [
+              0,
+              0,
+              27,
+              11,
+              30,
+              0,
+              45,
+              56,
+              0,
+              2,
+              10
+            ],
+            "max_nesting_depth": 9,
+            "avg_nesting_depth": 2.909090909090909,
+            "nesting_depth_per_function": [
+              0,
+              0,
+              4,
+              4,
+              4,
+              0,
+              6,
+              9,
+              0,
+              1,
+              4
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 2103.9444254918285,
+            "difficulty": 32.94827586206897,
+            "effort": 69321.34132956697,
+            "time": 3851.1856294203876,
+            "bugs": 0.7013148084972761,
+            "length": 341,
+            "vocabulary": 72,
+            "operators": 14,
+            "operands": 58,
+            "operator_count": 68,
+            "operand_count": 273
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 38.89976941691614,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 290,
+            "physical_lines_of_code": 399,
+            "comment_lines": 20,
+            "blank_lines": 89,
+            "code_to_comment_ratio": 14.5,
+            "function_count": 1,
+            "class_count": 9,
+            "method_count": 10,
+            "methods_per_class": [
+              0,
+              0,
+              0,
+              0,
+              2,
+              3,
+              5,
+              8,
+              10
+            ],
+            "parameters_per_function": [
+              0
+            ],
+            "avg_parameters_per_function": 0.0,
+            "wmc_per_class": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              12.363636363636363,
+              18.545454545454547,
+              30.909090909090907,
+              49.45454545454545,
+              61.81818181818181
+            ],
+            "avg_wmc": 19.23232323232323
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.6323529411764706,
+            "simple_function_ratio": 0.45454545454545453,
+            "complex_function_ratio": 0.36363636363636365,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_7/claude.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "2b1fa1c0-866e-4b3d-8a48-fe9c7a26ca6a",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "gemini",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 7,
+      "timestamp": "2025-07-14T04:23:50.005402",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 6,
+            "cyclomatic_complexity_per_function": [
+              18,
+              15,
+              7,
+              3
+            ],
+            "cognitive_complexity": 140,
+            "cognitive_complexity_per_function": [
+              58,
+              54,
+              14,
+              3
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 3.75,
+            "nesting_depth_per_function": [
+              5,
+              6,
+              3,
+              1
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1293.8852936170395,
+            "difficulty": 24.3,
+            "effort": 31441.41263489406,
+            "time": 1746.7451463830032,
+            "bugs": 0.4312950978723465,
+            "length": 237,
+            "vocabulary": 44,
+            "operators": 9,
+            "operands": 35,
+            "operator_count": 48,
+            "operand_count": 189
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 48.69036212556168,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 175,
+            "physical_lines_of_code": 234,
+            "comment_lines": 8,
+            "blank_lines": 51,
+            "code_to_comment_ratio": 21.875,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 4,
+            "methods_per_class": [
+              4
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              43.0
+            ],
+            "avg_wmc": 43.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.7777777777777778,
+            "simple_function_ratio": 0.25,
+            "complex_function_ratio": 0.5,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_7/gemini.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "bd44f3e8-9f21-4fa3-a20d-84871b6e380e",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "chatgpt",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 7,
+      "timestamp": "2025-07-14T04:23:50.005412",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 4,
+            "cyclomatic_complexity_per_function": [
+              1,
+              12,
+              6,
+              6,
+              3,
+              17,
+              11
+            ],
+            "cognitive_complexity": 171,
+            "cognitive_complexity_per_function": [
+              0,
+              37,
+              12,
+              11,
+              2,
+              62,
+              41
+            ],
+            "max_nesting_depth": 8,
+            "avg_nesting_depth": 3.7142857142857144,
+            "nesting_depth_per_function": [
+              0,
+              4,
+              3,
+              4,
+              1,
+              6,
+              8
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1704.4445693119667,
+            "difficulty": 46.861111111111114,
+            "effort": 79872.166345258,
+            "time": 4437.342574736555,
+            "bugs": 0.5681481897706555,
+            "length": 302,
+            "vocabulary": 50,
+            "operators": 14,
+            "operands": 36,
+            "operator_count": 61,
+            "operand_count": 241
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 44.91871134044479,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 208,
+            "physical_lines_of_code": 244,
+            "comment_lines": 9,
+            "blank_lines": 27,
+            "code_to_comment_ratio": 23.11111111111111,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 7,
+            "methods_per_class": [
+              7
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              56.0
+            ],
+            "avg_wmc": 56.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.7297297297297297,
+            "simple_function_ratio": 0.2857142857142857,
+            "complex_function_ratio": 0.42857142857142855,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_7/chatgpt.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "a6b7d44f-b34a-4f41-a84f-fb9d172be901",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "claude",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 5,
+      "timestamp": "2025-07-14T04:23:50.005421",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 2,
+            "cyclomatic_complexity_per_function": [
+              1,
+              1,
+              1,
+              2,
+              2,
+              13,
+              12,
+              1,
+              2,
+              6,
+              5,
+              4,
+              4,
+              1,
+              2,
+              9,
+              8,
+              8
+            ],
+            "cognitive_complexity": 124,
+            "cognitive_complexity_per_function": [
+              0,
+              0,
+              0,
+              1,
+              1,
+              20,
+              25,
+              0,
+              1,
+              15,
+              10,
+              6,
+              3,
+              0,
+              1,
+              15,
+              13,
+              12
+            ],
+            "max_nesting_depth": 5,
+            "avg_nesting_depth": 1.7222222222222223,
+            "nesting_depth_per_function": [
+              0,
+              0,
+              0,
+              1,
+              1,
+              2,
+              3,
+              0,
+              1,
+              5,
+              4,
+              3,
+              1,
+              0,
+              1,
+              4,
+              2,
+              3
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 2738.368934242367,
+            "difficulty": 46.27118644067797,
+            "effort": 126707.5794996892,
+            "time": 7039.309972204956,
+            "bugs": 0.9127896447474556,
+            "length": 441,
+            "vocabulary": 74,
+            "operators": 15,
+            "operands": 59,
+            "operator_count": 77,
+            "operand_count": 364
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 32.31966207502205,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 400,
+            "physical_lines_of_code": 533,
+            "comment_lines": 13,
+            "blank_lines": 120,
+            "code_to_comment_ratio": 30.76923076923077,
+            "function_count": 1,
+            "class_count": 10,
+            "method_count": 17,
+            "methods_per_class": [
+              0,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              7,
+              13,
+              17
+            ],
+            "parameters_per_function": [
+              0
+            ],
+            "avg_parameters_per_function": 0.0,
+            "wmc_per_class": [
+              0.0,
+              9.11111111111111,
+              9.11111111111111,
+              9.11111111111111,
+              9.11111111111111,
+              9.11111111111111,
+              9.11111111111111,
+              31.888888888888886,
+              59.22222222222222,
+              77.44444444444444
+            ],
+            "avg_wmc": 22.322222222222223
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.5,
+            "simple_function_ratio": 0.6666666666666666,
+            "complex_function_ratio": 0.1111111111111111,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_5/claude.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "1c8ab18f-2611-4c7c-b268-f37fe2ad660d",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "gemini",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 5,
+      "timestamp": "2025-07-14T04:23:50.005431",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 2,
+            "cyclomatic_complexity_per_function": [
+              1,
+              3,
+              16,
+              17,
+              11,
+              6
+            ],
+            "cognitive_complexity": 153,
+            "cognitive_complexity_per_function": [
+              0,
+              2,
+              37,
+              64,
+              41,
+              8
+            ],
+            "max_nesting_depth": 8,
+            "avg_nesting_depth": 3.6666666666666665,
+            "nesting_depth_per_function": [
+              0,
+              1,
+              4,
+              6,
+              8,
+              3
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1396.240625180289,
+            "difficulty": 35.1,
+            "effort": 49008.04594382815,
+            "time": 2722.6692191015636,
+            "bugs": 0.465413541726763,
+            "length": 250,
+            "vocabulary": 48,
+            "operators": 13,
+            "operands": 35,
+            "operator_count": 61,
+            "operand_count": 189
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 49.03037342470675,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 177,
+            "physical_lines_of_code": 231,
+            "comment_lines": 9,
+            "blank_lines": 45,
+            "code_to_comment_ratio": 19.666666666666668,
+            "function_count": 1,
+            "class_count": 1,
+            "method_count": 5,
+            "methods_per_class": [
+              5
+            ],
+            "parameters_per_function": [
+              0
+            ],
+            "avg_parameters_per_function": 0.0,
+            "wmc_per_class": [
+              45.0
+            ],
+            "avg_wmc": 45.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.7837837837837838,
+            "simple_function_ratio": 0.3333333333333333,
+            "complex_function_ratio": 0.5,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_5/gemini.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "a9dbb3fc-6c6c-48b4-8e27-a98aeeb3f955",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "chatgpt",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 5,
+      "timestamp": "2025-07-14T04:23:50.005440",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 4,
+            "cyclomatic_complexity_per_function": [
+              1,
+              13,
+              11,
+              17,
+              6,
+              6
+            ],
+            "cognitive_complexity": 172,
+            "cognitive_complexity_per_function": [
+              0,
+              47,
+              32,
+              62,
+              10,
+              15
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 4.0,
+            "nesting_depth_per_function": [
+              0,
+              5,
+              5,
+              6,
+              3,
+              5
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1596.1231210795056,
+            "difficulty": 44.7972972972973,
+            "effort": 71502.00197808867,
+            "time": 3972.333443227148,
+            "bugs": 0.5320410403598352,
+            "length": 280,
+            "vocabulary": 52,
+            "operators": 15,
+            "operands": 37,
+            "operator_count": 59,
+            "operand_count": 221
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 45.33822437254814,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 207,
+            "physical_lines_of_code": 246,
+            "comment_lines": 8,
+            "blank_lines": 31,
+            "code_to_comment_ratio": 25.875,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 6,
+            "methods_per_class": [
+              6
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              54.0
+            ],
+            "avg_wmc": 54.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.7631578947368421,
+            "simple_function_ratio": 0.16666666666666666,
+            "complex_function_ratio": 0.5,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_5/chatgpt.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "d02eb7c0-9259-4866-bad9-811a328a0fd1",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "claude",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 2,
+      "timestamp": "2025-07-14T04:23:50.005450",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 2,
+            "cyclomatic_complexity_per_function": [
+              1,
+              1,
+              1,
+              3,
+              10,
+              9,
+              3,
+              2,
+              6,
+              13,
+              13,
+              6,
+              6,
+              6
+            ],
+            "cognitive_complexity": 168,
+            "cognitive_complexity_per_function": [
+              0,
+              0,
+              0,
+              3,
+              19,
+              16,
+              2,
+              1,
+              11,
+              36,
+              45,
+              11,
+              15,
+              8
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 2.5714285714285716,
+            "nesting_depth_per_function": [
+              0,
+              0,
+              0,
+              1,
+              2,
+              3,
+              1,
+              1,
+              4,
+              6,
+              6,
+              4,
+              5,
+              3
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 2562.040301082996,
+            "difficulty": 47.04545454545455,
+            "effort": 120532.35052822277,
+            "time": 6696.241696012376,
+            "bugs": 0.854013433694332,
+            "length": 418,
+            "vocabulary": 70,
+            "operators": 15,
+            "operands": 55,
+            "operator_count": 73,
+            "operand_count": 345
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 36.02952414045646,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 325,
+            "physical_lines_of_code": 452,
+            "comment_lines": 20,
+            "blank_lines": 107,
+            "code_to_comment_ratio": 16.25,
+            "function_count": 1,
+            "class_count": 6,
+            "method_count": 13,
+            "methods_per_class": [
+              0,
+              2,
+              2,
+              2,
+              2,
+              13
+            ],
+            "parameters_per_function": [
+              0
+            ],
+            "avg_parameters_per_function": 0.0,
+            "wmc_per_class": [
+              0.0,
+              11.428571428571429,
+              11.428571428571429,
+              11.428571428571429,
+              11.428571428571429,
+              74.28571428571429
+            ],
+            "avg_wmc": 20.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.6612903225806451,
+            "simple_function_ratio": 0.42857142857142855,
+            "complex_function_ratio": 0.14285714285714285,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_2/claude.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "bb96a5bc-460c-4359-a2b1-346238efc958",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "gemini",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 2,
+      "timestamp": "2025-07-14T04:23:50.005459",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 8,
+            "cyclomatic_complexity_per_function": [
+              1,
+              3,
+              6,
+              15,
+              8
+            ],
+            "cognitive_complexity": 102,
+            "cognitive_complexity_per_function": [
+              0,
+              2,
+              10,
+              54,
+              20
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 2.6,
+            "nesting_depth_per_function": [
+              0,
+              1,
+              2,
+              6,
+              4
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1260.3203629737995,
+            "difficulty": 28.695121951219516,
+            "effort": 36165.046513138426,
+            "time": 2009.1692507299126,
+            "bugs": 0.4201067876579332,
+            "length": 219,
+            "vocabulary": 54,
+            "operators": 13,
+            "operands": 41,
+            "operator_count": 38,
+            "operand_count": 181
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 49.41873350467537,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 164,
+            "physical_lines_of_code": 222,
+            "comment_lines": 15,
+            "blank_lines": 43,
+            "code_to_comment_ratio": 10.933333333333334,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 5,
+            "methods_per_class": [
+              5
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              33.0
+            ],
+            "avg_wmc": 33.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.8333333333333334,
+            "simple_function_ratio": 0.4,
+            "complex_function_ratio": 0.2,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_2/gemini.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "20b8375c-c353-4284-83fb-58d55e9a1064",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "chatgpt",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 2,
+      "timestamp": "2025-07-14T04:23:50.005468",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 4,
+            "cyclomatic_complexity_per_function": [
+              1,
+              6,
+              9,
+              2,
+              10,
+              17,
+              6,
+              6
+            ],
+            "cognitive_complexity": 156,
+            "cognitive_complexity_per_function": [
+              0,
+              12,
+              22,
+              1,
+              16,
+              73,
+              11,
+              15
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 3.375,
+            "nesting_depth_per_function": [
+              0,
+              4,
+              4,
+              1,
+              3,
+              6,
+              4,
+              5
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1741.2878181872125,
+            "difficulty": 39.8125,
+            "effort": 69325.0212615784,
+            "time": 3851.390070087689,
+            "bugs": 0.5804292727290709,
+            "length": 304,
+            "vocabulary": 53,
+            "operators": 13,
+            "operands": 40,
+            "operator_count": 59,
+            "operand_count": 245
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 43.89885648109363,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 220,
+            "physical_lines_of_code": 256,
+            "comment_lines": 9,
+            "blank_lines": 27,
+            "code_to_comment_ratio": 24.444444444444443,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 8,
+            "methods_per_class": [
+              8
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              57.0
+            ],
+            "avg_wmc": 57.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.7804878048780488,
+            "simple_function_ratio": 0.25,
+            "complex_function_ratio": 0.125,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_2/chatgpt.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "6aac8a15-386d-492d-bb09-4a8b7919824c",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "claude",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 3,
+      "timestamp": "2025-07-14T04:23:50.005477",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 2,
+            "cyclomatic_complexity_per_function": [
+              1,
+              1,
+              13,
+              3,
+              2,
+              6,
+              11,
+              1,
+              12,
+              2,
+              6,
+              6,
+              1,
+              5,
+              7
+            ],
+            "cognitive_complexity": 141,
+            "cognitive_complexity_per_function": [
+              0,
+              0,
+              25,
+              2,
+              1,
+              11,
+              20,
+              0,
+              39,
+              1,
+              11,
+              15,
+              0,
+              4,
+              11
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 2.066666666666667,
+            "nesting_depth_per_function": [
+              0,
+              0,
+              3,
+              1,
+              1,
+              4,
+              2,
+              0,
+              6,
+              1,
+              4,
+              5,
+              0,
+              1,
+              3
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 2683.8667474541803,
+            "difficulty": 39.046875,
+            "effort": 104796.60940449995,
+            "time": 5822.033855805553,
+            "bugs": 0.8946222491513934,
+            "length": 427,
+            "vocabulary": 78,
+            "operators": 14,
+            "operands": 64,
+            "operator_count": 70,
+            "operand_count": 357
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 34.541191160581334,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 351,
+            "physical_lines_of_code": 485,
+            "comment_lines": 20,
+            "blank_lines": 114,
+            "code_to_comment_ratio": 17.55,
+            "function_count": 1,
+            "class_count": 10,
+            "method_count": 14,
+            "methods_per_class": [
+              0,
+              2,
+              2,
+              2,
+              2,
+              2,
+              4,
+              7,
+              12,
+              14
+            ],
+            "parameters_per_function": [
+              0
+            ],
+            "avg_parameters_per_function": 0.0,
+            "wmc_per_class": [
+              0.0,
+              10.266666666666667,
+              10.266666666666667,
+              10.266666666666667,
+              10.266666666666667,
+              10.266666666666667,
+              20.533333333333335,
+              35.93333333333334,
+              61.60000000000001,
+              71.86666666666667
+            ],
+            "avg_wmc": 24.126666666666672
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.56,
+            "simple_function_ratio": 0.5333333333333333,
+            "complex_function_ratio": 0.2,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_3/claude.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "b98ad568-e693-4bcc-9be7-bc4c9a9d1554",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "gemini",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 3,
+      "timestamp": "2025-07-14T04:23:50.005486",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 8,
+            "cyclomatic_complexity_per_function": [
+              3,
+              13,
+              16,
+              13
+            ],
+            "cognitive_complexity": 172,
+            "cognitive_complexity_per_function": [
+              2,
+              33,
+              66,
+              55
+            ],
+            "max_nesting_depth": 9,
+            "avg_nesting_depth": 5.25,
+            "nesting_depth_per_function": [
+              1,
+              4,
+              7,
+              9
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1354.5254855459339,
+            "difficulty": 37.91666666666667,
+            "effort": 51359.09132695,
+            "time": 2853.2828514972225,
+            "bugs": 0.45150849518197794,
+            "length": 240,
+            "vocabulary": 50,
+            "operators": 14,
+            "operands": 36,
+            "operator_count": 45,
+            "operand_count": 195
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 46.15626884104269,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 196,
+            "physical_lines_of_code": 252,
+            "comment_lines": 7,
+            "blank_lines": 49,
+            "code_to_comment_ratio": 28.0,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 4,
+            "methods_per_class": [
+              4
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              45.0
+            ],
+            "avg_wmc": 45.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.7837837837837838,
+            "simple_function_ratio": 0.25,
+            "complex_function_ratio": 0.75,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_3/gemini.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "c2f12c7d-a3f4-422e-88b6-dcc163917f48",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "chatgpt",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 3,
+      "timestamp": "2025-07-14T04:23:50.005496",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 4,
+            "cyclomatic_complexity_per_function": [
+              1,
+              1,
+              1,
+              18,
+              6,
+              14,
+              11
+            ],
+            "cognitive_complexity": 171,
+            "cognitive_complexity_per_function": [
+              0,
+              0,
+              0,
+              68,
+              9,
+              47,
+              41
+            ],
+            "max_nesting_depth": 8,
+            "avg_nesting_depth": 3.4285714285714284,
+            "nesting_depth_per_function": [
+              0,
+              0,
+              0,
+              6,
+              3,
+              7,
+              8
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1842.9498658298578,
+            "difficulty": 40.17391304347826,
+            "effort": 74038.50765333863,
+            "time": 4113.25042518548,
+            "bugs": 0.614316621943286,
+            "length": 312,
+            "vocabulary": 60,
+            "operators": 14,
+            "operands": 46,
+            "operator_count": 48,
+            "operand_count": 264
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 43.167894686724466,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 226,
+            "physical_lines_of_code": 272,
+            "comment_lines": 10,
+            "blank_lines": 36,
+            "code_to_comment_ratio": 22.6,
+            "function_count": 0,
+            "class_count": 2,
+            "method_count": 7,
+            "methods_per_class": [
+              7,
+              2
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              52.0,
+              14.857142857142858
+            ],
+            "avg_wmc": 33.42857142857143
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.75,
+            "simple_function_ratio": 0.42857142857142855,
+            "complex_function_ratio": 0.42857142857142855,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_3/chatgpt.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "4817e984-4dba-458c-a30f-6543a15deb64",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "claude",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 4,
+      "timestamp": "2025-07-14T04:23:50.005505",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 9,
+            "cyclomatic_complexity_per_function": [
+              1,
+              4,
+              1,
+              5,
+              5,
+              8,
+              4,
+              9,
+              15,
+              2,
+              7,
+              6
+            ],
+            "cognitive_complexity": 159,
+            "cognitive_complexity_per_function": [
+              0,
+              4,
+              0,
+              4,
+              10,
+              18,
+              4,
+              23,
+              48,
+              1,
+              12,
+              15
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 2.5,
+            "nesting_depth_per_function": [
+              0,
+              1,
+              0,
+              1,
+              4,
+              3,
+              2,
+              3,
+              6,
+              1,
+              4,
+              5
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 2226.254732898002,
+            "difficulty": 38.83018867924528,
+            "effort": 86445.89132649223,
+            "time": 4802.549518138458,
+            "bugs": 0.7420849109660007,
+            "length": 367,
+            "vocabulary": 67,
+            "operators": 14,
+            "operands": 53,
+            "operator_count": 73,
+            "operand_count": 294
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 35.55379626831545,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 317,
+            "physical_lines_of_code": 441,
+            "comment_lines": 28,
+            "blank_lines": 96,
+            "code_to_comment_ratio": 11.321428571428571,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 12,
+            "methods_per_class": [
+              12
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              67.0
+            ],
+            "avg_wmc": 67.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.7962962962962963,
+            "simple_function_ratio": 0.5833333333333334,
+            "complex_function_ratio": 0.08333333333333333,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_4/claude.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "48a8813e-20f7-432d-8eba-5cc251fafaa6",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "gemini",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 4,
+      "timestamp": "2025-07-14T04:23:50.005514",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 7,
+            "cyclomatic_complexity_per_function": [
+              3,
+              15,
+              15,
+              8
+            ],
+            "cognitive_complexity": 122,
+            "cognitive_complexity_per_function": [
+              2,
+              31,
+              54,
+              20
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 3.5,
+            "nesting_depth_per_function": [
+              1,
+              3,
+              6,
+              4
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1518.0708830713893,
+            "difficulty": 32.108695652173914,
+            "effort": 48743.27596296613,
+            "time": 2707.9597757203405,
+            "bugs": 0.506023627690463,
+            "length": 257,
+            "vocabulary": 60,
+            "operators": 14,
+            "operands": 46,
+            "operator_count": 46,
+            "operand_count": 211
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 48.00403299474655,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 171,
+            "physical_lines_of_code": 243,
+            "comment_lines": 25,
+            "blank_lines": 47,
+            "code_to_comment_ratio": 6.84,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 4,
+            "methods_per_class": [
+              4
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              41.0
+            ],
+            "avg_wmc": 41.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.7872340425531915,
+            "simple_function_ratio": 0.25,
+            "complex_function_ratio": 0.5,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_4/gemini.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "d330b848-b195-4ad2-b6dc-f68efb1a31ab",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "chatgpt",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 4,
+      "timestamp": "2025-07-14T04:23:50.005523",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 4,
+            "cyclomatic_complexity_per_function": [
+              1,
+              7,
+              12,
+              18,
+              6,
+              2,
+              6
+            ],
+            "cognitive_complexity": 171,
+            "cognitive_complexity_per_function": [
+              0,
+              18,
+              44,
+              76,
+              11,
+              1,
+              15
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 3.7142857142857144,
+            "nesting_depth_per_function": [
+              0,
+              4,
+              6,
+              6,
+              4,
+              1,
+              5
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1624.5620795004295,
+            "difficulty": 38.92682926829268,
+            "effort": 63239.05070445574,
+            "time": 3513.2805946919852,
+            "bugs": 0.5415206931668098,
+            "length": 281,
+            "vocabulary": 55,
+            "operators": 14,
+            "operands": 41,
+            "operator_count": 53,
+            "operand_count": 228
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 43.96776740163297,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 224,
+            "physical_lines_of_code": 270,
+            "comment_lines": 9,
+            "blank_lines": 37,
+            "code_to_comment_ratio": 24.88888888888889,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 7,
+            "methods_per_class": [
+              7
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              52.0
+            ],
+            "avg_wmc": 52.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.8571428571428571,
+            "simple_function_ratio": 0.2857142857142857,
+            "complex_function_ratio": 0.2857142857142857,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_4/chatgpt.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "9dfc84e9-6f41-4191-94f3-fb1914cca446",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "claude",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 10,
+      "timestamp": "2025-07-14T04:23:50.005532",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 3,
+            "cyclomatic_complexity_per_function": [
+              1,
+              1,
+              1,
+              1,
+              3,
+              11,
+              2,
+              3,
+              6,
+              7,
+              13,
+              6,
+              6,
+              7,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              3,
+              4,
+              5,
+              1
+            ],
+            "cognitive_complexity": 156,
+            "cognitive_complexity_per_function": [
+              0,
+              0,
+              0,
+              0,
+              3,
+              32,
+              1,
+              2,
+              11,
+              14,
+              45,
+              11,
+              15,
+              11,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              2,
+              3,
+              4,
+              0
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 1.5416666666666667,
+            "nesting_depth_per_function": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              5,
+              1,
+              1,
+              4,
+              4,
+              6,
+              4,
+              5,
+              3,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              1,
+              1,
+              0
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 2578.7309378652944,
+            "difficulty": 40.1639344262295,
+            "effort": 103571.98029131099,
+            "time": 5753.998905072833,
+            "bugs": 0.8595769792884315,
+            "length": 414,
+            "vocabulary": 75,
+            "operators": 14,
+            "operands": 61,
+            "operator_count": 64,
+            "operand_count": 350
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 33.7088204703108,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 369,
+            "physical_lines_of_code": 495,
+            "comment_lines": 15,
+            "blank_lines": 111,
+            "code_to_comment_ratio": 24.6,
+            "function_count": 1,
+            "class_count": 8,
+            "method_count": 23,
+            "methods_per_class": [
+              0,
+              2,
+              2,
+              2,
+              2,
+              2,
+              13,
+              23
+            ],
+            "parameters_per_function": [
+              0
+            ],
+            "avg_parameters_per_function": 0.0,
+            "wmc_per_class": [
+              0.0,
+              7.25,
+              7.25,
+              7.25,
+              7.25,
+              7.25,
+              47.125,
+              83.375
+            ],
+            "avg_wmc": 20.84375
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.6142857142857143,
+            "simple_function_ratio": 0.7083333333333334,
+            "complex_function_ratio": 0.08333333333333333,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_10/claude.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "e88bfc17-541a-47c4-85c8-58b2c14cc34a",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "gemini",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 10,
+      "timestamp": "2025-07-14T04:23:50.005541",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 7,
+            "cyclomatic_complexity_per_function": [
+              16,
+              15,
+              8,
+              3
+            ],
+            "cognitive_complexity": 150,
+            "cognitive_complexity_per_function": [
+              58,
+              54,
+              20,
+              3
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 4.25,
+            "nesting_depth_per_function": [
+              6,
+              6,
+              4,
+              1
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1512.1710000046844,
+            "difficulty": 30.878048780487806,
+            "effort": 46692.88990258367,
+            "time": 2594.049439032426,
+            "bugs": 0.5040570000015615,
+            "length": 264,
+            "vocabulary": 53,
+            "operators": 12,
+            "operands": 41,
+            "operator_count": 53,
+            "operand_count": 211
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 48.90017081218876,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 162,
+            "physical_lines_of_code": 216,
+            "comment_lines": 9,
+            "blank_lines": 45,
+            "code_to_comment_ratio": 18.0,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 4,
+            "methods_per_class": [
+              4
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              42.0
+            ],
+            "avg_wmc": 42.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.7857142857142857,
+            "simple_function_ratio": 0.25,
+            "complex_function_ratio": 0.5,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_10/gemini.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "dea1d6e6-c881-4be0-9d58-56e399527a98",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "chatgpt",
+      "challenge": "calculator",
+      "prompt": "5-role-zero_shot",
+      "iteration": 10,
+      "timestamp": "2025-07-14T04:23:50.005550",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 6,
+            "cyclomatic_complexity_per_function": [
+              2,
+              3,
+              14,
+              6,
+              15,
+              8
+            ],
+            "cognitive_complexity": 139,
+            "cognitive_complexity_per_function": [
+              1,
+              2,
+              42,
+              9,
+              54,
+              20
+            ],
+            "max_nesting_depth": 6,
+            "avg_nesting_depth": 3.3333333333333335,
+            "nesting_depth_per_function": [
+              1,
+              1,
+              5,
+              3,
+              6,
+              4
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1824.2993381858194,
+            "difficulty": 39.79268292682927,
+            "effort": 72593.7651280528,
+            "time": 4032.9869515584887,
+            "bugs": 0.6080997793952732,
+            "length": 317,
+            "vocabulary": 54,
+            "operators": 13,
+            "operands": 41,
+            "operator_count": 66,
+            "operand_count": 251
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 43.72052032181864,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 213,
+            "physical_lines_of_code": 256,
+            "comment_lines": 11,
+            "blank_lines": 32,
+            "code_to_comment_ratio": 19.363636363636363,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 6,
+            "methods_per_class": [
+              6
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              48.0
+            ],
+            "avg_wmc": 48.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.7857142857142857,
+            "simple_function_ratio": 0.3333333333333333,
+            "complex_function_ratio": 0.3333333333333333,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/calculator/5-role-zero_shot/temp_1.0/iteration_10/chatgpt.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "f2d05658-7c0d-4cfa-8084-c29a85e86477",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "claude",
+      "challenge": "ascii_art",
+      "prompt": "5-role-zero_shot",
+      "iteration": 1,
+      "timestamp": "2025-07-14T04:23:50.005559",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 2,
+            "cyclomatic_complexity_per_function": [
+              1,
+              5,
+              4,
+              1,
+              1,
+              2,
+              2,
+              2,
+              5
+            ],
+            "cognitive_complexity": 18,
+            "cognitive_complexity_per_function": [
+              0,
+              4,
+              3,
+              0,
+              0,
+              1,
+              1,
+              1,
+              7
+            ],
+            "max_nesting_depth": 2,
+            "avg_nesting_depth": 0.7777777777777778,
+            "nesting_depth_per_function": [
+              0,
+              1,
+              1,
+              0,
+              0,
+              1,
+              1,
+              1,
+              2
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1113.7240502020086,
+            "difficulty": 26.470588235294116,
+            "effort": 29480.9307406414,
+            "time": 1637.829485591189,
+            "bugs": 0.3712413500673362,
+            "length": 204,
+            "vocabulary": 44,
+            "operators": 10,
+            "operands": 34,
+            "operator_count": 24,
+            "operand_count": 180
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 45.34087412774488,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 239,
+            "physical_lines_of_code": 343,
+            "comment_lines": 19,
+            "blank_lines": 85,
+            "code_to_comment_ratio": 12.578947368421053,
+            "function_count": 1,
+            "class_count": 4,
+            "method_count": 8,
+            "methods_per_class": [
+              0,
+              0,
+              0,
+              8
+            ],
+            "parameters_per_function": [
+              0
+            ],
+            "avg_parameters_per_function": 0.0,
+            "wmc_per_class": [
+              0.0,
+              0.0,
+              0.0,
+              20.444444444444443
+            ],
+            "avg_wmc": 5.111111111111111
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.717948717948718,
+            "simple_function_ratio": 1.0,
+            "complex_function_ratio": 0.0,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/ascii_art/5-role-zero_shot/temp_0.5/iteration_1/claude.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "51779f47-aaab-4b19-9391-6279f40ea9a6",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "chatgpt",
+      "challenge": "ascii_art",
+      "prompt": "5-role-zero_shot",
+      "iteration": 1,
+      "timestamp": "2025-07-14T04:23:50.005568",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 2,
+            "cyclomatic_complexity_per_function": [
+              1,
+              5,
+              3,
+              1,
+              1,
+              2,
+              3,
+              2
+            ],
+            "cognitive_complexity": 12,
+            "cognitive_complexity_per_function": [
+              0,
+              4,
+              2,
+              0,
+              0,
+              1,
+              3,
+              1
+            ],
+            "max_nesting_depth": 2,
+            "avg_nesting_depth": 0.75,
+            "nesting_depth_per_function": [
+              0,
+              1,
+              1,
+              0,
+              0,
+              1,
+              2,
+              1
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 890.8165255225505,
+            "difficulty": 22.660714285714285,
+            "effort": 20186.538765859223,
+            "time": 1121.474375881068,
+            "bugs": 0.2969388418408502,
+            "length": 171,
+            "vocabulary": 37,
+            "operators": 9,
+            "operands": 28,
+            "operator_count": 30,
+            "operand_count": 141
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 51.094978885577575,
+            "maintainability_rank": "C",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 180,
+            "physical_lines_of_code": 224,
+            "comment_lines": 2,
+            "blank_lines": 42,
+            "code_to_comment_ratio": 90.0,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 8,
+            "methods_per_class": [
+              8
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              18.0
+            ],
+            "avg_wmc": 18.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.8620689655172413,
+            "simple_function_ratio": 1.0,
+            "complex_function_ratio": 0.0,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/ascii_art/5-role-zero_shot/temp_0.5/iteration_1/chatgpt.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "cadc7314-209f-45cb-9e49-b3d99988ce54",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "claude",
+      "challenge": "ascii_art",
+      "prompt": "5-role-zero_shot",
+      "iteration": 2,
+      "timestamp": "2025-07-14T04:23:50.005577",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 6,
+            "cyclomatic_complexity_per_function": [
+              6,
+              5,
+              1,
+              1,
+              2,
+              2,
+              2,
+              2
+            ],
+            "cognitive_complexity": 23,
+            "cognitive_complexity_per_function": [
+              7,
+              4,
+              0,
+              0,
+              1,
+              1,
+              1,
+              1
+            ],
+            "max_nesting_depth": 2,
+            "avg_nesting_depth": 0.875,
+            "nesting_depth_per_function": [
+              2,
+              1,
+              0,
+              0,
+              1,
+              1,
+              1,
+              1
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1036.6812197601612,
+            "difficulty": 27.80357142857143,
+            "effort": 28823.440342260197,
+            "time": 1601.3022412366777,
+            "bugs": 0.3455604065867204,
+            "length": 199,
+            "vocabulary": 37,
+            "operators": 9,
+            "operands": 28,
+            "operator_count": 26,
+            "operand_count": 173
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 45.84367923519385,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 224,
+            "physical_lines_of_code": 318,
+            "comment_lines": 18,
+            "blank_lines": 76,
+            "code_to_comment_ratio": 12.444444444444445,
+            "function_count": 1,
+            "class_count": 1,
+            "method_count": 7,
+            "methods_per_class": [
+              7
+            ],
+            "parameters_per_function": [
+              0
+            ],
+            "avg_parameters_per_function": 0.0,
+            "wmc_per_class": [
+              18.375
+            ],
+            "avg_wmc": 18.375
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.8666666666666667,
+            "simple_function_ratio": 0.875,
+            "complex_function_ratio": 0.0,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/ascii_art/5-role-zero_shot/temp_0.5/iteration_2/claude.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "0d09b00d-c674-4615-8e98-8f8082db6c45",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "chatgpt",
+      "challenge": "ascii_art",
+      "prompt": "5-role-zero_shot",
+      "iteration": 2,
+      "timestamp": "2025-07-14T04:23:50.005587",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 2,
+            "cyclomatic_complexity_per_function": [
+              1,
+              5,
+              3,
+              1,
+              1,
+              2,
+              2,
+              2
+            ],
+            "cognitive_complexity": 10,
+            "cognitive_complexity_per_function": [
+              0,
+              4,
+              2,
+              0,
+              0,
+              1,
+              1,
+              1
+            ],
+            "max_nesting_depth": 1,
+            "avg_nesting_depth": 0.625,
+            "nesting_depth_per_function": [
+              0,
+              1,
+              1,
+              0,
+              0,
+              1,
+              1,
+              1
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 875.1881654256637,
+            "difficulty": 23.142857142857146,
+            "effort": 20254.354685565362,
+            "time": 1125.2419269758534,
+            "bugs": 0.29172938847522123,
+            "length": 168,
+            "vocabulary": 37,
+            "operators": 9,
+            "operands": 28,
+            "operator_count": 24,
+            "operand_count": 144
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 49.97361549408997,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 194,
+            "physical_lines_of_code": 239,
+            "comment_lines": 2,
+            "blank_lines": 43,
+            "code_to_comment_ratio": 97.0,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 8,
+            "methods_per_class": [
+              8
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              17.0
+            ],
+            "avg_wmc": 17.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.8620689655172413,
+            "simple_function_ratio": 1.0,
+            "complex_function_ratio": 0.0,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/ascii_art/5-role-zero_shot/temp_0.5/iteration_2/chatgpt.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "a4fd123a-273d-4d29-81dc-71714f20c0d3",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "claude",
+      "challenge": "ascii_art",
+      "prompt": "5-role-zero_shot",
+      "iteration": 1,
+      "timestamp": "2025-07-14T04:23:50.005596",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 2,
+            "cyclomatic_complexity_per_function": [
+              1,
+              7,
+              5,
+              1,
+              1,
+              2,
+              2,
+              2,
+              14
+            ],
+            "cognitive_complexity": 55,
+            "cognitive_complexity_per_function": [
+              0,
+              8,
+              4,
+              0,
+              0,
+              1,
+              1,
+              1,
+              39
+            ],
+            "max_nesting_depth": 7,
+            "avg_nesting_depth": 1.3333333333333333,
+            "nesting_depth_per_function": [
+              0,
+              1,
+              1,
+              0,
+              0,
+              1,
+              1,
+              1,
+              7
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 1463.7439183551085,
+            "difficulty": 35.82857142857143,
+            "effort": 52443.85353192303,
+            "time": 2913.5474184401683,
+            "bugs": 0.4879146394517028,
+            "length": 265,
+            "vocabulary": 46,
+            "operators": 11,
+            "operands": 35,
+            "operator_count": 37,
+            "operand_count": 228
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 43.38639459428997,
+            "maintainability_rank": "D",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 247,
+            "physical_lines_of_code": 332,
+            "comment_lines": 5,
+            "blank_lines": 80,
+            "code_to_comment_ratio": 49.4,
+            "function_count": 1,
+            "class_count": 1,
+            "method_count": 8,
+            "methods_per_class": [
+              8
+            ],
+            "parameters_per_function": [
+              0
+            ],
+            "avg_parameters_per_function": 0.0,
+            "wmc_per_class": [
+              31.11111111111111
+            ],
+            "avg_wmc": 31.11111111111111
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.8378378378378378,
+            "simple_function_ratio": 0.7777777777777778,
+            "complex_function_ratio": 0.1111111111111111,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/ascii_art/5-role-zero_shot/temp_1.0/iteration_1/claude.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "f7b4f48a-d3cf-41c7-aa6d-899f985a9725",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "gemini",
+      "challenge": "ascii_art",
+      "prompt": "5-role-zero_shot",
+      "iteration": 1,
+      "timestamp": "2025-07-14T04:23:50.005604",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 6,
+            "cyclomatic_complexity_per_function": [
+              4,
+              4,
+              1,
+              1,
+              1,
+              2,
+              2
+            ],
+            "cognitive_complexity": 22,
+            "cognitive_complexity_per_function": [
+              3,
+              5,
+              0,
+              0,
+              0,
+              1,
+              1
+            ],
+            "max_nesting_depth": 3,
+            "avg_nesting_depth": 0.7142857142857143,
+            "nesting_depth_per_function": [
+              1,
+              2,
+              0,
+              0,
+              0,
+              1,
+              1
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 894.0839199410769,
+            "difficulty": 24.5,
+            "effort": 21905.056038556384,
+            "time": 1216.947557697577,
+            "bugs": 0.2980279733136923,
+            "length": 168,
+            "vocabulary": 40,
+            "operators": 10,
+            "operands": 30,
+            "operator_count": 21,
+            "operand_count": 147
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 51.08190718685533,
+            "maintainability_rank": "C",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 170,
+            "physical_lines_of_code": 234,
+            "comment_lines": 10,
+            "blank_lines": 54,
+            "code_to_comment_ratio": 17.0,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 7,
+            "methods_per_class": [
+              7
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              15.0
+            ],
+            "avg_wmc": 15.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.8387096774193549,
+            "simple_function_ratio": 1.0,
+            "complex_function_ratio": 0.0,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/ascii_art/5-role-zero_shot/temp_1.0/iteration_1/gemini.py",
+      "execution_time": 0,
+      "status": "success"
+    },
+    {
+      "result_id": "e5e795fd-299b-44fc-a006-6a71e2af7638",
+      "experiment_id": "dfbd6c40-d646-4dbd-a605-f56d92dda38a",
+      "model": "chatgpt",
+      "challenge": "ascii_art",
+      "prompt": "5-role-zero_shot",
+      "iteration": 1,
+      "timestamp": "2025-07-14T04:23:50.005613",
+      "metrics": {
+        "compilability": {},
+        "code_length": {},
+        "modularity": {},
+        "functional_completeness": {},
+        "functional_correctness": null,
+        "quality": {
+          "complexity_analysis": {
+            "cyclomatic_complexity": 2,
+            "cyclomatic_complexity_per_function": [
+              1,
+              1,
+              2,
+              2,
+              2,
+              3,
+              5
+            ],
+            "cognitive_complexity": 10,
+            "cognitive_complexity_per_function": [
+              0,
+              0,
+              1,
+              1,
+              1,
+              2,
+              4
+            ],
+            "max_nesting_depth": 1,
+            "avg_nesting_depth": 0.7142857142857143,
+            "nesting_depth_per_function": [
+              0,
+              0,
+              1,
+              1,
+              1,
+              1,
+              1
+            ]
+          },
+          "halstead_analysis": {
+            "volume": 882.2366789145342,
+            "difficulty": 21.62962962962963,
+            "effort": 19082.45261059585,
+            "time": 1060.1362561442138,
+            "bugs": 0.2940788929715114,
+            "length": 172,
+            "vocabulary": 35,
+            "operators": 8,
+            "operands": 27,
+            "operator_count": 26,
+            "operand_count": 146
+          },
+          "maintainability_analysis": {
+            "maintainability_index": 54.64811948284856,
+            "maintainability_rank": "C",
+            "abc_assignment_count": null,
+            "abc_branch_count": null,
+            "abc_condition_count": null,
+            "abc_magnitude": null
+          },
+          "size_analysis": {
+            "logical_lines_of_code": 145,
+            "physical_lines_of_code": 187,
+            "comment_lines": 9,
+            "blank_lines": 33,
+            "code_to_comment_ratio": 16.11111111111111,
+            "function_count": 0,
+            "class_count": 1,
+            "method_count": 7,
+            "methods_per_class": [
+              7
+            ],
+            "parameters_per_function": null,
+            "avg_parameters_per_function": null,
+            "wmc_per_class": [
+              16.0
+            ],
+            "avg_wmc": 16.0
+          },
+          "code_style_analysis": {
+            "naming_convention_score": 0.8214285714285714,
+            "simple_function_ratio": 1.0,
+            "complex_function_ratio": 0.0,
+            "very_complex_function_ratio": 0.0
+          },
+          "status": "success"
+        },
+        "structure": null,
+        "advanced": null,
+        "test_groups_run": null
+      },
+      "code_path": "/Users/filip.stehlik/baka/codes/Serial_experiments_temperature/dry_run_output/code/ascii_art/5-role-zero_shot/temp_1.0/iteration_1/chatgpt.py",
+      "execution_time": 0,
+      "status": "success"
+    }
+  ]
+}

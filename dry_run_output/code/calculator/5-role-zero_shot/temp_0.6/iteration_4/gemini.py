@@ -1,0 +1,275 @@
+
+"""
+A high-quality, console-based arithmetic calculator in Python.
+
+This module provides a Calculator class that adheres to the principles of the
+ISO/IEC 25010 standard for software quality, focusing on reliability,
+maintainability, and performance efficiency.
+"""
+
+from typing import List, Union, Dict
+
+class Calculator:
+    """
+    A robust calculator that evaluates arithmetic expressions from a string.
+
+    This class implements a calculator that can parse and evaluate expressions
+    containing integers, floating-point numbers, addition, subtraction,
+    multiplication, division, and parentheses. It uses the Shunting-yard
+    algorithm to ensure correct operator precedence and associativity.
+
+    The implementation avoids the use of `eval()` to ensure security and
+    provides robust error handling for invalid inputs.
+
+    ISO/IEC 25010 Quality Characteristics:
+    - Functional Suitability: Correctly computes expressions with standard
+      arithmetic rules.
+    - Performance Efficiency: Uses an O(n) algorithm for parsing and evaluation.
+    - Reliability: Gracefully handles invalid expressions and division by zero
+      through exceptions.
+    - Security: Avoids `eval()` to prevent code injection vulnerabilities.
+    - Maintainability: Code is modular, documented, and uses clear naming
+      conventions, making it easy to understand and extend.
+    - Testability: Logic is separated into distinct methods, facilitating
+      unit testing.
+    """
+    # Define operator precedence and associativity
+    # A special token '_' is used for unary minus.
+    OPERATORS: Dict[str, Dict[str, int]] = {
+        '+': {'precedence': 1, 'associativity': 'Left'},
+        '-': {'precedence': 1, 'associativity': 'Left'},
+        '*': {'precedence': 2, 'associativity': 'Left'},
+        '/': {'precedence': 2, 'associativity': 'Left'},
+        '_': {'precedence': 3, 'associativity': 'Right'} # Unary minus
+    }
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates a mathematical expression provided as a string.
+
+        This is the main public method that orchestrates the tokenization,
+        parsing (infix to postfix), and evaluation of the expression.
+
+        Args:
+            expression: The arithmetic expression string to evaluate.
+
+        Returns:
+            The result of the calculation as a float.
+
+        Raises:
+            ValueError: If the expression is invalid (e.g., contains
+                        unrecognized characters, unbalanced parentheses, or is
+                        malformed).
+            ZeroDivisionError: If the expression attempts to divide by zero.
+        """
+        try:
+            tokens = self._tokenize(expression)
+            postfix_tokens = self._infix_to_postfix(tokens)
+            result = self._evaluate_postfix(postfix_tokens)
+            return result
+        except (ValueError, ZeroDivisionError) as e:
+            # Re-raise exceptions with a more informative context if needed,
+            # or simply let them propagate.
+            raise e
+        except IndexError:
+            # Catches errors from popping from empty stacks, indicating a
+            # malformed expression.
+            raise ValueError("Invalid expression: Malformed or missing operands.")
+
+    def _tokenize(self, expression: str) -> List[Union[float, str]]:
+        """
+        Converts the input string into a list of numbers and operators (tokens).
+
+        This method handles integers, floats, and unary minus detection.
+
+        Args:
+            expression: The raw expression string.
+
+        Returns:
+            A list of tokens (floats for numbers, strings for operators).
+
+        Raises:
+            ValueError: If an invalid character is found in the expression.
+        """
+        tokens: List[Union[float, str]] = []
+        i = 0
+        while i < len(expression):
+            char = expression[i]
+
+            if char.isspace():
+                i += 1
+                continue
+
+            if char.isdigit() or (char == '.'):
+                num_str = ""
+                while i < len(expression) and (expression[i].isdigit() or expression[i] == '.'):
+                    num_str += expression[i]
+                    i += 1
+                try:
+                    tokens.append(float(num_str))
+                except ValueError:
+                    raise ValueError(f"Invalid number format: '{num_str}'")
+                continue
+
+            # Handle unary minus:
+            # A minus is unary if it's the first token, or if the preceding
+            # token was an operator or an opening parenthesis.
+            if char == '-':
+                is_unary = (
+                    not tokens or
+                    isinstance(tokens[-1], str) and tokens[-1] in self.OPERATORS or
+                    tokens[-1] == '('
+                )
+                if is_unary:
+                    tokens.append('_') # Special token for unary minus
+                else:
+                    tokens.append(char)
+            elif char in self.OPERATORS or char in '()':
+                tokens.append(char)
+            else:
+                raise ValueError(f"Invalid character in expression: '{char}'")
+            i += 1
+        return tokens
+
+    def _infix_to_postfix(self, tokens: List[Union[float, str]]) -> List[Union[float, str]]:
+        """
+        Converts a tokenized infix expression to postfix (RPN) using Shunting-yard.
+
+        Args:
+            tokens: A list of tokens in infix order.
+
+        Returns:
+            A list of tokens in postfix order.
+
+        Raises:
+            ValueError: If the expression has mismatched parentheses.
+        """
+        output_queue: List[Union[float, str]] = []
+        operator_stack: List[str] = []
+
+        for token in tokens:
+            if isinstance(token, float):
+                output_queue.append(token)
+            elif token in self.OPERATORS:
+                op1 = token
+                while (operator_stack and operator_stack[-1] in self.OPERATORS and
+                       ((self.OPERATORS[op1]['associativity'] == 'Left' and
+                         self.OPERATORS[op1]['precedence'] <= self.OPERATORS[operator_stack[-1]]['precedence']) or
+                        (self.OPERATORS[op1]['associativity'] == 'Right' and
+                         self.OPERATORS[op1]['precedence'] < self.OPERATORS[operator_stack[-1]]['precedence']))):
+                    output_queue.append(operator_stack.pop())
+                operator_stack.append(op1)
+            elif token == '(':
+                operator_stack.append(token)
+            elif token == ')':
+                while operator_stack and operator_stack[-1] != '(':
+                    output_queue.append(operator_stack.pop())
+                if not operator_stack or operator_stack[-1] != '(':
+                    raise ValueError("Invalid expression: Mismatched parentheses.")
+                operator_stack.pop()  # Discard the '('
+
+        while operator_stack:
+            op = operator_stack.pop()
+            if op == '(':
+                raise ValueError("Invalid expression: Mismatched parentheses.")
+            output_queue.append(op)
+
+        return output_queue
+
+    def _evaluate_postfix(self, postfix_tokens: List[Union[float, str]]) -> float:
+        """
+        Evaluates a postfix (RPN) expression.
+
+        Args:
+            postfix_tokens: A list of tokens in postfix order.
+
+        Returns:
+            The final result of the evaluation.
+
+        Raises:
+            ZeroDivisionError: If division by zero occurs.
+            ValueError: If the expression is malformed.
+        """
+        stack: List[float] = []
+
+        for token in postfix_tokens:
+            if isinstance(token, float):
+                stack.append(token)
+            elif token in self.OPERATORS:
+                if token == '_': # Unary minus
+                    if not stack:
+                        raise ValueError("Invalid expression: Unary minus needs an operand.")
+                    operand = stack.pop()
+                    stack.append(-operand)
+                    continue
+
+                # Binary operators
+                if len(stack) < 2:
+                    raise ValueError(f"Invalid expression: Operator '{token}' needs two operands.")
+                
+                op2 = stack.pop()
+                op1 = stack.pop()
+
+                if token == '+':
+                    stack.append(op1 + op2)
+                elif token == '-':
+                    stack.append(op1 - op2)
+                elif token == '*':
+                    stack.append(op1 * op2)
+                elif token == '/':
+                    if op2 == 0:
+                        raise ZeroDivisionError("Division by zero is not allowed.")
+                    stack.append(op1 / op2)
+
+        if len(stack) != 1:
+            raise ValueError("Invalid expression: The expression could not be resolved to a single value.")
+
+        return stack[0]
+
+# --- Main execution block for demonstration ---
+if __name__ == "__main__":
+    calculator = Calculator()
+    
+    print("--- High-Quality Arithmetic Calculator ---")
+    print("Enter 'quit' to exit.")
+
+    # Example test cases to demonstrate functionality and robustness
+    test_expressions = [
+        "3 + 5 * (10 - 4)",
+        "10 / 2 - 3",
+        "2.5 * 4 + 1.1",
+        "-5 + (-10 / 2)",
+        "100 / (10 * (2 + 3))",
+        "3 * -2", # Handled as 3 * (unary minus) 2
+        "1 / 3",
+        # Error cases
+        "3 + 5 * (10 - 4", # Mismatched parentheses
+        "10 / 0",          # Division by zero
+        "5 & 4",           # Invalid character
+        "5 + * 3"          # Malformed expression
+    ]
+
+    print("\n--- Running Demonstration Tests ---")
+    for expr in test_expressions:
+        try:
+            result = calculator.calculate(expr)
+            print(f"Expression: {expr:<25} | Result: {result}")
+        except (ValueError, ZeroDivisionError) as e:
+            print(f"Expression: {expr:<25} | Error: {e}")
+
+    print("\n--- Interactive Mode ---")
+    while True:
+        try:
+            expression = input("> ")
+            if expression.lower() == 'quit':
+                break
+            if not expression:
+                continue
+            
+            result = calculator.calculate(expression)
+            print(f"Result: {result}")
+        except (ValueError, ZeroDivisionError) as e:
+            print(f"Error: {e}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+

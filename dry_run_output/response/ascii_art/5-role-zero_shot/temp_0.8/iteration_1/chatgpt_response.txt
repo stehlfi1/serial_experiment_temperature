@@ -1,0 +1,168 @@
+```python
+"""
+asciiart.py
+
+A module for drawing 2D ASCII art shapes using OOP, following ISO/IEC 25010 code quality standards.
+
+Author: Senior Software Developer
+"""
+
+from typing import Any
+
+
+class AsciiArt:
+    """
+    A class for generating various 2D ASCII art shapes.
+    Provides input validation and returns multi-line string representations.
+    """
+
+    def _validate_symbol(self, symbol: str) -> None:
+        """
+        Validates that symbol is a single printable non-whitespace character.
+
+        :param symbol: The character to be used for drawing.
+        :raises ValueError: If symbol is invalid.
+        """
+        if not isinstance(symbol, str):
+            raise TypeError("Symbol must be a string.")
+        if len(symbol) != 1:
+            raise ValueError("Symbol must be exactly one character.")
+        if symbol.isspace():
+            raise ValueError("Symbol must not be a whitespace character.")
+        if not symbol.isprintable():
+            raise ValueError("Symbol must be a printable character.")
+
+    def _validate_positive_int(self, value: Any, name: str) -> None:
+        """
+        Validates that the provided value is a positive integer.
+
+        :param value: Value to validate.
+        :param name: Name of the parameter (for error messages).
+        :raises ValueError: If value is not a positive integer.
+        """
+        if not isinstance(value, int):
+            raise TypeError(f"{name} must be an integer.")
+        if value <= 0:
+            raise ValueError(f"{name} must be positive (got {value}).")
+
+    def draw_square(self, width: int, symbol: str) -> str:
+        """
+        Draws a filled square of given width.
+
+        :param width: Width/height of the square (>0).
+        :param symbol: Drawing character (single printable, non-whitespace char).
+        :return: Multi-line string of the square.
+        """
+        self._validate_positive_int(width, "Width")
+        self._validate_symbol(symbol)
+
+        line = symbol * width
+        square = "\n".join([line for _ in range(width)])
+        return square
+
+    def draw_rectangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled rectangle.
+
+        :param width: Width of the rectangle (>0).
+        :param height: Height of the rectangle (>0).
+        :param symbol: Drawing character.
+        :return: Multi-line string of the rectangle.
+        """
+        self._validate_positive_int(width, "Width")
+        self._validate_positive_int(height, "Height")
+        self._validate_symbol(symbol)
+
+        line = symbol * width
+        rectangle = "\n".join([line for _ in range(height)])
+        return rectangle
+
+    def draw_parallelogram(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled parallelogram (each row shifted by one space right).
+
+        :param width: Width of the parallelogram (>0).
+        :param height: Height of the parallelogram (>0).
+        :param symbol: Drawing character.
+        :return: Multi-line string of the parallelogram.
+        """
+        self._validate_positive_int(width, "Width")
+        self._validate_positive_int(height, "Height")
+        self._validate_symbol(symbol)
+
+        lines = []
+        for row in range(height):
+            shift = " " * row
+            content = symbol * width
+            lines.append(f"{shift}{content}")
+        return "\n".join(lines)
+
+    def draw_triangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled right-angled triangle (top-left right angle).
+
+        :param width: Width of the base (>0).
+        :param height: Height of the triangle (>0).
+        :param symbol: Drawing character.
+        :return: Multi-line string of the triangle.
+        """
+        self._validate_positive_int(width, "Width")
+        self._validate_positive_int(height, "Height")
+        self._validate_symbol(symbol)
+
+        lines = []
+        for row in range(height):
+            # Linear interpolation: number of symbols per row grows from 1 to width
+            count = max(1, (width * (row + 1) + height - 1) // height)
+            # Clamp to width max
+            count = min(count, width)
+            lines.append(symbol * count)
+        return "\n".join(lines)
+
+    def draw_pyramid(self, height: int, symbol: str) -> str:
+        """
+        Draws a filled symmetrical pyramid of given height.
+
+        :param height: Height of the pyramid (>0).
+        :param symbol: Drawing character.
+        :return: Multi-line string of the pyramid.
+        """
+        self._validate_positive_int(height, "Height")
+        self._validate_symbol(symbol)
+
+        lines = []
+        width = 2 * height - 1
+        for row in range(height):
+            num_symbols = 2 * row + 1
+            num_spaces = height - row - 1
+            line = " " * num_spaces + symbol * num_symbols + " " * num_spaces
+            lines.append(line)
+        return "\n".join(lines)
+
+
+if __name__ == "__main__":
+    # Example usage and simple manual tests
+    art = AsciiArt()
+    print("SQUARE:\n" + art.draw_square(4, "#"))
+    print("\nRECTANGLE:\n" + art.draw_rectangle(6, 3, "*"))
+    print("\nPARALLELOGRAM:\n" + art.draw_parallelogram(5, 4, "@"))
+    print("\nTRIANGLE:\n" + art.draw_triangle(6, 4, "%"))
+    print("\nPYRAMID:\n" + art.draw_pyramid(5, "$"))
+```
+**Key ISO/IEC 25010 Adherence:**
+- **Correctness:** Strict parameter validation, clear algorithms, and predictable output.
+- **Performance:** Efficient algorithms (all O(n) in output size).
+- **Modularity:** Well-separated validation and drawing logic; each shape as its own method.
+- **Safety:** Comprehensively guards against invalid inputs with clear error messages.
+- **Testability:** Each method is deterministic and easily unit-tested.
+- **Readability & Documentation:** Clear docstrings, variable names, and in-line comments.
+
+---
+
+**Usage Example**:
+```python
+art = AsciiArt()
+print(art.draw_square(4, '#'))
+print(art.draw_pyramid(3, '^'))
+```
+You can place this code in a Python file and run it; the sample main block demonstrates functionality.
