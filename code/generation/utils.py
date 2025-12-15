@@ -86,7 +86,7 @@ def write_generation_metadata(code_dir: str, llms: list, temperature: float, top
 
 def write_llm_output(code_dir: str, response_dir: str, llm_name: str, response_content: str) -> None:
     """Write LLM response and extracted code to files."""
-    from ..shared.utils import extract_python_code
+    from ..utils.helpers import extract_python_code
     
     response_file = Path(response_dir) / f"{llm_name}_response.txt"
     with open(response_file, "w", encoding="utf-8") as f:

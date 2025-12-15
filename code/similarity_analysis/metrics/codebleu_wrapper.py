@@ -77,38 +77,20 @@ class CodeBLEUCalculator:
                     "error": "Invalid Python syntax"
                 }
             
-            # Create temporary files for codebleu (it expects file paths)
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f1, \
-                 tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f2:
-                
-                f1.write(code1)
-                f2.write(code2)
-                f1.flush()
-                f2.flush()
-                
-                try:
-                    # Calculate CodeBLEU
-                    result = calc_codebleu(
-                        references=[f1.name],  # Reference file
-                        predictions=[f2.name], # Prediction file
-                        lang="python"
-                    )
-                    
-                    return {
-                        "codebleu": result.get("codebleu", 0.0),
-                        "bleu": result.get("ngram_match_score", 0.0),
-                        "weighted_ngram_match": result.get("weighted_ngram_match_score", 0.0),
-                        "syntax_match": result.get("syntax_match_score", 0.0),
-                        "dataflow_match": result.get("dataflow_match_score", 0.0)
-                    }
-                    
-                finally:
-                    # Clean up temp files
-                    try:
-                        os.unlink(f1.name)
-                        os.unlink(f2.name)
-                    except:
-                        pass
+            # Calculate CodeBLEU - pass code strings directly
+            result = calc_codebleu(
+                references=[code1],  # Reference code string
+                predictions=[code2], # Prediction code string
+                lang="python"
+            )
+
+            return {
+                "codebleu": result.get("codebleu", 0.0),
+                "bleu": result.get("ngram_match_score", 0.0),
+                "weighted_ngram_match": result.get("weighted_ngram_match_score", 0.0),
+                "syntax_match": result.get("syntax_match_score", 0.0),
+                "dataflow_match": result.get("dataflow_match_score", 0.0)
+            }
                         
         except Exception as e:
             return {

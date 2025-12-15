@@ -112,8 +112,8 @@ def main() -> None:
         "--test-groups",
         nargs="*",
         choices=["legacy", "quality", "structure"],
-        default=["legacy"],
-        help="Test groups to run (default: legacy). Options: legacy, quality, structure"
+        default=["legacy", "quality", "structure"],
+        help="Test groups to run (default: legacy, quality, structure). Options: legacy, quality, structure"
     )
     
     # Full command (generate + test)
@@ -159,7 +159,7 @@ def main() -> None:
         "--test-groups",
         nargs="*",
         choices=["legacy", "quality", "structure"],
-        default=["legacy"],
+        default=["legacy", "quality", "structure"],
         help="Test groups to run (default: legacy). Options: legacy, quality, structure"
     )
     

@@ -1,7 +1,7 @@
 from .llm import Llm
 from .challenge import Challenge
 from .prompt import Prompt
-from ..shared.utils import load_string_from_file
+from ..utils.helpers import load_string_from_file
 
 LLMS = [
     Llm("openai/gpt-4.1", "chatgpt", temperature=0.7),

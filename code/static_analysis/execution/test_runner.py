@@ -69,7 +69,8 @@ class TestResultParser:
         
         # Use regex to find pytest summary line - much more robust
         # Matches patterns like: "12 failed, 35 passed in 0.06s" or "88 passed in 0.15s"
-        summary_pattern = r'(\d+)\s+failed.*?(\d+)\s+passed\s+in\s+[\d.]+s|(\d+)\s+passed\s+in\s+[\d.]+s|(\d+)\s+failed\s+in\s+[\d.]+s'
+        # Also handles warnings/skips/errors: "33 failed, 55 passed, 2 warnings in 0.19s"
+        summary_pattern = r'(\d+)\s+failed.*?(\d+)\s+passed.*?in\s+[\d.]+s|(\d+)\s+passed.*?in\s+[\d.]+s|(\d+)\s+failed.*?in\s+[\d.]+s'
         
         for line in output.split('\n'):
             match = re.search(summary_pattern, line.strip())

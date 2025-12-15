@@ -15,10 +15,11 @@ class SimilarityStorage:
     
     def __init__(self, base_dir: str = "dry_run_output"):
         self.base_dir = Path(base_dir)
-        self.similarity_dir = self.base_dir / "similarity_metrics"
+        # New hierarchical structure
+        self.similarity_dir = self.base_dir / "similarity_analysis" / "pairwise_within_temperature"
         self.similarity_dir.mkdir(parents=True, exist_ok=True)
-        
-        self.similarity_calc = SimilarityCalculator()
+
+        self.similarity_calc = SimilarityCalculator(enable_codebleu=True)
     
     def analyze_and_store_temperature(self, model: str, challenge: str, prompt: str, 
                                     temperature_folder: str) -> str:
@@ -58,22 +59,26 @@ class SimilarityStorage:
         iterations.sort()
         
         # Calculate pairwise similarities
-        pairwise_data = {}
-        
+        pairwise_data = []
+
         for i in range(len(iterations)):
             for j in range(i + 1, len(iterations)):
                 iter1_num, file1 = iterations[i]
                 iter2_num, file2 = iterations[j]
-                
+
                 # Calculate all similarity metrics
                 similarity_result = self.similarity_calc.calculate_all_similarities(file1, file2)
-                
+
                 # Extract clean metrics
                 clean_metrics = self._extract_clean_metrics(similarity_result)
-                
-                # Store with clear iteration pair key
-                pair_key = f"iter_{iter1_num}_vs_{iter2_num}"
-                pairwise_data[pair_key] = clean_metrics
+
+                # Add iteration indices to metrics
+                comparison = {
+                    "i": iter1_num,
+                    "j": iter2_num,
+                    **clean_metrics
+                }
+                pairwise_data.append(comparison)
         
         # Store clean data
         return self._store_similarity_data(model, challenge, prompt, temperature_folder, pairwise_data)
@@ -81,16 +86,20 @@ class SimilarityStorage:
     def _extract_clean_metrics(self, similarity_result: Dict[str, Any]) -> Dict[str, float]:
         """Extract only the core similarity metrics without statistical noise."""
         clean_metrics = {}
-        
-        # CodeBLEU metrics
+
+        # CodeBLEU metrics (including BLEU)
         if "codebleu" in similarity_result.get("metrics", {}):
             codebleu_data = similarity_result["metrics"]["codebleu"]
             if "codebleu" in codebleu_data and not isinstance(codebleu_data["codebleu"], str):
                 clean_metrics["codebleu"] = round(codebleu_data["codebleu"], 4)
+            if "bleu" in codebleu_data and not isinstance(codebleu_data["bleu"], str):
+                clean_metrics["bleu"] = round(codebleu_data["bleu"], 4)
             if "syntax_match" in codebleu_data and not isinstance(codebleu_data["syntax_match"], str):
-                clean_metrics["codebleu_syntax"] = round(codebleu_data["syntax_match"], 4)
+                clean_metrics["syntax_match"] = round(codebleu_data["syntax_match"], 4)
             if "dataflow_match" in codebleu_data and not isinstance(codebleu_data["dataflow_match"], str):
-                clean_metrics["codebleu_dataflow"] = round(codebleu_data["dataflow_match"], 4)
+                clean_metrics["dataflow_match"] = round(codebleu_data["dataflow_match"], 4)
+            if "weighted_ngram_match" in codebleu_data and not isinstance(codebleu_data["weighted_ngram_match"], str):
+                clean_metrics["weighted_ngram_match"] = round(codebleu_data["weighted_ngram_match"], 4)
         
         # AST metrics
         if "ast" in similarity_result.get("metrics", {}):
@@ -116,29 +125,37 @@ class SimilarityStorage:
         
         return clean_metrics
     
-    def _store_similarity_data(self, model: str, challenge: str, prompt: str, 
-                             temperature_folder: str, pairwise_data: Dict[str, Dict[str, float]]) -> str:
-        """Store clean similarity data."""
-        filename = f"{model}_{challenge}_{prompt}_{temperature_folder}.json"
-        filepath = self.similarity_dir / filename
-        
+    def _store_similarity_data(self, model: str, challenge: str, prompt: str,
+                             temperature_folder: str, pairwise_data: List[Dict[str, Any]]) -> str:
+        """Store clean similarity data in new hierarchical structure."""
+        # Create hierarchical path: challenge/model/temp_X.X.json
+        challenge_dir = self.similarity_dir / challenge
+        model_dir = challenge_dir / model
+        model_dir.mkdir(parents=True, exist_ok=True)
+
+        # Simple filename based on temperature folder
+        filename = f"{temperature_folder}.json"
+        filepath = model_dir / filename
+
         # Parse temperature from folder name
         temp_params = self._parse_temperature_folder(temperature_folder)
-        
+
         # Calculate actual number of iterations from pairwise data
         # For n iterations, we have n*(n-1)/2 pairwise comparisons
         num_comparisons = len(pairwise_data)
         num_iterations = int((1 + (1 + 8 * num_comparisons) ** 0.5) / 2) if num_comparisons > 0 else 0
-        
-        # Clean data structure
+
+        # Clean data structure with metadata
         data = {
-            "model": model,
-            "challenge": challenge,
-            "prompt": prompt,
-            "generated_at": datetime.now().isoformat(),
-            "analysis_summary": {
-                "iterations_analyzed": num_iterations,
-                "pairwise_comparisons": num_comparisons,
+            "metadata": {
+                "analysis_type": "pairwise_within_temperature",
+                "challenge": challenge,
+                "model": model,
+                "temperature": temp_params.get("temperature"),
+                "prompt": prompt,
+                "generated_at": datetime.now().isoformat(),
+                "iterations": num_iterations,
+                "comparisons": num_comparisons,
                 "temperature_params": {
                     "temperature": temp_params.get("temperature"),
                     "top_k": temp_params.get("top_k"),
@@ -148,27 +165,34 @@ class SimilarityStorage:
             },
             "similarities": pairwise_data
         }
-        
+
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
-        
+
         return str(filepath)
     
-    def _store_error(self, model: str, challenge: str, prompt: str, 
+    def _store_error(self, model: str, challenge: str, prompt: str,
                     temperature_folder: str, error_msg: str) -> str:
-        """Store error information."""
-        filename = f"{model}_{challenge}_{prompt}_{temperature_folder}_error.json"
-        filepath = self.similarity_dir / filename
-        
+        """Store error information in new hierarchical structure."""
+        # Create hierarchical path
+        challenge_dir = self.similarity_dir / challenge
+        model_dir = challenge_dir / model
+        model_dir.mkdir(parents=True, exist_ok=True)
+
+        filename = f"{temperature_folder}_error.json"
+        filepath = model_dir / filename
+
         # Parse temperature from folder name for consistency
         temp_params = self._parse_temperature_folder(temperature_folder)
-        
+
         data = {
-            "model": model,
-            "challenge": challenge,
-            "prompt": prompt,
-            "generated_at": datetime.now().isoformat(),
-            "analysis_summary": {
+            "metadata": {
+                "analysis_type": "pairwise_within_temperature",
+                "challenge": challenge,
+                "model": model,
+                "temperature": temp_params.get("temperature"),
+                "prompt": prompt,
+                "generated_at": datetime.now().isoformat(),
                 "error": error_msg,
                 "temperature_params": {
                     "temperature": temp_params.get("temperature"),
@@ -178,10 +202,10 @@ class SimilarityStorage:
                 }
             }
         }
-        
+
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
-        
+
         return str(filepath)
     
     def _parse_temperature_folder(self, temperature_folder: str) -> Dict[str, Any]:
@@ -264,17 +288,17 @@ class SimilarityStorage:
                 for model in models:
                     for temp_folder in temp_folders:
                         try:
-                            # Check if file already exists
-                            filename = f"{model}_{challenge}_{prompt}_{temp_folder}.json"
-                            if not force_recompute and (self.similarity_dir / filename).exists():
+                            # Check if file already exists in new structure
+                            filepath_check = self.similarity_dir / challenge / model / f"{temp_folder}.json"
+                            if not force_recompute and filepath_check.exists():
                                 print(f"Skipping {model}/{challenge}/{prompt}/{temp_folder} (already exists)")
-                                results["files_skipped"].append(str(self.similarity_dir / filename))
+                                results["files_skipped"].append(str(filepath_check))
                                 continue
-                            
+
                             print(f"Analyzing {model}/{challenge}/{prompt}/{temp_folder}")
                             filepath = self.analyze_and_store_temperature(model, challenge, prompt, temp_folder)
                             results["files_created"].append(filepath)
-                            
+
                         except Exception as e:
                             error_msg = f"Error analyzing {model}/{challenge}/{prompt}/{temp_folder}: {str(e)}"
                             results["errors"].append(error_msg)
@@ -282,15 +306,25 @@ class SimilarityStorage:
         
         return results
     
-    def load_similarity_data(self, model: str, challenge: str, prompt: str, 
+    def load_similarity_data(self, model: str, challenge: str,
                            temperature_folder: str) -> Optional[Dict[str, Any]]:
-        """Load similarity data for a specific combination."""
-        filename = f"{model}_{challenge}_{prompt}_{temperature_folder}.json"
-        filepath = self.similarity_dir / filename
-        
+        """
+        Load similarity data for a specific combination.
+
+        Args:
+            model: Model name (e.g., "claude")
+            challenge: Challenge name (e.g., "calculator")
+            temperature_folder: Temperature folder name (e.g., "temp_1.0")
+
+        Returns:
+            Dict with similarity data or None if not found
+        """
+        # New hierarchical path: challenge/model/temp_X.X.json
+        filepath = self.similarity_dir / challenge / model / f"{temperature_folder}.json"
+
         if not filepath.exists():
             return None
-        
+
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 return json.load(f)
@@ -299,11 +333,17 @@ class SimilarityStorage:
             return None
     
     def list_available_data(self) -> List[str]:
-        """List all available similarity data files."""
+        """List all available similarity data files in new hierarchical structure."""
         if not self.similarity_dir.exists():
             return []
-        
-        return [str(f) for f in self.similarity_dir.glob("*.json") if not f.name.endswith("_error.json")]
+
+        # Find all JSON files in challenge/model/ subdirectories
+        files = []
+        for json_file in self.similarity_dir.glob("*/*/*.json"):
+            if not json_file.name.endswith("_error.json"):
+                files.append(str(json_file))
+
+        return sorted(files)
 
 
 if __name__ == "__main__":
