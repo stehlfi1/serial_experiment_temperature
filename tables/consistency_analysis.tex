@@ -1,0 +1,65 @@
+\begin{table}[htbp]
+    \centering
+    \caption{Consistency analysis: Coefficient of Variation (CV) for similarity metrics}
+    \label{tab:consistency_analysis}
+    \begin{tabular}{lrrrrr}
+\toprule
+Model & Temperature & Metric & Mean & Std & CV (%) \\
+\midrule
+Chatgpt & 0.0000 & Codebleu & 0.5001 & 0.1462 & 29.2256 \\
+Chatgpt & 0.2000 & Codebleu & 0.4663 & 0.0847 & 18.1637 \\
+Chatgpt & 0.4000 & Codebleu & 0.4543 & 0.0761 & 16.7514 \\
+Chatgpt & 0.6000 & Codebleu & 0.4571 & 0.0676 & 14.8012 \\
+Chatgpt & 0.8000 & Codebleu & 0.4255 & 0.0611 & 14.3554 \\
+Chatgpt & 1.0000 & Codebleu & 0.4237 & 0.0629 & 14.8482 \\
+Claude & 0.0000 & Codebleu & 0.6938 & 0.1737 & 25.0340 \\
+Claude & 0.2000 & Codebleu & 0.5871 & 0.1007 & 17.1532 \\
+Claude & 0.4000 & Codebleu & 0.5501 & 0.0831 & 15.1005 \\
+Claude & 0.6000 & Codebleu & 0.5300 & 0.0795 & 15.0077 \\
+Claude & 0.8000 & Codebleu & 0.5041 & 0.0783 & 15.5372 \\
+Claude & 1.0000 & Codebleu & 0.4732 & 0.0685 & 14.4729 \\
+Gemini & 0.0000 & Codebleu & 0.5338 & 0.1472 & 27.5719 \\
+Gemini & 0.2000 & Codebleu & 0.4707 & 0.0595 & 12.6338 \\
+Gemini & 0.4000 & Codebleu & 0.4692 & 0.0621 & 13.2331 \\
+Gemini & 0.6000 & Codebleu & 0.4702 & 0.0661 & 14.0650 \\
+Gemini & 0.8000 & Codebleu & 0.4562 & 0.0697 & 15.2767 \\
+Gemini & 1.0000 & Codebleu & 0.4641 & 0.0530 & 11.4098 \\
+Chatgpt & 0.0000 & Ast Edit Distance & 390.7088 & 249.6011 & 63.8842 \\
+Chatgpt & 0.2000 & Ast Edit Distance & 448.7211 & 297.1769 & 66.2275 \\
+Chatgpt & 0.4000 & Ast Edit Distance & 452.5947 & 293.1517 & 64.7713 \\
+Chatgpt & 0.6000 & Ast Edit Distance & 470.6552 & 289.2268 & 61.4520 \\
+Chatgpt & 0.8000 & Ast Edit Distance & 511.9105 & 337.0512 & 65.8418 \\
+Chatgpt & 1.0000 & Ast Edit Distance & 511.2316 & 332.1077 & 64.9623 \\
+Claude & 0.0000 & Ast Edit Distance & 586.0684 & 428.3091 & 73.0818 \\
+Claude & 0.2000 & Ast Edit Distance & 665.0018 & 360.7587 & 54.2493 \\
+Claude & 0.4000 & Ast Edit Distance & 691.8491 & 417.7818 & 60.3863 \\
+Claude & 0.6000 & Ast Edit Distance & 627.9807 & 419.8318 & 66.8543 \\
+Claude & 0.8000 & Ast Edit Distance & 735.3368 & 488.2825 & 66.4026 \\
+Claude & 1.0000 & Ast Edit Distance & 735.0228 & 431.5039 & 58.7062 \\
+Gemini & 0.0000 & Ast Edit Distance & 417.0436 & 180.4097 & 43.2592 \\
+Gemini & 0.2000 & Ast Edit Distance & 519.4211 & 217.3998 & 41.8543 \\
+Gemini & 0.4000 & Ast Edit Distance & 568.1263 & 241.8634 & 42.5721 \\
+Gemini & 0.6000 & Ast Edit Distance & 517.2702 & 238.7546 & 46.1567 \\
+Gemini & 0.8000 & Ast Edit Distance & 550.0491 & 227.9597 & 41.4435 \\
+Gemini & 1.0000 & Ast Edit Distance & 579.1561 & 251.1033 & 43.3568 \\
+Chatgpt & 0.0000 & Tsed & 413.7228 & 265.7900 & 64.2435 \\
+Chatgpt & 0.2000 & Tsed & 477.1544 & 315.1070 & 66.0388 \\
+Chatgpt & 0.4000 & Tsed & 481.0333 & 311.2611 & 64.7068 \\
+Chatgpt & 0.6000 & Tsed & 500.2432 & 307.4546 & 61.4610 \\
+Chatgpt & 0.8000 & Tsed & 544.4140 & 355.7843 & 65.3518 \\
+Chatgpt & 1.0000 & Tsed & 543.4877 & 351.6053 & 64.6943 \\
+Claude & 0.0000 & Tsed & 620.9544 & 454.1045 & 73.1301 \\
+Claude & 0.2000 & Tsed & 706.5596 & 381.7895 & 54.0350 \\
+Claude & 0.4000 & Tsed & 735.1667 & 439.3225 & 59.7582 \\
+Claude & 0.6000 & Tsed & 669.1000 & 441.9865 & 66.0569 \\
+Claude & 0.8000 & Tsed & 783.4842 & 514.3064 & 65.6435 \\
+Claude & 1.0000 & Tsed & 783.3614 & 455.4942 & 58.1461 \\
+Gemini & 0.0000 & Tsed & 440.6007 & 190.1855 & 43.1650 \\
+Gemini & 0.2000 & Tsed & 547.4000 & 226.9841 & 41.4659 \\
+Gemini & 0.4000 & Tsed & 598.6368 & 254.8801 & 42.5768 \\
+Gemini & 0.6000 & Tsed & 545.1947 & 251.4201 & 46.1157 \\
+Gemini & 0.8000 & Tsed & 578.9333 & 238.8981 & 41.2652 \\
+Gemini & 1.0000 & Tsed & 609.8439 & 262.5704 & 43.0554 \\
+\bottomrule
+\end{tabular}
+\end{table}
