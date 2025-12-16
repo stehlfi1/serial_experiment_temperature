@@ -183,6 +183,3 @@ xmdfiles
 .claude/
 .uv_cache/
 
-# Archived data
-*.tar.gz
-*.zip
