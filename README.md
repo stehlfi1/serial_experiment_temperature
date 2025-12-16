@@ -216,20 +216,6 @@ python -m code.static_visualization.static_plots
 
 ---
 
-## Závislosti
-
-Hlavní Python balíčky (viz `pyproject.toml`):
-
-- **radon** - Halsteadovy metriky, MI, cyklomatická složitost
-- **nltk** - BLEU score
-- **codebleu** - CodeBLEU metrika
-- **zss** - Zhang-Shasha algoritmus pro AST distance
-- **tree-sitter-python** - Parsing pro TSED
-- **matplotlib** - Vizualizace
-- **pandas** - Manipulace s daty
-- **scipy** - Statistické výpočty
-
----
 
 ## Citace
 
