@@ -1,0 +1,223 @@
+
+"""
+A module for generating 2D ASCII art shapes.
+
+This module provides the AsciiArt class, which implements methods to draw
+various geometric shapes using ASCII characters. The implementation prioritizes
+code quality, adhering to principles of modularity, efficiency, and safety
+as outlined in the ISO/IEC 25010 standard.
+"""
+
+import math
+from typing import Dict, Any
+
+class AsciiArt:
+    """
+    A class for generating various 2D ASCII art shapes.
+
+    This class provides a clean interface for creating string representations of
+    common shapes like squares, rectangles, and pyramids. It is designed for
+    reliability and ease of use, with built-in validation to ensure correct
+    and predictable behavior.
+
+    Methods are pure in the sense that they take inputs and return a string
+    output without side effects, making them easily testable and reusable.
+    """
+
+    @staticmethod
+    def _validate_inputs(symbol: str, **dimensions: int) -> None:
+        """
+        Validates the symbol and dimension inputs for drawing methods.
+
+        This private static method provides centralized validation logic, ensuring
+        that all shape-drawing functions operate on valid parameters. This
+        enhances the reliability and fault tolerance of the class.
+
+        Args:
+            symbol: The character to be used for drawing.
+            **dimensions: A dictionary of named integer dimensions (e.g., width, height).
+
+        Raises:
+            TypeError: If the symbol is not a string or a dimension is not an integer.
+            ValueError: If the symbol is not a single, non-whitespace character,
+                        or if any dimension is not a positive integer.
+        """
+        # --- Symbol Validation ---
+        if not isinstance(symbol, str):
+            raise TypeError("The 'symbol' must be a string.")
+        if len(symbol) != 1:
+            raise ValueError("The 'symbol' must be a single character.")
+        if symbol.isspace():
+            raise ValueError("The 'symbol' cannot be a whitespace character.")
+
+        # --- Dimension Validation ---
+        for name, value in dimensions.items():
+            if not isinstance(value, int):
+                raise TypeError(f"The dimension '{name}' must be an integer.")
+            if value <= 0:
+                raise ValueError(f"The dimension '{name}' must be a positive integer.")
+
+    def draw_square(self, width: int, symbol: str) -> str:
+        """
+        Draws a filled square.
+
+        Args:
+            width: The width and height of the square.
+            symbol: The character used to draw the square.
+
+        Returns:
+            A multi-line string representing the square.
+
+        Raises:
+            TypeError, ValueError: Propagated from input validation.
+        """
+        self._validate_inputs(symbol, width=width)
+        line = symbol * width
+        rows = [line] * width
+        return "\n".join(rows)
+
+    def draw_rectangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled rectangle.
+
+        Args:
+            width: The width of the rectangle.
+            height: The height of the rectangle.
+            symbol: The character used to draw the rectangle.
+
+        Returns:
+            A multi-line string representing the rectangle.
+
+        Raises:
+            TypeError, ValueError: Propagated from input validation.
+        """
+        self._validate_inputs(symbol, width=width, height=height)
+        line = symbol * width
+        rows = [line] * height
+        return "\n".join(rows)
+
+    def draw_parallelogram(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled parallelogram leaning to the right.
+
+        Each subsequent row is shifted one space to the right relative to the
+        previous one.
+
+        Args:
+            width: The width of the parallelogram's top and bottom sides.
+            height: The height of the parallelogram.
+            symbol: The character used to draw the parallelogram.
+
+        Returns:
+            A multi-line string representing the parallelogram.
+
+        Raises:
+            TypeError, ValueError: Propagated from input validation.
+        """
+        self._validate_inputs(symbol, width=width, height=height)
+        rows = [f"{' ' * i}{symbol * width}" for i in range(height)]
+        return "\n".join(rows)
+
+    def draw_triangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled, right-angled triangle.
+
+        The triangle grows from the top-left corner. The width of each row is
+        scaled based on the overall width and height to ensure the final base
+        has the specified width.
+
+        Args:
+            width: The width of the triangle's base.
+            height: The height of the triangle.
+            symbol: The character used to draw the triangle.
+
+        Returns:
+            A multi-line string representing the right-angled triangle.
+
+        Raises:
+            TypeError, ValueError: Propagated from input validation.
+        """
+        self._validate_inputs(symbol, width=width, height=height)
+        rows = []
+        for i in range(height):
+            # Calculate the number of symbols for the current row.
+            # We use math.ceil to ensure the triangle grows steadily and the
+            # final row has the correct width.
+            # The formula is based on linear scaling: (current_row / total_rows) * max_width
+            num_symbols = math.ceil(((i + 1) / height) * width)
+            rows.append(symbol * num_symbols)
+        return "\n".join(rows)
+
+    def draw_pyramid(self, height: int, symbol: str) -> str:
+        """
+        Draws a filled, symmetrical pyramid.
+
+        Args:
+            height: The height of the pyramid in rows.
+            symbol: The character used to draw the pyramid.
+
+        Returns:
+            A multi-line string representing the pyramid.
+
+        Raises:
+            TypeError, ValueError: Propagated from input validation.
+        """
+        self._validate_inputs(symbol, height=height)
+        rows = []
+        for i in range(height):
+            # For row `i` (0-indexed), we need `height - 1 - i` spaces for padding.
+            padding = " " * (height - 1 - i)
+            # The number of symbols in row `i` is `2*i + 1`.
+            symbols = symbol * (2 * i + 1)
+            rows.append(f"{padding}{symbols}")
+        return "\n".join(rows)
+
+
+# --- Example Usage ---
+# This block demonstrates the functionality of the AsciiArt class and allows
+# the script to be run directly for a quick visual check. This also serves
+as
+# an informal test case.
+if __name__ == "__main__":
+    # Instantiate the artist
+    artist = AsciiArt()
+
+    print("--- ASCII Art Shape Generator ---")
+
+    try:
+        # --- Draw Square ---
+        print("\n[+] Square (5x5, symbol='S')")
+        print(artist.draw_square(width=5, symbol="S"))
+
+        # --- Draw Rectangle ---
+        print("\n[+] Rectangle (8x4, symbol='#')")
+        print(artist.draw_rectangle(width=8, height=4, symbol="#"))
+
+        # --- Draw Parallelogram ---
+        print("\n[+] Parallelogram (10x5, symbol='@')")
+        print(artist.draw_parallelogram(width=10, height=5, symbol="@"))
+
+        # --- Draw Triangle ---
+        print("\n[+] Right-Angled Triangle (width=7, height=7, symbol='+')")
+        print(artist.draw_triangle(width=7, height=7, symbol="+"))
+
+        # --- Draw Pyramid ---
+        print("\n[+] Pyramid (height=6, symbol='^')")
+        print(artist.draw_pyramid(height=6, symbol="^"))
+
+        # --- Example of Invalid Input ---
+        print("\n[+] Testing Invalid Input: draw_square(-3, 'X')")
+        try:
+            artist.draw_square(width=-3, symbol="X")
+        except ValueError as e:
+            print(f"Caught expected error: {e}")
+
+        print("\n[+] Testing Invalid Input: draw_rectangle(5, 5, '&&')")
+        try:
+            artist.draw_rectangle(width=5, height=5, symbol="&&")
+        except ValueError as e:
+            print(f"Caught expected error: {e}")
+
+    except (ValueError, TypeError) as e:
+        print(f"\nAn unexpected error occurred: {e}")
+

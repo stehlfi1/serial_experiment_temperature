@@ -1,0 +1,212 @@
+
+import re
+
+class Calculator:
+    """
+    A console-based arithmetic calculator that evaluates string expressions.
+
+    This class provides a safe and efficient way to compute mathematical
+    expressions containing integers, floats, parentheses, and the basic
+    arithmetic operators (+, -, *, /).
+
+    It adheres to standard operator precedence and is designed with code
+    quality principles from ISO/IEC 25010 in mind, emphasizing correctness,
+    reliability, and maintainability.
+
+    Usage:
+        calculator = Calculator()
+        result = calculator.calculate("(3.5 + 1.5) * 2 - 10 / 4")
+        print(result)  # Output: 7.5
+    """
+
+    def __init__(self):
+        """Initializes the Calculator."""
+        # Precedence mapping for operators
+        self._precedence = {'+': 1, '-': 1, '*': 2, '/': 2}
+
+    def _apply_op(self, op: str, b: float, a: float) -> float:
+        """
+        Applies a given operator to two operands.
+
+        Args:
+            op: The operator string ('+', '-', '*', '/').
+            b: The second operand (right-hand side).
+            a: The first operand (left-hand side).
+
+        Returns:
+            The result of the operation.
+
+        Raises:
+            ZeroDivisionError: If the operator is '/' and the second operand is 0.
+            ValueError: If the operator is unknown.
+        """
+        if op == '+': return a + b
+        if op == '-': return a - b
+        if op == '*': return a * b
+        if op == '/':
+            if b == 0:
+                raise ZeroDivisionError("Division by zero is not allowed.")
+            return a / b
+        raise ValueError(f"Unknown operator: {op}")
+
+    def _tokenize(self, expression: str) -> list[str]:
+        """
+        Converts an infix expression string into a list of tokens.
+
+        This method handles numbers (integers, floats, negatives), operators,
+        and parentheses. It correctly distinguishes between binary subtraction
+        and unary negation.
+
+        Args:
+            expression: The string expression to tokenize.
+
+        Returns:
+            A list of string tokens.
+
+        Raises:
+            ValueError: If the expression contains invalid characters.
+        """
+        # Remove all whitespace for easier parsing
+        expression = expression.replace(" ", "")
+
+        # Regex to find numbers, operators, or parentheses
+        # It correctly captures floating point numbers and avoids splitting them.
+        # This also correctly handles negative numbers at the start or after an operator.
+        tokens = re.findall(r"(\d+\.?\d*)|([()+\-*/])", expression)
+        
+        # The regex produces tuples, so we flatten the list
+        flat_tokens = [item for sublist in tokens for item in sublist if item]
+
+        # Validate that the entire string was tokenized
+        if "".join(flat_tokens) != expression:
+            raise ValueError("Expression contains invalid characters or structure.")
+            
+        # Handle unary minus: convert '-x' to '0 - x'
+        # This simplifies the evaluation logic significantly.
+        processed_tokens = []
+        for i, token in enumerate(flat_tokens):
+            if token == '-':
+                # Check if it's a unary minus
+                # It's unary if it's the first token, or if the preceding
+                # token is an operator or an opening parenthesis.
+                is_unary = (i == 0) or (flat_tokens[i-1] in self._precedence or flat_tokens[i-1] == '(')
+                if is_unary:
+                    processed_tokens.append('0')
+            processed_tokens.append(token)
+            
+        return processed_tokens
+
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates a mathematical expression provided as a string.
+
+        The method supports addition, subtraction, multiplication, division,
+        and parentheses. It respects standard operator precedence.
+
+        Args:
+            expression: The mathematical expression string.
+
+        Returns:
+            The result of the evaluation as a float.
+
+        Raises:
+            ValueError: If the expression is malformed (e.g., unbalanced
+                        parentheses, invalid characters, or invalid syntax).
+            ZeroDivisionError: If the expression attempts to divide by zero.
+        """
+        try:
+            tokens = self._tokenize(expression)
+        except ValueError as e:
+            # Re-raise with a more user-friendly context
+            raise ValueError(f"Invalid expression provided: {e}") from e
+
+        values: list[float] = []  # Stack for number values
+        ops: list[str] = []       # Stack for operators
+
+        for token in tokens:
+            if token.replace('.', '', 1).replace('-', '', 1).isdigit():
+                values.append(float(token))
+            elif token == '(':
+                ops.append(token)
+            elif token == ')':
+                # Evaluate the expression inside the parentheses
+                while ops and ops[-1] != '(':
+                    op = ops.pop()
+                    val2 = values.pop()
+                    val1 = values.pop()
+                    values.append(self._apply_op(op, val2, val1))
+                if not ops or ops.pop() != '(':
+                    raise ValueError("Mismatched parentheses in expression.")
+            else: # Token is an operator
+                # Process operators with higher or equal precedence already on the stack
+                while (ops and ops[-1] != '(' and
+                       self._precedence.get(ops[-1], 0) >= self._precedence.get(token, 0)):
+                    op = ops.pop()
+                    val2 = values.pop()
+                    val1 = values.pop()
+                    values.append(self._apply_op(op, val2, val1))
+                ops.append(token)
+
+        # Process any remaining operators on the stack
+        while ops:
+            # If a '(' is found here, it means there are mismatched parentheses
+            op = ops.pop()
+            if op == '(':
+                raise ValueError("Mismatched parentheses in expression.")
+            val2 = values.pop()
+            val1 = values.pop()
+            values.append(self._apply_op(op, val2, val1))
+
+        # The final result is the single value left on the stack
+        if len(values) != 1 or ops:
+            raise ValueError("Expression is malformed.")
+
+        return values[0]
+
+# --- Main execution block for demonstration ---
+if __name__ == "__main__":
+    calculator = Calculator()
+
+    # A list of expressions to test
+    expressions_to_test = [
+        "1 + 1",
+        "2 * 3",
+        "10 / 2",
+        "5 - 3",
+        "2 + 3 * 4",          # Test precedence
+        "(2 + 3) * 4",        # Test parentheses
+        "10 / (2 + 3)",       # Test division with parentheses
+        "3.5 * (2 - 0.5)",    # Test floating point numbers
+        "-5 + 10",            # Test unary minus at the start
+        "10 * -2",            # Test unary minus after an operator
+        "10 * (-2 + 1)",      # Test unary minus in parentheses
+        "10 / 0",             # Test division by zero
+        "(5 + 2",             # Test mismatched parentheses
+        "5 + * 2",            # Test invalid syntax
+        "5 @ 2"               # Test invalid character
+    ]
+
+    print("--- Calculator Demonstration ---")
+    for expr in expressions_to_test:
+        try:
+            result = calculator.calculate(expr)
+            print(f'Expression: "{expr}"  =>  Result: {result}')
+        except (ValueError, ZeroDivisionError) as e:
+            print(f'Expression: "{expr}"  =>  ERROR: {e}')
+
+    # --- Interactive Console ---
+    print("\n--- Interactive Calculator ---")
+    print("Enter an expression to calculate or 'exit' to quit.")
+    while True:
+        try:
+            user_input = input("> ")
+            if user_input.lower() == 'exit':
+                break
+            result = calculator.calculate(user_input)
+            print(f"Result: {result}")
+        except (ValueError, ZeroDivisionError) as e:
+            print(f"Error: {e}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+

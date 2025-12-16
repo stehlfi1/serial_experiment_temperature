@@ -1,0 +1,276 @@
+
+from typing import List
+import re
+
+class CalculatorError(Exception):
+    """Base exception for calculator errors."""
+    pass
+
+class InvalidCharacterError(CalculatorError):
+    """Raised when the expression contains invalid characters."""
+    pass
+
+class UnbalancedParenthesesError(CalculatorError):
+    """Raised when the expression contains unbalanced parentheses."""
+    pass
+
+class DivisionByZeroError(CalculatorError):
+    """Raised when division by zero is attempted."""
+    pass
+
+class InvalidExpressionError(CalculatorError):
+    """Raised for any other invalid expressions."""
+    pass
+
+class Calculator:
+    """
+    A console-based arithmetic calculator that evaluates mathematical expressions.
+    Supports +, -, *, /, parentheses, and correct operator precedence.
+    """
+
+    # Regular expression for tokenization
+    TOKEN_PATTERN = re.compile(
+        r'\s*('
+        r'\d+\.\d+|'  # Float (e.g., 3.14)
+        r'\d+|'       # Integer (e.g., 42)
+        r'[+\-*/()]'  # Operators and parentheses
+        r')\s*'
+    )
+
+    # Operator definitions: precedence and associativity
+    OPERATORS = {
+        '+': (1, 'L'),
+        '-': (1, 'L'),
+        '*': (2, 'L'),
+        '/': (2, 'L'),
+    }
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates the arithmetic expression and returns its value as a float.
+
+        :param expression: Arithmetic expression as a string.
+        :raises CalculatorError: For invalid inputs and computation errors.
+        :return: Evaluation result as float.
+        """
+
+        tokens = self._tokenize(expression)
+        self._validate_tokens(tokens)
+        postfix = self._to_postfix(tokens)
+        result = self._evaluate_postfix(postfix)
+        return result
+
+    def _tokenize(self, expression: str) -> List[str]:
+        """
+        Tokenizes the input expression into numbers, operators, and parentheses.
+
+        :param expression: String expression.
+        :raises InvalidCharacterError: If invalid characters are present.
+        :return: List of tokens.
+        """
+        if not isinstance(expression, str):
+            raise InvalidCharacterError("Expression must be a string.")
+
+        tokens = []
+        i = 0
+        length = len(expression)
+
+        while i < length:
+            char = expression[i]
+
+            # Skip whitespace
+            if char.isspace():
+                i += 1
+                continue
+
+            # Parentheses and operators
+            if char in '()+-*/':
+                # Handle negative numbers (unary minus)
+                if char == '-' and (
+                    (i == 0)
+                    or (expression[i-1] in ' (*/+-')
+                ):
+                    # Look ahead for a number
+                    j = i + 1
+                    num_str = '-'
+                    decimal_found = False
+                    digits_found = False
+
+                    # Integer and/or float part
+                    while j < length and (expression[j].isdigit() or (expression[j] == '.' and not decimal_found)):
+                        if expression[j] == '.':
+                            decimal_found = True
+                        else:
+                            digits_found = True
+                        num_str += expression[j]
+                        j += 1
+
+                    if digits_found:  # It's a negative number
+                        tokens.append(num_str)
+                        i = j
+                        continue
+                    # Else, it's standalone '-' operator
+                tokens.append(char)
+                i += 1
+                continue
+
+            # Numbers (int/float)
+            if char.isdigit() or char == '.':
+                num_str = ''
+                decimal_found = False
+                while i < length and (expression[i].isdigit() or (expression[i] == '.' and not decimal_found)):
+                    if expression[i] == '.':
+                        if decimal_found:
+                            raise InvalidCharacterError("Invalid float number (two decimal points).")
+                        decimal_found = True
+                    num_str += expression[i]
+                    i += 1
+                tokens.append(num_str)
+                continue
+
+            # Invalid character
+            raise InvalidCharacterError(f"Invalid character '{char}' in expression.")
+
+        return tokens
+
+    def _validate_tokens(self, tokens: List[str]):
+        """
+        Validates the tokens for correct syntax and balanced parentheses.
+
+        :param tokens: List of tokens.
+        :raises UnbalancedParenthesesError: Unbalanced parentheses detected.
+        :raises InvalidExpressionError: Invalid sequence/placement of tokens.
+        """
+        paren_count = 0
+        prev_token = None
+
+        for idx, token in enumerate(tokens):
+            if token == '(':
+                paren_count += 1
+            elif token == ')':
+                paren_count -= 1
+                if paren_count < 0:
+                    raise UnbalancedParenthesesError("Unbalanced parentheses detected.")
+            elif self._is_operator(token):
+                # Ensure operator isn't first or last (unless unary minus handled in tokenize)
+                if prev_token is None and token not in ('+', '-'):
+                    raise InvalidExpressionError(f"Expression cannot start with operator '{token}'.")
+                if prev_token is not None and self._is_operator(prev_token) and token not in ('+', '-'):
+                    raise InvalidExpressionError(f"Invalid sequence: '{prev_token}' followed by '{token}'.")
+            prev_token = token
+
+        if paren_count != 0:
+            raise UnbalancedParenthesesError("Unbalanced parentheses detected.")
+
+    def _to_postfix(self, tokens: List[str]) -> List[str]:
+        """
+        Converts the token list (infix) to postfix using the Shunting Yard algorithm.
+
+        :param tokens: List of tokens.
+        :raises InvalidExpressionError: For invalid infix expressions.
+        :return: List of tokens in postfix order.
+        """
+        output = []
+        stack = []
+
+        for token in tokens:
+            if self._is_number(token):
+                output.append(token)
+            elif self._is_operator(token):
+                while (stack and stack[-1] != '(' and
+                       self._is_operator(stack[-1]) and
+                       ((self.OPERATORS[token][1] == 'L' and self.OPERATORS[token][0] <= self.OPERATORS[stack[-1]][0]) or
+                        (self.OPERATORS[token][1] == 'R' and self.OPERATORS[token][0] < self.OPERATORS[stack[-1]][0]))):
+                    output.append(stack.pop())
+                stack.append(token)
+            elif token == '(':
+                stack.append(token)
+            elif token == ')':
+                while stack and stack[-1] != '(':
+                    output.append(stack.pop())
+                if not stack or stack[-1] != '(':
+                    raise UnbalancedParenthesesError("Unbalanced parentheses detected during postfix conversion.")
+                stack.pop()  # Remove '(' from stack
+            else:
+                raise InvalidCharacterError(f"Invalid token '{token}' encountered.")
+
+        while stack:
+            if stack[-1] in ('(', ')'):
+                raise UnbalancedParenthesesError("Unbalanced parentheses detected in stack at the end.")
+            output.append(stack.pop())
+
+        return output
+
+    def _evaluate_postfix(self, tokens: List[str]) -> float:
+        """
+        Evaluates a postfix token list and returns the result.
+
+        :param tokens: List of postfix tokens.
+        :raises DivisionByZeroError: If division by zero occurs.
+        :raises InvalidExpressionError: For insufficient operands.
+        :return: Result of evaluation as float.
+        """
+        stack = []
+
+        for token in tokens:
+            if self._is_number(token):
+                stack.append(float(token))
+            elif self._is_operator(token):
+                try:
+                    b = stack.pop()
+                    a = stack.pop()
+                except IndexError:
+                    raise InvalidExpressionError("Insufficient operands for the operation.")
+
+                if token == '+':
+                    stack.append(a + b)
+                elif token == '-':
+                    stack.append(a - b)
+                elif token == '*':
+                    stack.append(a * b)
+                elif token == '/':
+                    if b == 0.0:
+                        raise DivisionByZeroError("Division by zero is undefined.")
+                    stack.append(a / b)
+                else:
+                    raise InvalidCharacterError(f"Invalid operator '{token}'.")
+            else:
+                raise InvalidCharacterError(f"Invalid token '{token}' in postfix evaluation.")
+
+        if len(stack) != 1:
+            raise InvalidExpressionError("The provided expression is invalid or incomplete.")
+
+        return stack[0]
+
+    def _is_operator(self, token: str) -> bool:
+        """Checks if a token is a recognized operator."""
+        return token in self.OPERATORS
+
+    def _is_number(self, token: str) -> bool:
+        """Checks if a token is a number (integer or float)."""
+        try:
+            float(token)
+            return True
+        except ValueError:
+            return False
+
+
+if __name__ == "__main__":
+    import sys
+
+    print("Console Arithmetic Calculator\nType 'exit' to quit.")
+    calculator = Calculator()
+
+    while True:
+        try:
+            expression = input("\nEnter expression: ").strip()
+            if expression.lower() == 'exit':
+                print("Goodbye!")
+                break
+            result = calculator.calculate(expression)
+            print(f"Result: {result}")
+        except CalculatorError as e:
+            print(f"Error: {str(e)}")
+        except KeyboardInterrupt:
+            print("\nGoodbye!")
+            sys.exit(0)

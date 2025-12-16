@@ -1,0 +1,208 @@
+```python
+from typing import List, Union
+import re
+
+class Calculator:
+    """
+    A console-based arithmetic calculator adhering to ISO/IEC 25010 standards of quality.
+    Supports operations: addition (+), subtraction (-), multiplication (*), division (/), and parentheses.
+    Accepts both integers and floating-point numbers (including negatives).
+    Ensures operator precedence and input validation without using eval().
+    """
+
+    # Allowed characters for expressions (digits, '.', operators, parentheses and spaces)
+    _VALID_CHAR_PATTERN = re.compile(r'^[\d\s\.\+\-\*/\(\)]+$')
+
+    # Token patterns
+    _TOKEN_PATTERN = re.compile(r'''
+        (?P<NUMBER>        -?\d+(?:\.\d+)? )    | # Integer or decimal number (possibly negative)
+        (?P<OPERATOR>      [\+\-\*/]        )   | # Operators + - * /
+        (?P<LPAREN>        \(                )   | # Left parenthesis
+        (?P<RPAREN>        \)                )     # Right parenthesis
+    ''', re.VERBOSE)
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates an arithmetic expression string and returns the result as a float.
+
+        :param expression: str, arithmetic expression to evaluate
+        :return: float, result of expression
+        :raises ValueError: if the expression is invalid
+        :raises ZeroDivisionError: if division by zero occurs
+        """
+        tokens = self._tokenize(expression)
+        rpn = self._to_rpn(tokens)
+        result = self._evaluate_rpn(rpn)
+        return result
+
+    def _tokenize(self, expr: str) -> List[Union[str, float]]:
+        """
+        Parses the input string into a list of tokens (numbers, operators, parentheses).
+
+        :param expr: Input string expression
+        :return: List of tokens (str for operators/parentheses, float for numbers)
+        :raises ValueError: if invalid characters or unbalanced parentheses are found
+        """
+        expr = expr.strip()
+        # Character-level validation
+        if not self._VALID_CHAR_PATTERN.match(expr.replace(' ', '')):
+            raise ValueError("Invalid characters in expression.")
+
+        # Insert explicit zeros for unary minus at start or after '('
+        expr = self._preprocess_unary_minus(expr)
+
+        tokens: List[Union[str, float]] = []
+        pos = 0
+        while pos < len(expr):
+            match = self._TOKEN_PATTERN.match(expr, pos)
+            if not match:
+                raise ValueError(f"Invalid token at position {pos}")
+            if match.lastgroup == 'NUMBER':
+                tokens.append(float(match.group()))
+            elif match.lastgroup in ('OPERATOR', 'LPAREN', 'RPAREN'):
+                tokens.append(match.group())
+            pos = match.end()
+        self._validate_parentheses(tokens)
+        return tokens
+
+    def _preprocess_unary_minus(self, expr: str) -> str:
+        """
+        Converts unary minus to binary by inserting '0' where necessary.
+        Example: '-3+4' -> '0-3+4', '2*(-5)' -> '2*(0-5)'
+        """
+        res = []
+        i = 0
+        prev_char = None
+        while i < len(expr):
+            char = expr[i]
+            if char == '-':
+                # Unary minus occurs (start or after '(' or operator)
+                if (prev_char is None or prev_char in '(*+/-') and (i+1 < len(expr) and (expr[i+1].isdigit() or expr[i+1]=='.')):
+                    res.append('0')
+                res.append('-')
+                prev_char = '-'
+            else:
+                res.append(char)
+                if char.strip():  # update previous non-space character
+                    prev_char = char
+            i += 1
+        return ''.join(res)
+
+    def _validate_parentheses(self, tokens: List[Union[str, float]]) -> None:
+        """
+        Validates that parentheses are balanced.
+        :param tokens: List of tokens
+        :raises ValueError: if parentheses are unbalanced
+        """
+        balance = 0
+        for token in tokens:
+            if token == '(':
+                balance += 1
+            elif token == ')':
+                balance -= 1
+            if balance < 0:
+                raise ValueError("Unmatched closing parenthesis detected.")
+        if balance != 0:
+            raise ValueError("Unbalanced parentheses.")
+
+    def _to_rpn(self, tokens: List[Union[str, float]]) -> List[Union[str, float]]:
+        """
+        Converts infix tokens to Reverse Polish Notation using the Shunting Yard algorithm.
+
+        :param tokens: List of tokens in infix
+        :return: List of tokens in RPN
+        :raises ValueError: if invalid syntax is found
+        """
+        output: List[Union[str, float]] = []
+        operators: List[str] = []
+        precedence = {'+': 1, '-': 1, '*': 2, '/': 2}
+        associativity = {'+': 'L', '-': 'L', '*': 'L', '/': 'L'}
+
+        for token in tokens:
+            if isinstance(token, float):
+                output.append(token)
+            elif token in precedence:
+                while (operators and
+                       operators[-1] in precedence and
+                       ((associativity[token] == 'L' and precedence[token] <= precedence[operators[-1]])
+                        or (associativity[token] == 'R' and precedence[token] < precedence[operators[-1]]))):
+                    output.append(operators.pop())
+                operators.append(token)
+            elif token == '(':
+                operators.append(token)
+            elif token == ')':
+                while operators and operators[-1] != '(':
+                    output.append(operators.pop())
+                if not operators:
+                    raise ValueError("Mismatched parentheses.")
+                operators.pop()  # Pop '('
+            else:
+                raise ValueError(f"Unknown token encountered: {token}")
+
+        while operators:
+            if operators[-1] in ('(', ')'):
+                raise ValueError("Unbalanced parentheses in expression.")
+            output.append(operators.pop())
+        return output
+
+    def _evaluate_rpn(self, tokens: List[Union[str, float]]) -> float:
+        """
+        Evaluates an RPN (postfix) expression.
+
+        :param tokens: List of tokens in RPN
+        :return: float result of evaluation
+        :raises ZeroDivisionError: on division by zero
+        :raises ValueError: on invalid syntax
+        """
+        stack: List[float] = []
+        for token in tokens:
+            if isinstance(token, float):
+                stack.append(token)
+            elif token in ('+', '-', '*', '/'):
+                if len(stack) < 2:
+                    raise ValueError("Insufficient operands for operator.")
+                b = stack.pop()
+                a = stack.pop()
+                if token == '+':
+                    stack.append(a + b)
+                elif token == '-':
+                    stack.append(a - b)
+                elif token == '*':
+                    stack.append(a * b)
+                elif token == '/':
+                    if b == 0:
+                        raise ZeroDivisionError("Division by zero.")
+                    stack.append(a / b)
+            else:
+                raise ValueError(f"Invalid token in RPN: {token}")
+        if len(stack) != 1:
+            raise ValueError("Invalid expression: too many values.")
+        return stack[0]
+
+
+# Example usage and basic tests
+if __name__ == "__main__":
+    calculator = Calculator()
+    tests = [
+        ("1+2*3", 7.0),           # precedence
+        ("(1+2)*3", 9.0),         # parentheses
+        ("-5+4", -1.0),           # unary minus
+        ("2.5*2", 5.0),           # floats
+        ("1-2-3", -4.0),          # associativity
+        ("2*(3+4)", 14.0),
+        ("10/2", 5.0),
+        ("1/(1-1)", ZeroDivisionError), # division by zero
+        ("2+*2", ValueError),           # invalid syntax
+        ("(1+2", ValueError),           # unbalanced parens
+        ("2 + a", ValueError),          # invalid char
+        ("-3.5 * (2+1)", -10.5)
+    ]
+    for expr, expected in tests:
+        try:
+            result = calculator.calculate(expr)
+            print(f"{expr} = {result}")
+            assert isinstance(expected, float) and abs(result - expected) < 1e-8
+        except Exception as e:
+            print(f"{expr} raised {type(e).__name__}: {e}")
+            assert isinstance(e, expected) if isinstance(expected, type) else False
+```

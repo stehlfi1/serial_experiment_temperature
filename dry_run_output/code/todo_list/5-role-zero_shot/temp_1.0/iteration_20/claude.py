@@ -1,0 +1,450 @@
+
+"""
+High-Quality Todo List Application
+
+A console-based todo list application implementing the TaskManager class
+with comprehensive task management functionality following ISO/IEC 25010 standards.
+"""
+
+from typing import List, Dict, Optional, Union
+import re
+from datetime import datetime
+
+
+class TaskNotFoundError(Exception):
+    """Raised when a task with the specified ID is not found."""
+    pass
+
+
+class InvalidInputError(Exception):
+    """Raised when invalid input is provided to task operations."""
+    pass
+
+
+class Task:
+    """
+    Represents a single task with its properties.
+    
+    This class encapsulates task data and provides a clean interface
+    for task manipulation while ensuring data integrity.
+    """
+    
+    def __init__(self, task_id: int, name: str, description: str) -> None:
+        """
+        Initialize a new task.
+        
+        Args:
+            task_id: Unique identifier for the task
+            name: Name of the task
+            description: Detailed description of the task
+        """
+        self.id = task_id
+        self.name = name
+        self.description = description
+        self.is_finished = False
+        self.created_at = datetime.now()
+        self.completed_at: Optional[datetime] = None
+    
+    def mark_finished(self) -> None:
+        """Mark the task as completed."""
+        self.is_finished = True
+        self.completed_at = datetime.now()
+    
+    def to_dict(self) -> Dict[str, Union[int, str, bool]]:
+        """
+        Convert task to dictionary format.
+        
+        Returns:
+            Dictionary containing task information in the required format
+        """
+        return {
+            "id": self.id,
+            "task_name": self.name,
+            "task_description": self.description,
+            "is_finished": self.is_finished
+        }
+    
+    def matches_search_term(self, search_term: str) -> bool:
+        """
+        Check if task matches the search term.
+        
+        Args:
+            search_term: Term to search for in name or description
+            
+        Returns:
+            True if task matches the search term, False otherwise
+        """
+        search_term_lower = search_term.lower()
+        return (search_term_lower in self.name.lower() or 
+                search_term_lower in self.description.lower())
+
+
+class TaskManager:
+    """
+    Manages a collection of tasks with full CRUD operations.
+    
+    This class provides a comprehensive interface for task management
+    including creation, retrieval, updating, and deletion of tasks.
+    Implements efficient data structures and comprehensive error handling.
+    """
+    
+    def __init__(self) -> None:
+        """Initialize the TaskManager with empty task storage."""
+        self._tasks: Dict[int, Task] = {}
+        self._next_id: int = 1
+        self._task_name_index: Dict[str, List[int]] = {}  # For efficient name-based searches
+    
+    def _validate_task_name(self, task_name: str) -> None:
+        """
+        Validate task name input.
+        
+        Args:
+            task_name: Name to validate
+            
+        Raises:
+            InvalidInputError: If task name is invalid
+        """
+        if not isinstance(task_name, str):
+            raise InvalidInputError("Task name must be a string")
+        if not task_name or task_name.isspace():
+            raise InvalidInputError("Task name cannot be empty or whitespace only")
+        if len(task_name.strip()) > 100:
+            raise InvalidInputError("Task name cannot exceed 100 characters")
+    
+    def _validate_task_description(self, task_description: str) -> None:
+        """
+        Validate task description input.
+        
+        Args:
+            task_description: Description to validate
+            
+        Raises:
+            InvalidInputError: If task description is invalid
+        """
+        if not isinstance(task_description, str):
+            raise InvalidInputError("Task description must be a string")
+        if not task_description or task_description.isspace():
+            raise InvalidInputError("Task description cannot be empty or whitespace only")
+        if len(task_description.strip()) > 500:
+            raise InvalidInputError("Task description cannot exceed 500 characters")
+    
+    def _validate_task_id(self, task_id: int) -> None:
+        """
+        Validate task ID input.
+        
+        Args:
+            task_id: ID to validate
+            
+        Raises:
+            InvalidInputError: If task ID is invalid
+            TaskNotFoundError: If task ID doesn't exist
+        """
+        if not isinstance(task_id, int):
+            raise InvalidInputError("Task ID must be an integer")
+        if task_id < 1:
+            raise InvalidInputError("Task ID must be a positive integer")
+        if task_id not in self._tasks:
+            raise TaskNotFoundError(f"Task with ID {task_id} not found")
+    
+    def _validate_search_term(self, search_term: str) -> None:
+        """
+        Validate search term input.
+        
+        Args:
+            search_term: Search term to validate
+            
+        Raises:
+            InvalidInputError: If search term is invalid
+        """
+        if not isinstance(search_term, str):
+            raise InvalidInputError("Search term must be a string")
+        if not search_term or search_term.isspace():
+            raise InvalidInputError("Search term cannot be empty or whitespace only")
+        if len(search_term.strip()) > 100:
+            raise InvalidInputError("Search term cannot exceed 100 characters")
+    
+    def _update_name_index(self, task: Task) -> None:
+        """
+        Update the name index for efficient searching.
+        
+        Args:
+            task: Task to index
+        """
+        name_key = task.name.lower()
+        if name_key not in self._task_name_index:
+            self._task_name_index[name_key] = []
+        self._task_name_index[name_key].append(task.id)
+    
+    def _remove_from_name_index(self, task: Task) -> None:
+        """
+        Remove task from the name index.
+        
+        Args:
+            task: Task to remove from index
+        """
+        name_key = task.name.lower()
+        if name_key in self._task_name_index:
+            try:
+                self._task_name_index[name_key].remove(task.id)
+                if not self._task_name_index[name_key]:
+                    del self._task_name_index[name_key]
+            except ValueError:
+                pass  # Task ID not found in index
+    
+    def add(self, task_name: str, task_description: str) -> int:
+        """
+        Add a new task to the task manager.
+        
+        Args:
+            task_name: Name of the task (1-100 characters, non-empty)
+            task_description: Description of the task (1-500 characters, non-empty)
+            
+        Returns:
+            Unique ID of the created task
+            
+        Raises:
+            InvalidInputError: If task name or description is invalid
+        """
+        # Validate inputs
+        self._validate_task_name(task_name)
+        self._validate_task_description(task_description)
+        
+        # Clean inputs
+        clean_name = task_name.strip()
+        clean_description = task_description.strip()
+        
+        # Create task
+        task_id = self._next_id
+        task = Task(task_id, clean_name, clean_description)
+        
+        # Store task and update indices
+        self._tasks[task_id] = task
+        self._update_name_index(task)
+        self._next_id += 1
+        
+        return task_id
+    
+    def remove(self, task_id: int) -> bool:
+        """
+        Remove a task by its ID.
+        
+        Args:
+            task_id: ID of the task to remove
+            
+        Returns:
+            True if task was successfully removed, False otherwise
+            
+        Raises:
+            InvalidInputError: If task ID is invalid
+            TaskNotFoundError: If task with given ID doesn't exist
+        """
+        try:
+            self._validate_task_id(task_id)
+            
+            # Get task before removal for index cleanup
+            task = self._tasks[task_id]
+            
+            # Remove from indices and storage
+            self._remove_from_name_index(task)
+            del self._tasks[task_id]
+            
+            return True
+        except (InvalidInputError, TaskNotFoundError):
+            raise
+        except Exception:
+            return False
+    
+    def search(self, search_term: str) -> List[Dict[str, Union[int, str, bool]]]:
+        """
+        Search for tasks by name or description.
+        
+        Args:
+            search_term: Term to search for in task names or descriptions
+            
+        Returns:
+            List of dictionaries containing matching task information
+            
+        Raises:
+            InvalidInputError: If search term is invalid
+        """
+        self._validate_search_term(search_term)
+        
+        clean_search_term = search_term.strip()
+        matching_tasks = []
+        
+        # Efficient search using both direct iteration and name index
+        search_term_lower = clean_search_term.lower()
+        
+        # Check name index for exact matches first
+        potential_matches = set()
+        for name_key, task_ids in self._task_name_index.items():
+            if search_term_lower in name_key:
+                potential_matches.update(task_ids)
+        
+        # Search all tasks for comprehensive matching
+        for task in self._tasks.values():
+            if task.matches_search_term(clean_search_term):
+                potential_matches.add(task.id)
+        
+        # Convert to sorted list of dictionaries
+        matching_tasks = [
+            self._tasks[task_id].to_dict() 
+            for task_id in sorted(potential_matches)
+        ]
+        
+        return matching_tasks
+    
+    def finish(self, task_id: int) -> bool:
+        """
+        Mark a task as completed.
+        
+        Args:
+            task_id: ID of the task to mark as finished
+            
+        Returns:
+            True if task was successfully marked as finished
+            
+        Raises:
+            InvalidInputError: If task ID is invalid
+            TaskNotFoundError: If task with given ID doesn't exist
+        """
+        try:
+            self._validate_task_id(task_id)
+            
+            task = self._tasks[task_id]
+            task.mark_finished()
+            
+            return True
+        except (InvalidInputError, TaskNotFoundError):
+            raise
+        except Exception:
+            return False
+    
+    def get_all(self) -> List[Dict[str, Union[int, str, bool]]]:
+        """
+        Retrieve all tasks.
+        
+        Returns:
+            List of dictionaries containing all task information,
+            sorted by task ID for consistent ordering
+        """
+        return [
+            self._tasks[task_id].to_dict() 
+            for task_id in sorted(self._tasks.keys())
+        ]
+    
+    def clear_all(self) -> bool:
+        """
+        Delete all tasks from the manager.
+        
+        Returns:
+            True if all tasks were successfully cleared
+        """
+        try:
+            self._tasks.clear()
+            self._task_name_index.clear()
+            self._next_id = 1
+            return True
+        except Exception:
+            return False
+    
+    def get_task_count(self) -> int:
+        """
+        Get the total number of tasks.
+        
+        Returns:
+            Total number of tasks in the manager
+        """
+        return len(self._tasks)
+    
+    def get_completed_count(self) -> int:
+        """
+        Get the number of completed tasks.
+        
+        Returns:
+            Number of completed tasks
+        """
+        return sum(1 for task in self._tasks.values() if task.is_finished)
+    
+    def get_pending_count(self) -> int:
+        """
+        Get the number of pending tasks.
+        
+        Returns:
+            Number of pending (not completed) tasks
+        """
+        return sum(1 for task in self._tasks.values() if not task.is_finished)
+
+
+def main():
+    """
+    Demonstration of the TaskManager functionality.
+    
+    This function showcases the main features of the task management system
+    including adding, searching, completing, and managing tasks.
+    """
+    # Initialize task manager
+    task_manager = TaskManager()
+    
+    print("=== Todo List Application Demo ===\n")
+    
+    try:
+        # Add sample tasks
+        print("Adding sample tasks...")
+        id1 = task_manager.add("Buy groceries", "Purchase milk, bread, and eggs from the store")
+        id2 = task_manager.add("Complete project", "Finish the Python todo list application")
+        id3 = task_manager.add("Exercise", "Go for a 30-minute run in the park")
+        print(f"Added tasks with IDs: {id1}, {id2}, {id3}\n")
+        
+        # Display all tasks
+        print("All tasks:")
+        all_tasks = task_manager.get_all()
+        for task in all_tasks:
+            status = "✓" if task["is_finished"] else "○"
+            print(f"  {status} [{task['id']}] {task['task_name']}: {task['task_description']}")
+        print()
+        
+        # Search for tasks
+        print("Searching for 'project':")
+        search_results = task_manager.search("project")
+        for task in search_results:
+            print(f"  Found: [{task['id']}] {task['task_name']}")
+        print()
+        
+        # Mark a task as finished
+        print(f"Marking task {id2} as finished...")
+        task_manager.finish(id2)
+        
+        # Display updated tasks
+        print("Updated tasks:")
+        all_tasks = task_manager.get_all()
+        for task in all_tasks:
+            status = "✓" if task["is_finished"] else "○"
+            print(f"  {status} [{task['id']}] {task['task_name']}: {task['task_description']}")
+        print()
+        
+        # Display statistics
+        print("Task Statistics:")
+        print(f"  Total tasks: {task_manager.get_task_count()}")
+        print(f"  Completed: {task_manager.get_completed_count()}")
+        print(f"  Pending: {task_manager.get_pending_count()}")
+        print()
+        
+        # Remove a task
+        print(f"Removing task {id1}...")
+        task_manager.remove(id1)
+        
+        print("Final task list:")
+        all_tasks = task_manager.get_all()
+        for task in all_tasks:
+            status = "✓" if task["is_finished"] else "○"
+            print(f"  {status} [{task['id']}] {task['task_name']}: {task['task_description']}")
+        
+    except (InvalidInputError, TaskNotFoundError) as e:
+        print(f"Error: {e}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+
+
+if __name__ == "__main__":
+    main()

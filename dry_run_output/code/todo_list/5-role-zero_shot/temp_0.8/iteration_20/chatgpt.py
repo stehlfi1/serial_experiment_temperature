@@ -1,0 +1,206 @@
+
+"""
+Console-based Todo List Application
+
+This application adheres to ISO/IEC 25010 quality standards, focusing on:
+- Correctness
+- Efficiency
+- Modularity
+- Safety/Validation
+- Testability
+- Readability & Documentation
+
+Author: [Your Name]
+Date: 2024-06
+"""
+
+from typing import List, Dict, Optional
+
+
+class TaskValidationError(ValueError):
+    """Custom exception for task validation errors."""
+
+
+class TaskNotFoundError(KeyError):
+    """Custom exception for not found tasks."""
+
+
+class Task:
+    """
+    Represents a single todo task.
+
+    Attributes:
+        id (int): Unique identifier for the task.
+        name (str): Name/title of the task.
+        description (str): Description/details of the task.
+        is_finished (bool): Whether the task is completed.
+    """
+
+    def __init__(self, id: int, name: str, description: str) -> None:
+        if not name.strip():
+            raise TaskValidationError("Task name cannot be empty.")
+        if not description.strip():
+            raise TaskValidationError("Task description cannot be empty.")
+        self.id = id
+        self.name = name
+        self.description = description
+        self.is_finished = False
+
+    def to_dict(self) -> Dict:
+        """
+        Returns:
+            dict: Task information in (id, task_name, task_description, is_finished) format.
+        """
+        return {
+            'id': self.id,
+            'task_name': self.name,
+            'task_description': self.description,
+            'is_finished': self.is_finished
+        }
+
+
+class TaskManager:
+    """
+    Manages todo tasks in-memory.
+
+    Interface methods:
+        - add(task_name: str, task_description: str) -> int
+        - remove(task_id: int) -> bool
+        - search(task_term: str) -> list[dict]
+        - finish(task_id: int) -> bool
+        - get_all() -> list[dict]
+        - clear_all() -> bool
+    """
+
+    def __init__(self) -> None:
+        """Initializes the TaskManager."""
+        self._tasks: Dict[int, Task] = {}
+        self._next_id: int = 1
+
+    def add(self, task_name: str, task_description: str) -> int:
+        """
+        Adds a task.
+
+        Args:
+            task_name (str): Name/title of the task.
+            task_description (str): Task description/details.
+
+        Returns:
+            int: Unique task ID assigned.
+
+        Raises:
+            TaskValidationError: If name/description is invalid.
+        """
+        task = Task(self._next_id, task_name, task_description)
+        self._tasks[self._next_id] = task
+        assigned_id = self._next_id
+        self._next_id += 1
+        return assigned_id
+
+    def remove(self, task_id: int) -> bool:
+        """
+        Removes a task by ID.
+
+        Args:
+            task_id (int): Unique task ID.
+
+        Returns:
+            bool: True if removal succeeded, False otherwise.
+
+        Raises:
+            TaskValidationError: If task_id is not valid.
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise TaskValidationError("Task ID must be a positive integer.")
+        if task_id not in self._tasks:
+            return False
+        del self._tasks[task_id]
+        return True
+
+    def search(self, task_term: str) -> List[Dict]:
+        """
+        Searches for tasks by name or description (case-insensitive).
+
+        Args:
+            task_term (str): Search term (non-empty string).
+
+        Returns:
+            list[dict]: List of matching task dictionaries.
+        """
+        if not task_term.strip():
+            raise TaskValidationError("Search term cannot be empty.")
+        term_lower = task_term.lower()
+        results = [
+            task.to_dict()
+            for task in self._tasks.values()
+            if term_lower in task.name.lower() or term_lower in task.description.lower()
+        ]
+        return results
+
+    def finish(self, task_id: int) -> bool:
+        """
+        Marks a task as completed.
+
+        Args:
+            task_id (int): Unique task ID.
+
+        Returns:
+            bool: True if marking as finished succeeded, False otherwise.
+
+        Raises:
+            TaskValidationError: If task_id is not valid.
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise TaskValidationError("Task ID must be a positive integer.")
+        task = self._tasks.get(task_id)
+        if not task:
+            return False
+        task.is_finished = True
+        return True
+
+    def get_all(self) -> List[Dict]:
+        """
+        Retrieves all tasks.
+
+        Returns:
+            list[dict]: List of all task dictionaries.
+        """
+        # Sorted by ID ascending for consistency
+        return [task.to_dict() for task in sorted(self._tasks.values(), key=lambda t: t.id)]
+
+    def clear_all(self) -> bool:
+        """
+        Deletes all tasks.
+
+        Returns:
+            bool: True if operation succeeded, False otherwise.
+        """
+        self._tasks.clear()
+        self._next_id = 1
+        return True
+
+
+# Demo main function (for manual testing)
+if __name__ == "__main__":
+    # This demonstrates usage and is testable. Not needed in production.
+    manager = TaskManager()
+    try:
+        tid1 = manager.add("Buy groceries", "Milk, Bread, Eggs")
+        tid2 = manager.add("Read book", "Finish reading 'Python Best Practices'")
+        tid3 = manager.add("Gym", "Leg day at 7pm")
+        print("All tasks:")
+        for task in manager.get_all():
+            print(task)
+        print("\nSearch 'book':", manager.search("book"))
+        print("Finish ID 2:", manager.finish(tid2))
+        print("Task 2 after finishing:", [t for t in manager.get_all() if t['id'] == tid2])
+        print("Remove ID 1:", manager.remove(tid1))
+        print("All tasks after removal:")
+        for task in manager.get_all():
+            print(task)
+        print("Clear all:", manager.clear_all())
+        print("All tasks after clearing:", manager.get_all())
+    except TaskValidationError as e:
+        print(f"Validation error: {e}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")

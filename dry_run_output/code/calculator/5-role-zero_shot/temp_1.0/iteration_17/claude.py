@@ -1,0 +1,421 @@
+
+"""
+Arithmetic Calculator Module
+
+A high-quality, maintainable implementation of a console-based arithmetic calculator
+that supports basic operations with proper error handling and validation.
+
+Author: Senior Software Developer
+Standard: ISO/IEC 25010 compliant
+"""
+
+import re
+from typing import List, Union
+from enum import Enum
+
+
+class TokenType(Enum):
+    """Enumeration of token types for expression parsing."""
+    NUMBER = "NUMBER"
+    OPERATOR = "OPERATOR"
+    LEFT_PAREN = "LEFT_PAREN"
+    RIGHT_PAREN = "RIGHT_PAREN"
+
+
+class Token:
+    """Represents a token in the mathematical expression."""
+    
+    def __init__(self, token_type: TokenType, value: Union[float, str]):
+        """
+        Initialize a token.
+        
+        Args:
+            token_type (TokenType): The type of the token
+            value (Union[float, str]): The value of the token
+        """
+        self.type = token_type
+        self.value = value
+    
+    def __repr__(self) -> str:
+        """Return string representation of the token."""
+        return f"Token({self.type}, {self.value})"
+
+
+class CalculatorError(Exception):
+    """Base exception class for calculator-related errors."""
+    pass
+
+
+class InvalidExpressionError(CalculatorError):
+    """Exception raised for invalid mathematical expressions."""
+    pass
+
+
+class DivisionByZeroError(CalculatorError):
+    """Exception raised when attempting to divide by zero."""
+    pass
+
+
+class Calculator:
+    """
+    A robust arithmetic calculator supporting basic operations with proper precedence.
+    
+    Supports operations: +, -, *, /
+    Supports parentheses for grouping
+    Handles integers and floating-point numbers (including negative values)
+    """
+    
+    # Operator precedence mapping (higher number = higher precedence)
+    OPERATOR_PRECEDENCE = {'+': 1, '-': 1, '*': 2, '/': 2}
+    
+    # Valid operators
+    OPERATORS = {'+', '-', '*', '/'}
+    
+    def __init__(self):
+        """Initialize the calculator."""
+        pass
+    
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates a mathematical expression and returns the result.
+        
+        Args:
+            expression (str): The mathematical expression to evaluate
+            
+        Returns:
+            float: The result of the calculation
+            
+        Raises:
+            InvalidExpressionError: If the expression is invalid
+            DivisionByZeroError: If division by zero is attempted
+            
+        Examples:
+            >>> calc = Calculator()
+            >>> calc.calculate("2 + 3 * 4")
+            14.0
+            >>> calc.calculate("(2 + 3) * 4")
+            20.0
+            >>> calc.calculate("-5 + 3")
+            -2.0
+        """
+        if not expression or not expression.strip():
+            raise InvalidExpressionError("Expression cannot be empty")
+        
+        try:
+            # Tokenize the expression
+            tokens = self._tokenize(expression.strip())
+            
+            # Validate tokens
+            self._validate_tokens(tokens)
+            
+            # Convert to postfix notation (Reverse Polish Notation)
+            postfix_tokens = self._infix_to_postfix(tokens)
+            
+            # Evaluate the postfix expression
+            result = self._evaluate_postfix(postfix_tokens)
+            
+            return float(result)
+            
+        except (ValueError, TypeError) as e:
+            raise InvalidExpressionError(f"Invalid expression: {str(e)}")
+    
+    def _tokenize(self, expression: str) -> List[Token]:
+        """
+        Tokenize the mathematical expression into a list of tokens.
+        
+        Args:
+            expression (str): The expression to tokenize
+            
+        Returns:
+            List[Token]: List of tokens representing the expression
+            
+        Raises:
+            InvalidExpressionError: If invalid characters are found
+        """
+        tokens = []
+        i = 0
+        
+        while i < len(expression):
+            char = expression[i]
+            
+            # Skip whitespace
+            if char.isspace():
+                i += 1
+                continue
+            
+            # Handle numbers (including negative numbers and decimals)
+            if char.isdigit() or char == '.':
+                number_str, i = self._extract_number(expression, i)
+                tokens.append(Token(TokenType.NUMBER, float(number_str)))
+                continue
+            
+            # Handle negative numbers at the beginning or after operators/opening parentheses
+            if char == '-' and self._is_negative_number_context(tokens):
+                number_str, i = self._extract_number(expression, i)
+                tokens.append(Token(TokenType.NUMBER, float(number_str)))
+                continue
+            
+            # Handle operators
+            if char in self.OPERATORS:
+                tokens.append(Token(TokenType.OPERATOR, char))
+                i += 1
+                continue
+            
+            # Handle parentheses
+            if char == '(':
+                tokens.append(Token(TokenType.LEFT_PAREN, char))
+                i += 1
+                continue
+            
+            if char == ')':
+                tokens.append(Token(TokenType.RIGHT_PAREN, char))
+                i += 1
+                continue
+            
+            # Invalid character found
+            raise InvalidExpressionError(f"Invalid character '{char}' at position {i}")
+        
+        return tokens
+    
+    def _extract_number(self, expression: str, start_index: int) -> tuple:
+        """
+        Extract a complete number (including decimals and negative signs) from the expression.
+        
+        Args:
+            expression (str): The full expression
+            start_index (int): Starting index for number extraction
+            
+        Returns:
+            tuple: (number_string, next_index)
+        """
+        i = start_index
+        number_str = ""
+        
+        # Handle negative sign
+        if i < len(expression) and expression[i] == '-':
+            number_str += expression[i]
+            i += 1
+        
+        # Extract digits and decimal point
+        decimal_found = False
+        while i < len(expression):
+            char = expression[i]
+            
+            if char.isdigit():
+                number_str += char
+                i += 1
+            elif char == '.' and not decimal_found:
+                decimal_found = True
+                number_str += char
+                i += 1
+            else:
+                break
+        
+        if not number_str or number_str == '-' or number_str == '.':
+            raise InvalidExpressionError(f"Invalid number format at position {start_index}")
+        
+        return number_str, i
+    
+    def _is_negative_number_context(self, tokens: List[Token]) -> bool:
+        """
+        Determine if a minus sign represents a negative number rather than subtraction.
+        
+        Args:
+            tokens (List[Token]): Current list of tokens
+            
+        Returns:
+            bool: True if the minus sign should be treated as part of a negative number
+        """
+        if not tokens:
+            return True  # Beginning of expression
+        
+        last_token = tokens[-1]
+        return (last_token.type == TokenType.OPERATOR or 
+                last_token.type == TokenType.LEFT_PAREN)
+    
+    def _validate_tokens(self, tokens: List[Token]) -> None:
+        """
+        Validate the token sequence for correctness.
+        
+        Args:
+            tokens (List[Token]): List of tokens to validate
+            
+        Raises:
+            InvalidExpressionError: If the token sequence is invalid
+        """
+        if not tokens:
+            raise InvalidExpressionError("Empty expression")
+        
+        # Check for balanced parentheses
+        paren_count = 0
+        for token in tokens:
+            if token.type == TokenType.LEFT_PAREN:
+                paren_count += 1
+            elif token.type == TokenType.RIGHT_PAREN:
+                paren_count -= 1
+                if paren_count < 0:
+                    raise InvalidExpressionError("Unbalanced parentheses: too many closing parentheses")
+        
+        if paren_count > 0:
+            raise InvalidExpressionError("Unbalanced parentheses: missing closing parentheses")
+        
+        # Check for proper token sequence
+        for i, token in enumerate(tokens):
+            # First token should be number or opening parenthesis
+            if i == 0 and token.type not in [TokenType.NUMBER, TokenType.LEFT_PAREN]:
+                raise InvalidExpressionError("Expression must start with a number or opening parenthesis")
+            
+            # Last token should be number or closing parenthesis
+            if i == len(tokens) - 1 and token.type not in [TokenType.NUMBER, TokenType.RIGHT_PAREN]:
+                raise InvalidExpressionError("Expression must end with a number or closing parenthesis")
+            
+            # Check for consecutive operators
+            if (token.type == TokenType.OPERATOR and i > 0 and 
+                tokens[i-1].type == TokenType.OPERATOR):
+                raise InvalidExpressionError("Consecutive operators are not allowed")
+    
+    def _infix_to_postfix(self, tokens: List[Token]) -> List[Token]:
+        """
+        Convert infix notation to postfix notation using the Shunting Yard algorithm.
+        
+        Args:
+            tokens (List[Token]): List of tokens in infix notation
+            
+        Returns:
+            List[Token]: List of tokens in postfix notation
+        """
+        output_queue = []
+        operator_stack = []
+        
+        for token in tokens:
+            if token.type == TokenType.NUMBER:
+                output_queue.append(token)
+            
+            elif token.type == TokenType.OPERATOR:
+                while (operator_stack and 
+                       operator_stack[-1].type == TokenType.OPERATOR and
+                       self.OPERATOR_PRECEDENCE[operator_stack[-1].value] >= 
+                       self.OPERATOR_PRECEDENCE[token.value]):
+                    output_queue.append(operator_stack.pop())
+                operator_stack.append(token)
+            
+            elif token.type == TokenType.LEFT_PAREN:
+                operator_stack.append(token)
+            
+            elif token.type == TokenType.RIGHT_PAREN:
+                while (operator_stack and 
+                       operator_stack[-1].type != TokenType.LEFT_PAREN):
+                    output_queue.append(operator_stack.pop())
+                
+                if operator_stack:
+                    operator_stack.pop()  # Remove the left parenthesis
+        
+        # Pop remaining operators
+        while operator_stack:
+            output_queue.append(operator_stack.pop())
+        
+        return output_queue
+    
+    def _evaluate_postfix(self, tokens: List[Token]) -> float:
+        """
+        Evaluate a postfix expression.
+        
+        Args:
+            tokens (List[Token]): List of tokens in postfix notation
+            
+        Returns:
+            float: The result of the evaluation
+            
+        Raises:
+            DivisionByZeroError: If division by zero is attempted
+            InvalidExpressionError: If the expression structure is invalid
+        """
+        stack = []
+        
+        for token in tokens:
+            if token.type == TokenType.NUMBER:
+                stack.append(token.value)
+            
+            elif token.type == TokenType.OPERATOR:
+                if len(stack) < 2:
+                    raise InvalidExpressionError("Invalid expression structure")
+                
+                operand2 = stack.pop()
+                operand1 = stack.pop()
+                
+                result = self._perform_operation(operand1, operand2, token.value)
+                stack.append(result)
+        
+        if len(stack) != 1:
+            raise InvalidExpressionError("Invalid expression structure")
+        
+        return stack[0]
+    
+    def _perform_operation(self, operand1: float, operand2: float, operator: str) -> float:
+        """
+        Perform a single arithmetic operation.
+        
+        Args:
+            operand1 (float): First operand
+            operand2 (float): Second operand
+            operator (str): The operation to perform
+            
+        Returns:
+            float: The result of the operation
+            
+        Raises:
+            DivisionByZeroError: If division by zero is attempted
+        """
+        if operator == '+':
+            return operand1 + operand2
+        elif operator == '-':
+            return operand1 - operand2
+        elif operator == '*':
+            return operand1 * operand2
+        elif operator == '/':
+            if operand2 == 0:
+                raise DivisionByZeroError("Division by zero is not allowed")
+            return operand1 / operand2
+        else:
+            raise InvalidExpressionError(f"Unknown operator: {operator}")
+
+
+def main():
+    """
+    Main function to demonstrate the calculator functionality.
+    Provides an interactive console interface for the calculator.
+    """
+    calculator = Calculator()
+    
+    print("Arithmetic Calculator")
+    print("Supported operations: +, -, *, /")
+    print("Supports parentheses and negative numbers")
+    print("Type 'quit' or 'exit' to stop\n")
+    
+    while True:
+        try:
+            expression = input("Enter expression: ").strip()
+            
+            if expression.lower() in ['quit', 'exit']:
+                print("Goodbye!")
+                break
+            
+            if not expression:
+                continue
+            
+            result = calculator.calculate(expression)
+            print(f"Result: {result}")
+            
+        except (InvalidExpressionError, DivisionByZeroError) as e:
+            print(f"Error: {e}")
+        except KeyboardInterrupt:
+            print("\nGoodbye!")
+            break
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+        
+        print()  # Empty line for readability
+
+
+if __name__ == "__main__":
+    main()

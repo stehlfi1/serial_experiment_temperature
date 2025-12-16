@@ -1,0 +1,152 @@
+```python
+from typing import Any
+
+
+class AsciiArt:
+    """
+    A class for drawing basic ASCII art geometric shapes.
+
+    All shapes are rendered as multi-line strings and fully filled
+    using a single, user-supplied printable symbol.
+
+    Validations are performed for all argument inputs to ensure correctness.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the AsciiArt object."""
+        pass
+
+    def _validate_symbol(self, symbol: str) -> None:
+        """
+        Validate that the symbol is a single, non-whitespace printable character.
+
+        :param symbol: The symbol to validate.
+        :raise ValueError: If symbol is not one printable, non-whitespace character.
+        """
+        if not isinstance(symbol, str):
+            raise TypeError("Symbol must be a string.")
+        if len(symbol) != 1:
+            raise ValueError("Symbol must be a single character.")
+        if symbol.isspace():
+            raise ValueError("Symbol must not be a whitespace character.")
+        if not symbol.isprintable():
+            raise ValueError("Symbol must be printable.")
+
+    def _validate_positive_int(self, value: Any, name: str = "value") -> None:
+        """
+        Validate that a parameter is a positive integer.
+
+        :param value: The value to validate.
+        :param name: The name of the parameter for error messages.
+        :raise ValueError: If not positive integer.
+        """
+        if not isinstance(value, int):
+            raise TypeError(f"{name} must be an integer.")
+        if value <= 0:
+            raise ValueError(f"{name} must be > 0.")
+
+    def draw_square(self, width: int, symbol: str) -> str:
+        """
+        Draw a filled ASCII square of size width x width.
+
+        :param width: The size of the square's side (must be integer > 0).
+        :param symbol: The fill symbol (single printable non-whitespace character).
+        :return: Multi-line string representing the square.
+        """
+        self._validate_positive_int(width, "width")
+        self._validate_symbol(symbol)
+        row = symbol * width
+        return "\n".join([row] * width)
+
+    def draw_rectangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draw a filled ASCII rectangle.
+
+        :param width: The rectangle width (integer > 0).
+        :param height: The rectangle height (integer > 0).
+        :param symbol: The fill symbol (single printable non-whitespace character).
+        :return: Multi-line string representing the rectangle.
+        """
+        self._validate_positive_int(width, "width")
+        self._validate_positive_int(height, "height")
+        self._validate_symbol(symbol)
+        row = symbol * width
+        return "\n".join([row] * height)
+
+    def draw_parallelogram(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draw a filled right-leaning ASCII parallelogram (each row shifted right).
+
+        :param width: The parallelogram's width (integer > 0).
+        :param height: The parallelogram's height (integer > 0).
+        :param symbol: The fill symbol (single printable non-whitespace character).
+        :return: Multi-line string representing the parallelogram.
+        """
+        self._validate_positive_int(width, "width")
+        self._validate_positive_int(height, "height")
+        self._validate_symbol(symbol)
+        lines = []
+        for i in range(height):
+            line = (' ' * i) + (symbol * width)
+            lines.append(line)
+        return "\n".join(lines)
+
+    def draw_triangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draw a filled right-angled triangle (right angle at top-left, sloping down and to the right).
+
+        :param width: The triangle's maximum base width (integer > 0).
+        :param height: The triangle's height (integer > 0).
+        :param symbol: The fill symbol (single printable non-whitespace character).
+        :return: Multi-line string representing the triangle.
+        """
+        self._validate_positive_int(width, "width")
+        self._validate_positive_int(height, "height")
+        self._validate_symbol(symbol)
+        lines = []
+        for i in range(height):
+            # Compute the number of symbols for the current row, ranging from 1 to width
+            current_width = max(1, round((i + 1) * width / height))
+            line = symbol * current_width
+            lines.append(line)
+        return "\n".join(lines)
+
+    def draw_pyramid(self, height: int, symbol: str) -> str:
+        """
+        Draw a filled, center-aligned ASCII pyramid of given height.
+
+        :param height: The pyramid height (integer > 0).
+        :param symbol: The fill symbol (single printable non-whitespace character).
+        :return: Multi-line string representing the pyramid.
+        """
+        self._validate_positive_int(height, "height")
+        self._validate_symbol(symbol)
+        lines = []
+        max_width = 2 * height - 1
+        for i in range(height):
+            num_symbols = 2 * i + 1
+            num_spaces = (max_width - num_symbols) // 2
+            line = ' ' * num_spaces + symbol * num_symbols + ' ' * num_spaces
+            lines.append(line)
+        return "\n".join(lines)
+
+
+# Example unit test usage
+if __name__ == "__main__":
+    art = AsciiArt()
+    print("Square:\n", art.draw_square(4, "#"))
+    print("Rectangle:\n", art.draw_rectangle(6, 3, "*"))
+    print("Parallelogram:\n", art.draw_parallelogram(5, 4, "+"))
+    print("Right-angled triangle:\n", art.draw_triangle(7, 5, "@"))
+    print("Pyramid:\n", art.draw_pyramid(4, "^"))
+```
+**Key Features (ISO/IEC 25010 compliance):**
+- **Correctness:** Solid validation and clear algorithms produce geometrically correct shapes.
+- **Performance:** Uses simple and efficient string/list operations.
+- **Modularity:** All methods and validation are separated, facilitating maintainability.
+- **Safety:** Rigorous validation of all public inputs; uses Pythonic exceptions.
+- **Testability:** Each method returns a deterministic result; `if __name__ == "__main__":` can be used for basic tests.
+- **Readability:** Docstrings for all methods, clear parameter names, in-line comments.
+- **Documentation:** All methods specify purpose, parameters, and return value.
+
+This class is ready for extension, integration, and detailed unit testing.

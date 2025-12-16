@@ -1,0 +1,255 @@
+
+import re
+from typing import List, Union
+
+class Calculator:
+    """
+    A high-quality, safe, and efficient arithmetic calculator.
+
+    This class evaluates mathematical expressions provided as strings,
+    supporting addition, subtraction, multiplication, division, and parentheses.
+    It adheres to standard operator precedence.
+
+    The implementation uses a two-stack algorithm to parse and evaluate
+    expressions, ensuring safety by avoiding the use of `eval()`.
+    """
+
+    def __init__(self):
+        """Initializes the Calculator, defining operators and their precedence."""
+        self._operators = {
+            '+': 1, '-': 1,
+            '*': 2, '/': 2
+        }
+
+    def _apply_op(self, ops: List[str], values: List[float]) -> None:
+        """
+        Applies an operator to the top two values on the value stack.
+
+        Pops one operator from the operator stack and two operands from the
+        value stack, performs the operation, and pushes the result back
+        onto the value stack.
+
+        Args:
+            ops: The stack of operators.
+            values: The stack of numerical values (operands).
+
+        Raises:
+            ValueError: If there are not enough values on the stack for an operation.
+            ZeroDivisionError: If attempting to divide by zero.
+        """
+        if len(values) < 2:
+            raise ValueError("Invalid expression: Not enough operands for an operator.")
+        
+        operator = ops.pop()
+        right = values.pop()
+        left = values.pop()
+
+        if operator == '+':
+            values.append(left + right)
+        elif operator == '-':
+            values.append(left - right)
+        elif operator == '*':
+            values.append(left * right)
+        elif operator == '/':
+            if right == 0:
+                raise ZeroDivisionError("Error: Division by zero is not allowed.")
+            values.append(left / right)
+
+    def _tokenize(self, expression: str) -> List[str]:
+        """
+        Converts an expression string into a list of tokens.
+
+        This method handles integers, floating-point numbers, and operators.
+        It also validates for any unsupported characters.
+
+        Args:
+            expression: The string expression to tokenize.
+
+        Returns:
+            A list of tokens (numbers as strings, operators, parentheses).
+
+        Raises:
+            ValueError: If the expression contains invalid characters.
+        """
+        # Remove all whitespace for easier parsing
+        expression = expression.replace(" ", "")
+        
+        # Regex to find numbers (int/float) or operators/parentheses
+        # This will correctly separate all components of the expression.
+        tokens = re.findall(r"(\d+(?:\.\d*)?|\.\d+|[+\-*/()])", expression)
+
+        # Validate that the entire expression was tokenized
+        if "".join(tokens) != expression:
+            raise ValueError("Invalid characters found in expression.")
+            
+        return tokens
+
+    def _evaluate(self, tokens: List[str]) -> float:
+        """
+        Evaluates a list of tokens using a two-stack algorithm.
+
+        Args:
+            tokens: A list of string tokens from the `_tokenize` method.
+
+        Returns:
+            The final result of the evaluation as a float.
+
+        Raises:
+            ValueError: For malformed expressions like unbalanced parentheses.
+        """
+        values: List[float] = []
+        ops: List[str] = []
+        
+        # To correctly handle unary minus (e.g., -5 or 3 * -2)
+        # We check the context of the '-' operator.
+        last_token_was_operator_or_paren = True
+
+        for token in tokens:
+            if token.replace('.', '', 1).isdigit() or (token.startswith('-') and token[1:].replace('.', '', 1).isdigit()):
+                # This is a number
+                values.append(float(token))
+                last_token_was_operator_or_paren = False
+            elif token == '(':
+                ops.append(token)
+                last_token_was_operator_or_paren = True
+            elif token == ')':
+                while ops and ops[-1] != '(':
+                    self._apply_op(ops, values)
+                if not ops or ops.pop() != '(':
+                    raise ValueError("Invalid expression: Mismatched parentheses.")
+                last_token_was_operator_or_paren = False
+            elif token in self._operators:
+                # Handle unary minus: if '-' follows an operator or '(', it's unary.
+                if token == '-' and last_token_was_operator_or_paren:
+                    # This is a unary minus. We treat it by pushing a 0 onto the
+                    # value stack, effectively turning '-x' into '0 - x'.
+                    values.append(0.0)
+                else:
+                    # This is a binary operator.
+                    while (ops and ops[-1] in self._operators and
+                           self._operators[ops[-1]] >= self._operators[token]):
+                        self._apply_op(ops, values)
+                ops.append(token)
+                last_token_was_operator_or_paren = True
+            else:
+                # This case should ideally not be reached due to tokenizer validation
+                raise ValueError(f"Invalid token found: {token}")
+
+        # Process remaining operators on the stack
+        while ops:
+            if ops[-1] == '(':
+                raise ValueError("Invalid expression: Mismatched parentheses.")
+            self._apply_op(ops, values)
+
+        if len(values) != 1 or ops:
+            raise ValueError("Invalid expression: Malformed expression.")
+
+        return values[0]
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates a mathematical expression from a string.
+
+        This is the public interface for the Calculator class. It orchestrates
+        the tokenization and evaluation of the expression, providing a single,
+        easy-to-use method.
+
+        Args:
+            expression: A string containing the arithmetic expression.
+                        Example: "10 + 2 * (6 - 3)"
+
+        Returns:
+            The result of the calculation as a float.
+
+        Raises:
+            ValueError: If the expression is invalid, contains illegal characters,
+                        or is malformed.
+            ZeroDivisionError: If the expression attempts to divide by zero.
+            TypeError: If the input is not a string.
+        """
+        if not isinstance(expression, str):
+            raise TypeError("Input expression must be a string.")
+        if not expression.strip():
+            raise ValueError("Input expression cannot be empty.")
+
+        try:
+            tokens = self._tokenize(expression)
+            # A special case for a single negative number like "-5"
+            if len(tokens) == 2 and tokens[0] == '-' and tokens[1].replace('.', '', 1).isdigit():
+                return -float(tokens[1])
+            
+            result = self._evaluate(tokens)
+            return result
+        except (ValueError, ZeroDivisionError) as e:
+            # Re-raise exceptions to be handled by the caller
+            raise e
+        except IndexError:
+            # Catches errors from popping empty stacks, indicating a malformed expression
+            raise ValueError("Invalid expression: Malformed or incomplete.")
+
+
+if __name__ == '__main__':
+    # --- Demonstration and Testing ---
+    calculator = Calculator()
+    
+    test_expressions = {
+        "5 + 3": 8.0,
+        "10 - 4": 6.0,
+        "6 * 7": 42.0,
+        "8 / 4": 2.0,
+        "2 + 3 * 4": 14.0,
+        "(2 + 3) * 4": 20.0,
+        "10 / (2 + 3)": 2.0,
+        "10.5 * 2": 21.0,
+        "100 * (2 + 12) / 14": 100.0,
+        "-5 + 10": 5.0,
+        "10 * -2": -20.0,
+        "10 + (-2)": 8.0,
+        "5 - (-3)": 8.0,
+        "-5 * -5": 25.0,
+        "1 - 1 + 1 - 1": 0.0,
+        "2 * 3 - 4 / 2 + 1": 5.0,
+        "-10": -10.0,
+        "(-10)": -10.0
+    }
+
+    print("--- Running Correctness Tests ---")
+    for expr, expected in test_expressions.items():
+        try:
+            result = calculator.calculate(expr)
+            status = "✅ PASSED" if abs(result - expected) < 1e-9 else f"❌ FAILED (Got {result})"
+            print(f"'{expr}' = {expected} -> {status}")
+        except Exception as e:
+            print(f"'{expr}' -> ❌ FAILED with exception: {e}")
+
+    print("\n--- Running Error Handling Tests ---")
+    error_expressions = [
+        "10 / 0",          # Division by zero
+        "5 * (3 + 2",     # Mismatched parentheses
+        "5 +",             # Incomplete expression
+        "5 + * 2",         # Malformed expression
+        "5 & 2",           # Invalid character
+        "(5+2))"           # Mismatched parentheses
+    ]
+
+    for expr in error_expressions:
+        try:
+            calculator.calculate(expr)
+            print(f"'{expr}' -> ❌ FAILED (Expected an error but got none)")
+        except (ValueError, ZeroDivisionError) as e:
+            print(f"'{expr}' -> ✅ PASSED (Caught expected error: {e})")
+        except Exception as e:
+            print(f"'{expr}' -> ❌ FAILED (Caught unexpected error: {e})")
+
+    print("\n--- Interactive Console ---")
+    print("Enter an expression to calculate or 'quit' to exit.")
+    while True:
+        try:
+            user_input = input(">> ")
+            if user_input.lower() == 'quit':
+                break
+            result = calculator.calculate(user_input)
+            print(f"= {result}")
+        except Exception as e:
+            print(f"Error: {e}")
+

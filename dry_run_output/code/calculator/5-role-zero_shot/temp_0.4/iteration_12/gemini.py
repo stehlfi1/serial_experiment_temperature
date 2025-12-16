@@ -1,0 +1,203 @@
+
+"""
+A high-quality, maintainable implementation of a console-based calculator.
+
+This module provides a Calculator class that can parse and evaluate arithmetic
+expressions from a string, adhering to standard operator precedence and
+parentheses.
+"""
+
+import re
+from typing import List, Union
+
+
+class Calculator:
+    """
+    A calculator that evaluates arithmetic expressions from strings.
+
+    This class provides a safe and efficient way to compute the result of
+    mathematical expressions containing integers, floating-point numbers,
+    parentheses, and the basic arithmetic operators (+, -, *, /).
+
+    It adheres to standard operator precedence rules (* and / are evaluated
+    before + and -).
+
+    Usage:
+        calculator = Calculator()
+        result = calculator.calculate("3 + 5 * (2 - 8)")
+        print(result)  # Output: -27.0
+    """
+
+    def __init__(self):
+        """Initializes the Calculator."""
+        self._operators = {
+            '+': {'precedence': 1, 'func': lambda a, b: a + b},
+            '-': {'precedence': 1, 'func': lambda a, b: a - b},
+            '*': {'precedence': 2, 'func': lambda a, b: a * b},
+            '/': {'precedence': 2, 'func': self._safe_division}
+        }
+
+    def _safe_division(self, a: float, b: float) -> float:
+        """
+        Performs division, raising ZeroDivisionError if the divisor is zero.
+        
+        Args:
+            a: The dividend.
+            b: The divisor.
+
+        Returns:
+            The result of the division.
+
+        Raises:
+            ZeroDivisionError: If the divisor `b` is 0.
+        """
+        if b == 0:
+            raise ZeroDivisionError("Division by zero is not allowed.")
+        return a / b
+
+    def _tokenize(self, expression: str) -> List[Union[float, str]]:
+        """
+        Converts an expression string into a list of tokens (numbers and operators).
+        
+        This method uses regular expressions to perform lexical analysis, correctly
+        handling negative numbers, floating-point numbers, and operators.
+
+        Args:
+            expression: The string expression to tokenize.
+
+        Returns:
+            A list of tokens, where numbers are floats and operators/parentheses
+            are strings.
+        
+        Raises:
+            ValueError: If the expression contains invalid characters.
+        """
+        # Regex to find numbers (including floats and negatives), operators, and parentheses
+        token_regex = re.compile(r'(-?\d+\.?\d*)|([+\-*/()])')
+        
+        tokens = token_regex.findall(expression)
+        if not tokens and expression.strip():
+            raise ValueError(f"Expression contains invalid characters: {expression}")
+
+        processed_tokens = []
+        for num_str, op in tokens:
+            if num_str:
+                processed_tokens.append(float(num_str))
+            elif op:
+                processed_tokens.append(op)
+        
+        # Validate that the original expression was fully tokenized
+        reconstructed_expr = "".join(map(str, processed_tokens)).replace(" ", "")
+        original_expr_no_space = expression.replace(" ", "")
+        if reconstructed_expr != original_expr_no_space:
+             raise ValueError(f"Expression contains invalid characters or syntax.")
+
+        return processed_tokens
+
+    def _apply_operation(self, ops: list, values: list):
+        """
+
+        Applies the top operator from the ops stack to the top two values
+        from the values stack.
+        
+        Args:
+            ops: The stack of operators.
+            values: The stack of numerical values.
+
+        Raises:
+            ValueError: If there are not enough values for an operation.
+        """
+        try:
+            op_symbol = ops.pop()
+            right_operand = values.pop()
+            left_operand = values.pop()
+        except IndexError:
+            raise ValueError("Invalid syntax: Mismatched operators and operands.")
+        
+        operation = self._operators[op_symbol]['func']
+        result = operation(left_operand, right_operand)
+        values.append(result)
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates a mathematical expression provided as a string.
+
+        This method implements a variant of the Shunting-yard algorithm to
+        correctly handle operator precedence and parentheses.
+
+        Args:
+            expression: The mathematical expression to evaluate.
+                        Example: "10 + 2 * (6 - 3)"
+
+        Returns:
+            The result of the evaluation as a float.
+
+        Raises:
+            ValueError: If the expression is malformed (e.g., invalid characters,
+                        unbalanced parentheses, or incorrect syntax).
+            ZeroDivisionError: If the expression attempts to divide by zero.
+        """
+        if not isinstance(expression, str):
+            raise TypeError("Expression must be a string.")
+            
+        tokens = self._tokenize(expression)
+        
+        values: List[float] = []
+        ops: List[str] = []
+
+        for token in tokens:
+            if isinstance(token, float):
+                values.append(token)
+            elif token == '(':
+                ops.append(token)
+            elif token == ')':
+                # Process all operators until an opening parenthesis is found
+                while ops and ops[-1] != '(':
+                    self._apply_operation(ops, values)
+                if not ops or ops.pop() != '(':
+                    raise ValueError("Mismatched parentheses in expression.")
+            elif token in self._operators:
+                # Process operators with higher or equal precedence
+                while (ops and ops[-1] in self._operators and
+                       self._operators[ops[-1]]['precedence'] >= self._operators[token]['precedence']):
+                    self._apply_operation(ops, values)
+                ops.append(token)
+
+        # Process any remaining operators
+        while ops:
+            # If an opening parenthesis is found here, it's mismatched
+            if ops[-1] == '(':
+                raise ValueError("Mismatched parentheses in expression.")
+            self._apply_operation(ops, values)
+
+        if len(values) != 1 or ops:
+            raise ValueError("Invalid expression syntax.")
+
+        return values[0]
+
+
+# --- Example Usage ---
+if __name__ == "__main__":
+    calculator = Calculator()
+
+    print("--- Console Arithmetic Calculator ---")
+    print("Enter an expression to calculate or 'exit' to quit.")
+    print("Supported operations: +, -, *, /, ()")
+    print("Example: 3.5 + 4 * (2 - 1)\n")
+
+    while True:
+        try:
+            user_input = input(">>> ")
+            if user_input.lower() == 'exit':
+                break
+            if not user_input.strip():
+                continue
+
+            result = calculator.calculate(user_input)
+            print(f"Result: {result}")
+
+        except (ValueError, ZeroDivisionError, TypeError) as e:
+            print(f"Error: {e}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+

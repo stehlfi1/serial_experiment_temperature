@@ -1,0 +1,429 @@
+
+"""
+ASCII Art Generator Module
+
+This module provides functionality to generate various ASCII art shapes including
+squares, rectangles, parallelograms, triangles, and pyramids.
+
+Author: Senior Software Developer
+Follows: ISO/IEC 25010 Standard for Software Quality
+"""
+
+from typing import Optional
+
+
+class AsciiArt:
+    """
+    A class for generating ASCII art shapes.
+    
+    This class provides methods to draw various geometric shapes using ASCII characters.
+    All methods validate input parameters and return multi-line strings representing
+    the requested shapes.
+    """
+    
+    @staticmethod
+    def _validate_symbol(symbol: str) -> None:
+        """
+        Validates that the symbol is a single printable non-whitespace character.
+        
+        Args:
+            symbol: The character to validate
+            
+        Raises:
+            TypeError: If symbol is not a string
+            ValueError: If symbol is not exactly one character, is whitespace, or not printable
+        """
+        if not isinstance(symbol, str):
+            raise TypeError("Symbol must be a string")
+        
+        if len(symbol) != 1:
+            raise ValueError("Symbol must be exactly one character")
+        
+        if symbol.isspace():
+            raise ValueError("Symbol cannot be whitespace")
+        
+        if not symbol.isprintable():
+            raise ValueError("Symbol must be a printable character")
+    
+    @staticmethod
+    def _validate_positive_integer(value: int, parameter_name: str) -> None:
+        """
+        Validates that a value is a positive integer.
+        
+        Args:
+            value: The value to validate
+            parameter_name: Name of the parameter for error messages
+            
+        Raises:
+            TypeError: If value is not an integer
+            ValueError: If value is not positive
+        """
+        if not isinstance(value, int):
+            raise TypeError(f"{parameter_name} must be an integer")
+        
+        if value <= 0:
+            raise ValueError(f"{parameter_name} must be positive")
+    
+    def draw_square(self, width: int, symbol: str) -> str:
+        """
+        Draws a filled square using the specified symbol.
+        
+        Args:
+            width: The width and height of the square (must be positive)
+            symbol: The character to use for drawing (single printable non-whitespace char)
+            
+        Returns:
+            A multi-line string representing the square
+            
+        Raises:
+            TypeError: If parameters are not of correct type
+            ValueError: If parameters are invalid
+            
+        Example:
+            >>> art = AsciiArt()
+            >>> print(art.draw_square(3, '*'))
+            ***
+            ***
+            ***
+        """
+        self._validate_positive_integer(width, "width")
+        self._validate_symbol(symbol)
+        
+        return '\n'.join(symbol * width for _ in range(width))
+    
+    def draw_rectangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled rectangle using the specified symbol.
+        
+        Args:
+            width: The width of the rectangle (must be positive)
+            height: The height of the rectangle (must be positive)
+            symbol: The character to use for drawing (single printable non-whitespace char)
+            
+        Returns:
+            A multi-line string representing the rectangle
+            
+        Raises:
+            TypeError: If parameters are not of correct type
+            ValueError: If parameters are invalid
+            
+        Example:
+            >>> art = AsciiArt()
+            >>> print(art.draw_rectangle(4, 2, '#'))
+            ####
+            ####
+        """
+        self._validate_positive_integer(width, "width")
+        self._validate_positive_integer(height, "height")
+        self._validate_symbol(symbol)
+        
+        return '\n'.join(symbol * width for _ in range(height))
+    
+    def draw_parallelogram(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled parallelogram that grows diagonally to the right.
+        
+        The parallelogram starts from the top-left corner, with each subsequent
+        row shifted one space to the right.
+        
+        Args:
+            width: The width of each row (must be positive)
+            height: The height of the parallelogram (must be positive)
+            symbol: The character to use for drawing (single printable non-whitespace char)
+            
+        Returns:
+            A multi-line string representing the parallelogram
+            
+        Raises:
+            TypeError: If parameters are not of correct type
+            ValueError: If parameters are invalid
+            
+        Example:
+            >>> art = AsciiArt()
+            >>> print(art.draw_parallelogram(3, 3, '*'))
+            ***
+             ***
+              ***
+        """
+        self._validate_positive_integer(width, "width")
+        self._validate_positive_integer(height, "height")
+        self._validate_symbol(symbol)
+        
+        lines = []
+        for row in range(height):
+            spaces = ' ' * row
+            shape_line = symbol * width
+            lines.append(spaces + shape_line)
+        
+        return '\n'.join(lines)
+    
+    def draw_triangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled right-angled triangle that grows diagonally to the right.
+        
+        The triangle starts from the top-left corner with one symbol,
+        and each row adds one more symbol.
+        
+        Args:
+            width: The maximum width of the triangle base (must be positive)
+            height: The height of the triangle (must be positive)
+            symbol: The character to use for drawing (single printable non-whitespace char)
+            
+        Returns:
+            A multi-line string representing the triangle
+            
+        Raises:
+            TypeError: If parameters are not of correct type
+            ValueError: If parameters are invalid
+            
+        Example:
+            >>> art = AsciiArt()
+            >>> print(art.draw_triangle(3, 3, '*'))
+            *
+            **
+            ***
+        """
+        self._validate_positive_integer(width, "width")
+        self._validate_positive_integer(height, "height")
+        self._validate_symbol(symbol)
+        
+        lines = []
+        for row in range(height):
+            # Calculate the number of symbols for this row
+            # Ensure we don't exceed the specified width
+            symbols_count = min(row + 1, width)
+            lines.append(symbol * symbols_count)
+        
+        return '\n'.join(lines)
+    
+    def draw_pyramid(self, height: int, symbol: str) -> str:
+        """
+        Draws a filled symmetrical pyramid.
+        
+        The pyramid is centered and grows symmetrically from top to bottom.
+        Each row has an odd number of symbols (1, 3, 5, 7, ...).
+        
+        Args:
+            height: The height of the pyramid (must be positive)
+            symbol: The character to use for drawing (single printable non-whitespace char)
+            
+        Returns:
+            A multi-line string representing the pyramid
+            
+        Raises:
+            TypeError: If parameters are not of correct type
+            ValueError: If parameters are invalid
+            
+        Example:
+            >>> art = AsciiArt()
+            >>> print(art.draw_pyramid(4, '*'))
+               *
+              ***
+             *****
+            *******
+        """
+        self._validate_positive_integer(height, "height")
+        self._validate_symbol(symbol)
+        
+        lines = []
+        max_width = 2 * height - 1  # Width of the base
+        
+        for row in range(height):
+            # Calculate symbols for this row (1, 3, 5, 7, ...)
+            symbols_count = 2 * row + 1
+            # Calculate leading spaces for centering
+            leading_spaces = (max_width - symbols_count) // 2
+            
+            line = ' ' * leading_spaces + symbol * symbols_count
+            lines.append(line)
+        
+        return '\n'.join(lines)
+
+
+def main() -> None:
+    """
+    Demonstration function showing usage of the AsciiArt class.
+    
+    This function creates various shapes and prints them to demonstrate
+    the functionality of the AsciiArt class.
+    """
+    art = AsciiArt()
+    
+    print("ASCII Art Generator Demo")
+    print("=" * 40)
+    
+    try:
+        # Demonstrate square
+        print("\nSquare (5x5, symbol: '#'):")
+        print(art.draw_square(5, '#'))
+        
+        # Demonstrate rectangle
+        print("\nRectangle (6x3, symbol: '*'):")
+        print(art.draw_rectangle(6, 3, '*'))
+        
+        # Demonstrate parallelogram
+        print("\nParallelogram (4x4, symbol: '+'):")
+        print(art.draw_parallelogram(4, 4, '+'))
+        
+        # Demonstrate triangle
+        print("\nTriangle (5x5, symbol: '='):")
+        print(art.draw_triangle(5, 5, '='))
+        
+        # Demonstrate pyramid
+        print("\nPyramid (height: 6, symbol: '^'):")
+        print(art.draw_pyramid(6, '^'))
+        
+        # Demonstrate error handling
+        print("\nError handling demonstration:")
+        try:
+            art.draw_square(-1, '*')
+        except ValueError as e:
+            print(f"Caught expected error: {e}")
+        
+        try:
+            art.draw_rectangle(5, 3, '  ')  # Multi-character symbol
+        except ValueError as e:
+            print(f"Caught expected error: {e}")
+            
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+if __name__ == "__main__":
+    main()
+
+
+# Unit tests for comprehensive testing
+import unittest
+
+
+class TestAsciiArt(unittest.TestCase):
+    """
+    Unit tests for the AsciiArt class.
+    
+    These tests ensure that all methods work correctly and handle
+    edge cases and invalid inputs appropriately.
+    """
+    
+    def setUp(self):
+        """Set up test fixtures before each test method."""
+        self.art = AsciiArt()
+    
+    def test_draw_square_valid_input(self):
+        """Test draw_square with valid inputs."""
+        result = self.art.draw_square(2, '*')
+        expected = "**\n**"
+        self.assertEqual(result, expected)
+    
+    def test_draw_square_single_unit(self):
+        """Test draw_square with minimum valid size."""
+        result = self.art.draw_square(1, '#')
+        expected = "#"
+        self.assertEqual(result, expected)
+    
+    def test_draw_rectangle_valid_input(self):
+        """Test draw_rectangle with valid inputs."""
+        result = self.art.draw_rectangle(3, 2, '+')
+        expected = "+++\n+++"
+        self.assertEqual(result, expected)
+    
+    def test_draw_parallelogram_valid_input(self):
+        """Test draw_parallelogram with valid inputs."""
+        result = self.art.draw_parallelogram(2, 3, '*')
+        expected = "**\n **\n  **"
+        self.assertEqual(result, expected)
+    
+    def test_draw_triangle_valid_input(self):
+        """Test draw_triangle with valid inputs."""
+        result = self.art.draw_triangle(3, 3, '=')
+        expected = "=\n==\n==="
+        self.assertEqual(result, expected)
+    
+    def test_draw_pyramid_valid_input(self):
+        """Test draw_pyramid with valid inputs."""
+        result = self.art.draw_pyramid(3, '^')
+        expected = "  ^\n ^^^\n^^^^^"
+        self.assertEqual(result, expected)
+    
+    def test_invalid_symbol_multichar(self):
+        """Test that multi-character symbols raise ValueError."""
+        with self.assertRaises(ValueError):
+            self.art.draw_square(3, "**")
+    
+    def test_invalid_symbol_whitespace(self):
+        """Test that whitespace symbols raise ValueError."""
+        with self.assertRaises(ValueError):
+            self.art.draw_square(3, " ")
+    
+    def test_invalid_symbol_empty(self):
+        """Test that empty symbols raise ValueError."""
+        with self.assertRaises(ValueError):
+            self.art.draw_square(3, "")
+    
+    def test_invalid_width_negative(self):
+        """Test that negative width raises ValueError."""
+        with self.assertRaises(ValueError):
+            self.art.draw_square(-1, "*")
+    
+    def test_invalid_width_zero(self):
+        """Test that zero width raises ValueError."""
+        with self.assertRaises(ValueError):
+            self.art.draw_rectangle(0, 5, "*")
+    
+    def test_invalid_width_type(self):
+        """Test that non-integer width raises TypeError."""
+        with self.assertRaises(TypeError):
+            self.art.draw_square("3", "*")
+    
+    def test_invalid_symbol_type(self):
+        """Test that non-string symbol raises TypeError."""
+        with self.assertRaises(TypeError):
+            self.art.draw_square(3, 42)
+
+
+# Performance tests for efficiency verification
+class TestAsciiArtPerformance(unittest.TestCase):
+    """
+    Performance tests to ensure efficient algorithm implementation.
+    """
+    
+    def setUp(self):
+        """Set up test fixtures before each test method."""
+        self.art = AsciiArt()
+    
+    def test_large_square_performance(self):
+        """Test that large squares can be generated efficiently."""
+        import time
+        start_time = time.time()
+        result = self.art.draw_square(100, '*')
+        end_time = time.time()
+        
+        # Should complete in reasonable time (less than 1 second)
+        self.assertLess(end_time - start_time, 1.0)
+        # Verify result is correct size
+        lines = result.split('\n')
+        self.assertEqual(len(lines), 100)
+        self.assertEqual(len(lines[0]), 100)
+    
+    def test_large_pyramid_performance(self):
+        """Test that large pyramids can be generated efficiently."""
+        import time
+        start_time = time.time()
+        result = self.art.draw_pyramid(100, '^')
+        end_time = time.time()
+        
+        # Should complete in reasonable time
+        self.assertLess(end_time - start_time, 1.0)
+        # Verify result is correct size
+        lines = result.split('\n')
+        self.assertEqual(len(lines), 100)
+
+
+if __name__ == "__main__":
+    # Run main demo
+    main()
+    
+    # Uncomment the following lines to run unit tests
+    # print("\n" + "="*50)
+    # print("Running Unit Tests...")
+    # unittest.main(argv=[''], exit=False, verbosity=2)

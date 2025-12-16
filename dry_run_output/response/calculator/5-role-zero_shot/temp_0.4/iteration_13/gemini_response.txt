@@ -1,0 +1,217 @@
+Of course. As a senior software developer, I understand the importance of building software that is not only functional but also robust, maintainable, and secure. Adhering to the principles of ISO/IEC 25010, I will provide a solution that emphasizes these qualities.
+
+The chosen approach is to implement a classic two-pass algorithm:
+1.  **Shunting-yard Algorithm:** To parse the infix expression string into a postfix (Reverse Polish Notation) queue. This correctly handles operator precedence and parentheses.
+2.  **RPN Evaluation:** To evaluate the resulting postfix queue, which is a straightforward and efficient process.
+
+This approach completely avoids the use of `eval()`, thus preventing code injection vulnerabilities (Security), and is highly efficient (Performance Efficiency). The code is structured into a class with private helper methods, promoting Modularity and Maintainability. Comprehensive error handling and documentation address Reliability and Readability.
+
+Here is the high-quality Python code for the calculator:
+
+```python
+import re
+from typing import List, Union
+
+class Calculator:
+    """
+    A console-based arithmetic calculator that evaluates string expressions.
+
+    This class adheres to ISO/IEC 25010 quality standards by providing:
+    - Functional Suitability: Implements addition, subtraction, multiplication,
+      division, parentheses, and correct operator precedence.
+    - Performance Efficiency: Uses an efficient O(n) Shunting-yard algorithm.
+    - Reliability: Handles invalid inputs, division by zero, and malformed
+      expressions gracefully with specific exceptions.
+    - Security: Avoids the use of `eval()` to prevent code injection attacks.
+    - Maintainability: Structured with clear, modular, and documented methods.
+    - Usability: Provides clear error messages for invalid inputs.
+    """
+
+    def __init__(self):
+        """Initializes the Calculator, defining operator precedence."""
+        self._precedence = {'+': 1, '-': 1, '*': 2, '/': 2}
+
+    def _tokenize(self, expression: str) -> List[str]:
+        """
+        Converts an expression string into a list of tokens.
+
+        This method uses regular expressions to split the string into numbers
+        (integers/floats), operators, and parentheses.
+
+        Args:
+            expression: The mathematical expression string.
+
+        Returns:
+            A list of string tokens.
+        
+        Raises:
+            ValueError: If the expression contains invalid characters.
+        """
+        # Remove all whitespace for easier parsing
+        expression = expression.replace(" ", "")
+        
+        # Regex to find numbers (including floats) or operators/parentheses
+        token_regex = r"(\d+\.\d*|\.\d+|\d+|[+\-*/()])"
+        tokens = re.findall(token_regex, expression)
+        
+        # Validate that the entire expression was tokenized
+        if "".join(tokens) != expression:
+            raise ValueError("Expression contains invalid characters")
+            
+        return tokens
+
+    def _shunting_yard(self, tokens: List[str]) -> List[Union[float, str]]:
+        """
+        Converts a list of infix tokens to a postfix (RPN) queue.
+
+        This method implements Dijkstra's Shunting-yard algorithm to handle
+        operator precedence and associativity. It also correctly handles
+        unary minus (e.g., '-5' or '(-3)').
+
+        Args:
+            tokens: A list of infix string tokens.
+
+        Returns:
+            A list of tokens in postfix (RPN) order.
+
+        Raises:
+            ValueError: If the expression has mismatched parentheses.
+        """
+        output_queue: List[Union[float, str]] = []
+        operator_stack: List[str] = []
+        
+        prev_token = None
+        for token in tokens:
+            if token.replace('.', '', 1).isdigit():
+                output_queue.append(float(token))
+            elif token == '(':
+                operator_stack.append(token)
+            elif token == ')':
+                while operator_stack and operator_stack[-1] != '(':
+                    output_queue.append(operator_stack.pop())
+                if not operator_stack or operator_stack.pop() != '(':
+                    raise ValueError("Mismatched parentheses in expression")
+            else: # Token is an operator
+                # Handle unary minus: if '-' is at the start or after an
+                # operator or an opening parenthesis.
+                is_unary = (token == '-') and \
+                           (prev_token is None or prev_token in self._precedence or prev_token == '(')
+                
+                if is_unary:
+                    # To handle unary minus, we treat it as (0 - number).
+                    # We push a 0 to the output and a regular minus to the stack.
+                    output_queue.append(0.0)
+
+                while (operator_stack and
+                       operator_stack[-1] != '(' and
+                       self._precedence.get(operator_stack[-1], 0) >= self._precedence.get(token, 0)):
+                    output_queue.append(operator_stack.pop())
+                operator_stack.append(token)
+            
+            prev_token = token
+
+        while operator_stack:
+            op = operator_stack.pop()
+            if op == '(':
+                raise ValueError("Mismatched parentheses in expression")
+            output_queue.append(op)
+            
+        return output_queue
+
+    def _apply_operator(self, op: str, b: float, a: float) -> float:
+        """Applies a binary operator to two operands."""
+        if op == '+': return a + b
+        if op == '-': return a - b
+        if op == '*': return a * b
+        if op == '/':
+            if b == 0:
+                raise ZeroDivisionError("Division by zero is not allowed")
+            return a / b
+        # This should not be reached with valid operators
+        raise ValueError(f"Unknown operator: {op}")
+
+    def _evaluate_rpn(self, rpn_queue: List[Union[float, str]]) -> float:
+        """
+        Evaluates a postfix (RPN) token queue.
+
+        Args:
+            rpn_queue: A list of tokens in postfix order.
+
+        Returns:
+            The final calculated result as a float.
+
+        Raises:
+            ValueError: If the expression is malformed (e.g., insufficient operands).
+        """
+        value_stack: List[float] = []
+        for token in rpn_queue:
+            if isinstance(token, float):
+                value_stack.append(token)
+            else: # Token is an operator
+                if len(value_stack) < 2:
+                    raise ValueError("Invalid expression: insufficient operands for operator")
+                operand_b = value_stack.pop()
+                operand_a = value_stack.pop()
+                result = self._apply_operator(token, operand_b, operand_a)
+                value_stack.append(result)
+
+        if len(value_stack) != 1:
+            raise ValueError("Invalid expression: too many values left on stack")
+            
+        return value_stack[0]
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates a mathematical expression provided as a string.
+
+        This is the main public interface for the Calculator. It orchestrates
+        the tokenization, parsing (Shunting-yard), and evaluation steps.
+
+        Args:
+            expression: The mathematical expression to evaluate.
+                        Example: "3 + 4 * (2 - 1)"
+
+        Returns:
+            The result of the evaluation as a float.
+
+        Raises:
+            ValueError: For invalid characters or malformed expressions.
+            ZeroDivisionError: For division by zero.
+        """
+        if not isinstance(expression, str) or not expression.strip():
+            raise ValueError("Input expression must be a non-empty string.")
+            
+        tokens = self._tokenize(expression)
+        rpn_queue = self._shunting_yard(tokens)
+        result = self._evaluate_rpn(rpn_queue)
+        
+        return result
+
+
+# --- Main execution block for demonstration and manual testing ---
+if __name__ == "__main__":
+    # This block demonstrates the usage of the Calculator class and serves
+    # as a simple, interactive command-line interface.
+    # It is designed for testability and ease of use.
+    
+    calc = Calculator()
+    print("--- Python Arithmetic Calculator ---")
+    print("Enter an expression to calculate or 'exit' to quit.")
+    
+    while True:
+        try:
+            user_input = input(">> ")
+            if user_input.lower() == 'exit':
+                print("Exiting calculator.")
+                break
+            
+            result = calc.calculate(user_input)
+            print(f"= {result}")
+
+        except (ValueError, ZeroDivisionError) as e:
+            print(f"Error: {e}")
+        except Exception as e:
+            # Catch any other unexpected errors for robustness
+            print(f"An unexpected error occurred: {e}")
+
+```

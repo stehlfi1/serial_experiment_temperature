@@ -1,0 +1,204 @@
+
+"""
+Console-based Todo List App
+
+Implements a TaskManager class that manages todo tasks according to
+ISO/IEC 25010 standards for software quality, focusing on correctness,
+performance, modularity, safety, testability, and maintainability.
+
+Author: [Your Name]
+"""
+
+from typing import List, Dict
+
+
+class TaskValidationError(ValueError):
+    """Custom exception raised when task validation fails."""
+    pass
+
+
+class TaskNotFoundError(KeyError):
+    """Custom exception raised when a task ID is not found."""
+    pass
+
+
+class TaskManager:
+    """
+    TaskManager manages todo list tasks in memory.
+    Each task is uniquely identified by an integer ID.
+    """
+
+    def __init__(self):
+        """
+        Initializes the TaskManager with empty tasks and unique ID counter.
+        """
+        self._tasks: Dict[int, Dict] = {}
+        self._next_id: int = 1  # Incremented for each new task
+
+    def add(self, task_name: str, task_description: str) -> int:
+        """
+        Adds a new task with the specified name and description.
+
+        Args:
+            task_name (str): The name of the task.
+            task_description (str): The description of the task.
+
+        Returns:
+            int: The unique ID of the newly added task.
+
+        Raises:
+            TaskValidationError: If task_name or task_description is empty.
+        """
+        if not isinstance(task_name, str) or not task_name.strip():
+            raise TaskValidationError("Task name must be a non-empty string.")
+        if not isinstance(task_description, str) or not task_description.strip():
+            raise TaskValidationError("Task description must be a non-empty string.")
+
+        task_id = self._next_id
+        self._tasks[task_id] = {
+            "id": task_id,
+            "task_name": task_name.strip(),
+            "task_description": task_description.strip(),
+            "is_finished": False,
+        }
+        self._next_id += 1
+        return task_id
+
+    def remove(self, task_id: int) -> bool:
+        """
+        Removes a task by its unique ID.
+
+        Args:
+            task_id (int): The unique ID of the task to remove.
+
+        Returns:
+            bool: True if the task was removed; False if task_id does not exist.
+
+        Raises:
+            ValueError: If task_id is not a positive integer.
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise ValueError("Task ID must be a positive integer.")
+        return self._tasks.pop(task_id, None) is not None
+
+    def search(self, task_term: str) -> List[Dict]:
+        """
+        Searches tasks for a term in the name or description (case-insensitive).
+
+        Args:
+            task_term (str): The term to search for.
+
+        Returns:
+            List[Dict]: List of matching tasks as dictionaries.
+
+        Raises:
+            TaskValidationError: If search term is empty.
+        """
+        if not isinstance(task_term, str) or not task_term.strip():
+            raise TaskValidationError("Search term must be a non-empty string.")
+        term_lower = task_term.strip().lower()
+        results = [
+            task for task in self._tasks.values()
+            if term_lower in task['task_name'].lower() or
+               term_lower in task['task_description'].lower()
+        ]
+        return [self._format_task(task) for task in results]
+
+    def finish(self, task_id: int) -> bool:
+        """
+        Marks the specified task as finished.
+
+        Args:
+            task_id (int): The unique ID of the task to finish.
+
+        Returns:
+            bool: True if task marked finished, False if task not found.
+
+        Raises:
+            ValueError: If task_id is not a positive integer.
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise ValueError("Task ID must be a positive integer.")
+
+        task = self._tasks.get(task_id)
+        if task:
+            task['is_finished'] = True
+            return True
+        return False
+
+    def get_all(self) -> List[Dict]:
+        """
+        Retrieves all tasks with their details.
+
+        Returns:
+            List[Dict]: List of all tasks as dictionaries.
+        """
+        return [self._format_task(task) for task in self._tasks.values()]
+
+    def clear_all(self) -> bool:
+        """
+        Deletes all tasks.
+
+        Returns:
+            bool: True if operation successful.
+        """
+        self._tasks.clear()
+        return True
+
+    @staticmethod
+    def _format_task(task: Dict) -> Dict:
+        """
+        Formats a task dictionary for return operations.
+
+        Args:
+            task (Dict): The task dictionary.
+
+        Returns:
+            Dict: Dictionary containing id, task_name, task_description, is_finished.
+        """
+        return {
+            "id": task['id'],
+            "task_name": task['task_name'],
+            "task_description": task['task_description'],
+            "is_finished": task['is_finished'],
+        }
+
+
+# ------------------------- TESTING CODE BELOW -------------------------
+
+if __name__ == "__main__":
+    # Sample tests to demonstrate TaskManager functionality.
+    manager = TaskManager()
+
+    # Add tasks
+    tid1 = manager.add("Buy groceries", "Milk, Bread, Eggs")
+    tid2 = manager.add("Read Book", "Finish reading 'Clean Code'")
+    tid3 = manager.add("Workout", "30 mins cardio")
+
+    # Get all tasks
+    print("\nAll Tasks:")
+    for task in manager.get_all():
+        print(task)
+
+    # Finish a task
+    manager.finish(tid1)
+
+    print("\nAfter finishing Task 1:")
+    for task in manager.get_all():
+        print(task)
+
+    # Search for a task
+    print("\nSearch 'book':")
+    for task in manager.search("book"):
+        print(task)
+
+    # Remove a task
+    manager.remove(tid2)
+    print("\nAfter removing Task 2:")
+    for task in manager.get_all():
+        print(task)
+
+    # Clear all tasks
+    manager.clear_all()
+    print("\nAfter clearing all tasks:")
+    print(manager.get_all())

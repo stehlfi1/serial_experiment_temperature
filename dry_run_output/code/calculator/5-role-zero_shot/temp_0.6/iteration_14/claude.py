@@ -1,0 +1,469 @@
+
+"""
+Console-based Arithmetic Calculator
+
+This module implements a high-quality arithmetic calculator that supports
+basic operations (+, -, *, /) with parentheses and proper operator precedence.
+The implementation follows ISO/IEC 25010 standards for software quality.
+"""
+
+import re
+from typing import List, Union
+from enum import Enum
+
+
+class TokenType(Enum):
+    """Enumeration for different types of tokens in mathematical expressions."""
+    NUMBER = "NUMBER"
+    OPERATOR = "OPERATOR"
+    LEFT_PAREN = "LEFT_PAREN"
+    RIGHT_PAREN = "RIGHT_PAREN"
+
+
+class Token:
+    """Represents a token in a mathematical expression."""
+    
+    def __init__(self, token_type: TokenType, value: Union[str, float]):
+        """
+        Initialize a token.
+        
+        Args:
+            token_type: The type of the token
+            value: The value of the token
+        """
+        self.type = token_type
+        self.value = value
+    
+    def __repr__(self) -> str:
+        return f"Token({self.type}, {self.value})"
+
+
+class CalculatorError(Exception):
+    """Base exception class for calculator-related errors."""
+    pass
+
+
+class InvalidExpressionError(CalculatorError):
+    """Raised when the expression contains invalid syntax or characters."""
+    pass
+
+
+class DivisionByZeroError(CalculatorError):
+    """Raised when attempting to divide by zero."""
+    pass
+
+
+class UnbalancedParenthesesError(CalculatorError):
+    """Raised when parentheses are not properly balanced."""
+    pass
+
+
+class Calculator:
+    """
+    A console-based arithmetic calculator that supports basic operations
+    with proper operator precedence and parentheses handling.
+    
+    This implementation uses the Shunting Yard algorithm for parsing
+    and evaluating mathematical expressions without using eval().
+    """
+    
+    # Operator precedence mapping (higher values = higher precedence)
+    OPERATOR_PRECEDENCE = {'+': 1, '-': 1, '*': 2, '/': 2}
+    
+    # Supported operators
+    OPERATORS = {'+', '-', '*', '/'}
+    
+    def __init__(self):
+        """Initialize the calculator."""
+        self._reset_state()
+    
+    def _reset_state(self) -> None:
+        """Reset internal state for new calculation."""
+        self._tokens: List[Token] = []
+        self._output_queue: List[Token] = []
+        self._operator_stack: List[Token] = []
+    
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluate a mathematical expression and return the result.
+        
+        Args:
+            expression: Mathematical expression as a string
+            
+        Returns:
+            The calculated result as a float
+            
+        Raises:
+            InvalidExpressionError: If the expression contains invalid syntax
+            DivisionByZeroError: If division by zero is attempted
+            UnbalancedParenthesesError: If parentheses are not balanced
+            
+        Examples:
+            >>> calc = Calculator()
+            >>> calc.calculate("2 + 3 * 4")
+            14.0
+            >>> calc.calculate("(2 + 3) * 4")
+            20.0
+            >>> calc.calculate("-5 + 3")
+            -2.0
+        """
+        if not expression or not expression.strip():
+            raise InvalidExpressionError("Expression cannot be empty")
+        
+        self._reset_state()
+        
+        try:
+            # Step 1: Tokenize the expression
+            self._tokenize(expression.strip())
+            
+            # Step 2: Validate tokens
+            self._validate_tokens()
+            
+            # Step 3: Convert to postfix notation using Shunting Yard algorithm
+            self._convert_to_postfix()
+            
+            # Step 4: Evaluate postfix expression
+            result = self._evaluate_postfix()
+            
+            return float(result)
+            
+        except (ValueError, IndexError) as e:
+            raise InvalidExpressionError(f"Invalid expression: {str(e)}")
+    
+    def _tokenize(self, expression: str) -> None:
+        """
+        Tokenize the input expression into numbers, operators, and parentheses.
+        
+        Args:
+            expression: The mathematical expression to tokenize
+            
+        Raises:
+            InvalidExpressionError: If invalid characters are found
+        """
+        # Remove whitespace and validate characters
+        clean_expr = re.sub(r'\s+', '', expression)
+        
+        # Check for invalid characters
+        valid_chars = set('0123456789+-*/.()e')
+        if not all(c in valid_chars for c in clean_expr):
+            invalid_chars = set(clean_expr) - valid_chars
+            raise InvalidExpressionError(
+                f"Invalid characters found: {', '.join(sorted(invalid_chars))}"
+            )
+        
+        i = 0
+        while i < len(clean_expr):
+            char = clean_expr[i]
+            
+            if char.isdigit() or char == '.':
+                # Parse number (including decimals and scientific notation)
+                number_str, i = self._parse_number(clean_expr, i)
+                try:
+                    number_value = float(number_str)
+                    self._tokens.append(Token(TokenType.NUMBER, number_value))
+                except ValueError:
+                    raise InvalidExpressionError(f"Invalid number format: {number_str}")
+            
+            elif char in self.OPERATORS:
+                # Handle unary minus/plus
+                if char in ['+', '-'] and self._is_unary_operator(i):
+                    if char == '-':
+                        # Parse negative number
+                        if i + 1 < len(clean_expr) and (
+                            clean_expr[i + 1].isdigit() or clean_expr[i + 1] == '.'
+                        ):
+                            number_str, i = self._parse_number(clean_expr, i)
+                            try:
+                                number_value = float(number_str)
+                                self._tokens.append(Token(TokenType.NUMBER, number_value))
+                            except ValueError:
+                                raise InvalidExpressionError(f"Invalid number format: {number_str}")
+                        else:
+                            # Unary minus as operator (treat as 0 - x)
+                            self._tokens.append(Token(TokenType.NUMBER, 0.0))
+                            self._tokens.append(Token(TokenType.OPERATOR, char))
+                            i += 1
+                    else:
+                        # Unary plus - skip it
+                        i += 1
+                else:
+                    # Binary operator
+                    self._tokens.append(Token(TokenType.OPERATOR, char))
+                    i += 1
+            
+            elif char == '(':
+                self._tokens.append(Token(TokenType.LEFT_PAREN, char))
+                i += 1
+            
+            elif char == ')':
+                self._tokens.append(Token(TokenType.RIGHT_PAREN, char))
+                i += 1
+            
+            else:
+                raise InvalidExpressionError(f"Unexpected character: {char}")
+    
+    def _parse_number(self, expression: str, start_index: int) -> tuple[str, int]:
+        """
+        Parse a number from the expression starting at the given index.
+        
+        Args:
+            expression: The expression string
+            start_index: Starting index for parsing
+            
+        Returns:
+            Tuple of (number_string, next_index)
+        """
+        i = start_index
+        number_str = ""
+        
+        # Handle negative sign
+        if i < len(expression) and expression[i] == '-':
+            number_str += expression[i]
+            i += 1
+        elif i < len(expression) and expression[i] == '+':
+            i += 1  # Skip unary plus
+        
+        # Parse digits and decimal point
+        decimal_count = 0
+        while i < len(expression):
+            char = expression[i]
+            if char.isdigit():
+                number_str += char
+            elif char == '.' and decimal_count == 0:
+                number_str += char
+                decimal_count += 1
+            elif char.lower() == 'e' and i + 1 < len(expression):
+                # Handle scientific notation
+                number_str += char
+                i += 1
+                if i < len(expression) and expression[i] in ['+', '-']:
+                    number_str += expression[i]
+                    i += 1
+            else:
+                break
+            i += 1
+        
+        return number_str, i
+    
+    def _is_unary_operator(self, index: int) -> bool:
+        """
+        Check if the operator at the given index is unary.
+        
+        Args:
+            index: Index of the operator in the expression
+            
+        Returns:
+            True if the operator is unary, False otherwise
+        """
+        if index == 0:
+            return True
+        
+        if not self._tokens:
+            return True
+        
+        last_token = self._tokens[-1]
+        return last_token.type in [TokenType.OPERATOR, TokenType.LEFT_PAREN]
+    
+    def _validate_tokens(self) -> None:
+        """
+        Validate the tokenized expression for syntax errors.
+        
+        Raises:
+            InvalidExpressionError: If syntax errors are found
+            UnbalancedParenthesesError: If parentheses are not balanced
+        """
+        if not self._tokens:
+            raise InvalidExpressionError("Empty expression")
+        
+        # Check parentheses balance
+        paren_count = 0
+        for token in self._tokens:
+            if token.type == TokenType.LEFT_PAREN:
+                paren_count += 1
+            elif token.type == TokenType.RIGHT_PAREN:
+                paren_count -= 1
+                if paren_count < 0:
+                    raise UnbalancedParenthesesError("Unmatched closing parenthesis")
+        
+        if paren_count != 0:
+            raise UnbalancedParenthesesError("Unmatched opening parenthesis")
+        
+        # Check for consecutive operators or other syntax errors
+        for i, token in enumerate(self._tokens):
+            if token.type == TokenType.OPERATOR:
+                # Check if operator is at the end
+                if i == len(self._tokens) - 1:
+                    raise InvalidExpressionError("Expression cannot end with an operator")
+                
+                # Check for consecutive operators (except after opening parenthesis)
+                if i > 0:
+                    prev_token = self._tokens[i - 1]
+                    if prev_token.type == TokenType.OPERATOR:
+                        raise InvalidExpressionError("Consecutive operators are not allowed")
+            
+            elif token.type == TokenType.LEFT_PAREN:
+                # Check for number immediately before opening parenthesis
+                if i > 0 and self._tokens[i - 1].type == TokenType.NUMBER:
+                    raise InvalidExpressionError("Missing operator before opening parenthesis")
+            
+            elif token.type == TokenType.RIGHT_PAREN:
+                # Check for operator immediately before closing parenthesis
+                if i > 0 and self._tokens[i - 1].type == TokenType.OPERATOR:
+                    raise InvalidExpressionError("Operator before closing parenthesis")
+            
+            elif token.type == TokenType.NUMBER:
+                # Check for consecutive numbers
+                if i > 0 and self._tokens[i - 1].type == TokenType.NUMBER:
+                    raise InvalidExpressionError("Consecutive numbers are not allowed")
+                
+                # Check for number immediately after closing parenthesis
+                if i > 0 and self._tokens[i - 1].type == TokenType.RIGHT_PAREN:
+                    raise InvalidExpressionError("Missing operator after closing parenthesis")
+    
+    def _convert_to_postfix(self) -> None:
+        """
+        Convert infix expression to postfix notation using Shunting Yard algorithm.
+        """
+        self._output_queue = []
+        self._operator_stack = []
+        
+        for token in self._tokens:
+            if token.type == TokenType.NUMBER:
+                self._output_queue.append(token)
+            
+            elif token.type == TokenType.OPERATOR:
+                while (self._operator_stack and
+                       self._operator_stack[-1].type == TokenType.OPERATOR and
+                       self.OPERATOR_PRECEDENCE[self._operator_stack[-1].value] >= 
+                       self.OPERATOR_PRECEDENCE[token.value]):
+                    self._output_queue.append(self._operator_stack.pop())
+                self._operator_stack.append(token)
+            
+            elif token.type == TokenType.LEFT_PAREN:
+                self._operator_stack.append(token)
+            
+            elif token.type == TokenType.RIGHT_PAREN:
+                while (self._operator_stack and 
+                       self._operator_stack[-1].type != TokenType.LEFT_PAREN):
+                    self._output_queue.append(self._operator_stack.pop())
+                
+                if not self._operator_stack:
+                    raise UnbalancedParenthesesError("Mismatched parentheses")
+                
+                # Remove the left parenthesis
+                self._operator_stack.pop()
+        
+        # Pop remaining operators
+        while self._operator_stack:
+            if self._operator_stack[-1].type == TokenType.LEFT_PAREN:
+                raise UnbalancedParenthesesError("Mismatched parentheses")
+            self._output_queue.append(self._operator_stack.pop())
+    
+    def _evaluate_postfix(self) -> float:
+        """
+        Evaluate the postfix expression and return the result.
+        
+        Returns:
+            The calculated result
+            
+        Raises:
+            DivisionByZeroError: If division by zero is attempted
+            InvalidExpressionError: If the expression is malformed
+        """
+        stack = []
+        
+        for token in self._output_queue:
+            if token.type == TokenType.NUMBER:
+                stack.append(token.value)
+            
+            elif token.type == TokenType.OPERATOR:
+                if len(stack) < 2:
+                    raise InvalidExpressionError("Invalid expression: insufficient operands")
+                
+                right_operand = stack.pop()
+                left_operand = stack.pop()
+                
+                result = self._perform_operation(
+                    left_operand, token.value, right_operand
+                )
+                stack.append(result)
+        
+        if len(stack) != 1:
+            raise InvalidExpressionError("Invalid expression: malformed")
+        
+        return stack[0]
+    
+    def _perform_operation(self, left: float, operator: str, right: float) -> float:
+        """
+        Perform a single arithmetic operation.
+        
+        Args:
+            left: Left operand
+            operator: Arithmetic operator
+            right: Right operand
+            
+        Returns:
+            Result of the operation
+            
+        Raises:
+            DivisionByZeroError: If division by zero is attempted
+        """
+        if operator == '+':
+            return left + right
+        elif operator == '-':
+            return left - right
+        elif operator == '*':
+            return left * right
+        elif operator == '/':
+            if right == 0:
+                raise DivisionByZeroError("Division by zero is not allowed")
+            return left / right
+        else:
+            raise InvalidExpressionError(f"Unknown operator: {operator}")
+
+
+def main():
+    """
+    Main function to demonstrate the calculator functionality.
+    """
+    calculator = Calculator()
+    
+    print("Arithmetic Calculator")
+    print("Supported operations: +, -, *, /, ()")
+    print("Enter 'quit' to exit")
+    print("-" * 40)
+    
+    while True:
+        try:
+            expression = input("Enter expression: ").strip()
+            
+            if expression.lower() in ['quit', 'exit', 'q']:
+                print("Goodbye!")
+                break
+            
+            if not expression:
+                continue
+            
+            result = calculator.calculate(expression)
+            print(f"Result: {result}")
+            
+        except (CalculatorError, KeyboardInterrupt) as e:
+            if isinstance(e, KeyboardInterrupt):
+                print("\nGoodbye!")
+                break
+            print(f"Error: {e}")
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+        
+        print()
+
+
+if __name__ == "__main__":
+    main()
+
+
+calc = Calculator()
+print(calc.calculate("2 + 3 * 4"))        # 14.0
+print(calc.calculate("(2 + 3) * 4"))      # 20.0
+print(calc.calculate("-5 + 3"))           # -2.0
+print(calc.calculate("10 / (2 + 3)"))     # 2.0

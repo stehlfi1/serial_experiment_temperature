@@ -1,0 +1,246 @@
+
+"""
+A module for a console-based arithmetic calculator that adheres to high-quality
+software standards.
+"""
+
+import re
+from typing import List, Union
+
+class Calculator:
+    """
+    A robust, safe, and maintainable arithmetic expression evaluator.
+
+    This class implements a calculator that can parse and evaluate string-based
+    arithmetic expressions containing integers, floating-point numbers,
+    parentheses, and the basic operators (+, -, *, /).
+
+    It is designed with the principles of ISO/IEC 25010 in mind, focusing on:
+    - Functional Suitability (Correctness): Accurately calculates results.
+    - Performance Efficiency: Uses an efficient O(n) algorithm.
+    - Reliability (Maturity, Fault Tolerance): Handles invalid inputs gracefully.
+    - Usability (Learnability): Simple, clear interface.
+    - Maintainability (Modularity, Reusability, Testability):
+      Logically separated, well-documented, and testable components.
+    - Security: Avoids insecure practices like `eval()`.
+    """
+
+    # --- Constants for Readability and Maintainability ---
+    _OPERATORS = {'+', '-', '*', '/'}
+    _PRECEDENCE = {'+': 1, '-': 1, '*': 2, '/': 2}
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates a given arithmetic expression string.
+
+        This is the main public interface for the Calculator. It orchestrates
+        the validation, tokenization, and evaluation of the expression.
+
+        Args:
+            expression: The arithmetic expression string to evaluate.
+
+        Returns:
+            The result of the evaluation as a float.
+
+        Raises:
+            ValueError: If the expression is invalid (e.g., unbalanced
+                        parentheses, invalid characters, malformed expression).
+            ZeroDivisionError: If the expression contains a division by zero.
+        """
+        self._validate_input(expression)
+        tokens = self._tokenize(expression)
+        result = self._evaluate_tokens(tokens)
+        return result
+
+    # --- Private Methods for Modularity and Encapsulation ---
+
+    def _validate_input(self, expression: str) -> None:
+        """
+        Performs initial validation on the expression string.
+
+        Checks for balanced parentheses and invalid characters. This is a
+        fail-fast mechanism to catch simple errors before complex parsing.
+
+        Args:
+            expression: The expression string to validate.
+
+        Raises:
+            ValueError: If validation fails.
+        """
+        # Safety: Check for balanced parentheses
+        if expression.count('(') != expression.count(')'):
+            raise ValueError("Mismatched parentheses in expression.")
+
+        # Safety: Check for invalid characters using a regular expression
+        allowed_chars = r"[\d\.\s\+\-\*\/\(\)]+"
+        if not re.fullmatch(allowed_chars, expression):
+            # Find the first invalid character for a more helpful error message
+            invalid_char = re.sub(allowed_chars, '', expression, 1)[0]
+            raise ValueError(f"Invalid character '{invalid_char}' in expression.")
+
+    def _tokenize(self, expression: str) -> List[str]:
+        """
+        Converts the expression string into a list of tokens.
+
+        This lexer-like method handles multi-digit numbers, floating-point numbers,
+        and unary minus operators (e.g., '-5' or '3 * -2').
+
+        Args:
+            expression: The expression string.
+
+        Returns:
+            A list of tokens (numbers as strings, operators, parentheses).
+        """
+        # Add spaces around operators and parentheses for easier splitting
+        # A lookbehind `(?<=[().+*/])` and lookahead `(?=[().+*/])` ensures
+        # we don't split a number, but do split around all operators.
+        spaced_expression = re.sub(r'([()+\-*/])', r' \1 ', expression)
+        tokens = spaced_expression.split()
+
+        # Modularity & Correctness: Handle unary minus
+        processed_tokens = []
+        for i, token in enumerate(tokens):
+            if token == '-':
+                # A minus is unary if it's the first token, or if the
+                # preceding token is an operator or an opening parenthesis.
+                is_unary = (i == 0) or (tokens[i-1] in self._OPERATORS or tokens[i-1] == '(')
+                if is_unary:
+                    # Combine with the next token to form a negative number
+                    try:
+                        processed_tokens.append(f"-{tokens[i+1]}")
+                        # Skip the next token as it has been consumed
+                        tokens[i+1] = ''
+                    except IndexError:
+                        raise ValueError("Invalid expression: trailing '-' operator.")
+                else:
+                    processed_tokens.append(token)
+            elif token: # Append non-empty tokens
+                processed_tokens.append(token)
+
+        return processed_tokens
+
+    def _apply_operator(self, operators: list, values: list) -> None:
+        """
+        Applies an operator to the top two values on the stack.
+
+        Pops one operator and two values, performs the calculation, and pushes
+        the result back onto the values stack.
+
+        Args:
+            operators: The stack of operators.
+            values: The stack of numerical values.
+
+        Raises:
+            ZeroDivisionError: If attempting to divide by zero.
+            ValueError: If the stacks are in an inconsistent state.
+        """
+        try:
+            operator = operators.pop()
+            right_operand = values.pop()
+            left_operand = values.pop()
+        except IndexError:
+            raise ValueError("Invalid expression: malformed syntax or operator without enough operands.")
+
+        if operator == '+':
+            values.append(left_operand + right_operand)
+        elif operator == '-':
+            values.append(left_operand - right_operand)
+        elif operator == '*':
+            values.append(left_operand * right_operand)
+        elif operator == '/':
+            # Safety: Explicit check for division by zero
+            if right_operand == 0:
+                raise ZeroDivisionError("Division by zero is not allowed.")
+            values.append(left_operand / right_operand)
+
+    def _evaluate_tokens(self, tokens: List[str]) -> float:
+        """
+        Evaluates a list of tokens using the Shunting-yard based algorithm.
+
+        This is the core evaluation logic, using two stacks for values and
+        operators to respect operator precedence and parentheses.
+
+        Args:
+            tokens: A list of string tokens.
+
+        Returns:
+            The final calculated result.
+
+        Raises:
+            ValueError: If the expression is malformed.
+        """
+        values: List[Union[int, float]] = []
+        operators: List[str] = []
+
+        for token in tokens:
+            if token.replace('.', '', 1).replace('-', '', 1).isdigit():
+                # Correctness: Handle both integers and floats
+                values.append(float(token))
+            elif token == '(':
+                operators.append(token)
+            elif token == ')':
+                # Evaluate everything until we find the matching '('
+                while operators and operators[-1] != '(':
+                    self._apply_operator(operators, values)
+                if not operators or operators.pop() != '(':
+                    # This case should be caught by _validate_input, but
+                    # serves as a redundant safety check.
+                    raise ValueError("Mismatched parentheses detected during evaluation.")
+            elif token in self._OPERATORS:
+                # Correctness: Handle operator precedence
+                while (operators and operators[-1] != '(' and
+                       self._PRECEDENCE.get(operators[-1], 0) >= self._PRECEDENCE.get(token, 0)):
+                    self._apply_operator(operators, values)
+                operators.append(token)
+            else:
+                # Safety: This should not be reached if validation is correct
+                raise ValueError(f"Unknown token during evaluation: {token}")
+
+        # Apply any remaining operators on the stack
+        while operators:
+            self._apply_operator(operators, values)
+
+        # Correctness & Safety: The final result should be the only item left
+        if len(values) != 1 or operators:
+            raise ValueError("Malformed expression resulted in invalid final state.")
+
+        return values[0]
+
+
+def main():
+    """
+    Main function to run the calculator in a console loop.
+    This demonstrates the usage of the Calculator class.
+    """
+    print("--- Console Arithmetic Calculator ---")
+    print("Enter an expression to calculate or 'exit' to quit.")
+    print("Supports: +, -, *, /, parentheses, floats, and integers.")
+    print("-" * 35)
+
+    calculator = Calculator()
+
+    while True:
+        try:
+            expression = input(">>> ")
+            if expression.lower() == 'exit':
+                break
+            if not expression.strip():
+                continue
+
+            result = calculator.calculate(expression)
+            print(f"= {result}")
+
+        except (ValueError, ZeroDivisionError) as e:
+            print(f"Error: {e}")
+        except KeyboardInterrupt:
+            print("\nExiting.")
+            break
+        except Exception as e:
+            # Catch-all for unexpected errors
+            print(f"An unexpected error occurred: {e}")
+
+
+if __name__ == "__main__":
+    # Testability: The main logic is encapsulated, allowing the file
+    # to be both runnable and importable for unit testing.
+    main()

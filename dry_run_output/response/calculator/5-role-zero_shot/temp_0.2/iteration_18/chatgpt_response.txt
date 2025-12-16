@@ -1,0 +1,211 @@
+```python
+"""
+Calculator Module
+
+Implements a console-based arithmetic calculator with support for basic operations and validation,
+in compliance with ISO/IEC 25010 quality attributes like correctness, reliability, and maintainability.
+
+Supported Operations:
+- Addition, Subtraction, Multiplication, Division
+- Parentheses
+- Operator precedence
+- Integers and floating point numbers (including negatives)
+"""
+
+import re
+from typing import List, Union
+
+class Calculator:
+    """
+    Arithmetic Calculator class.
+
+    Methods
+    -------
+    calculate(expression: str) -> float
+        Evaluates the arithmetic expression and returns the result as a float.
+    """
+
+    # Supported operators and their precedence
+    _OPERATORS = {
+        '+': (1, lambda x, y: x + y),
+        '-': (1, lambda x, y: x - y),
+        '*': (2, lambda x, y: x * y),
+        '/': (2, lambda x, y: x / y)
+    }
+
+    # Token types
+    _TOKEN_REGEX = re.compile(
+        r"""
+        (?P<NUMBER>   -?\d+(?:\.\d+)? )
+        |(?P<LPAREN>  \( )
+        |(?P<RPAREN>  \) )
+        |(?P<OP>      [+\-*/] )
+        |(?P<WS>      \s+ )
+        """,
+        re.VERBOSE
+    )
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates the provided arithmetic expression.
+
+        Parameters
+        ----------
+        expression : str
+            The arithmetic expression to evaluate.
+
+        Returns
+        -------
+        float
+            The result of the evaluation.
+
+        Raises
+        ------
+        ValueError
+            In case of invalid input.
+        ZeroDivisionError
+            In case of division by zero.
+        """
+        tokens = self._tokenize(expression)
+        rpn = self._to_rpn(tokens)
+        result = self._evaluate_rpn(rpn)
+        return result
+
+    def _tokenize(self, expr: str) -> List[Union[float, str]]:
+        """
+        Tokenizes the input expression into numbers, operators, and parentheses.
+
+        Returns a list of tokens for further parsing.
+        Raises ValueError on invalid characters or tokenization issues.
+        """
+        tokens = []
+        index = 0
+        last_token_type = None
+
+        while index < len(expr):
+            match = self._TOKEN_REGEX.match(expr, index)
+            if not match:
+                raise ValueError(f"Invalid character in expression at position {index}: '{expr[index]}'")
+
+            if match.lastgroup == 'NUMBER':
+                value = float(match.group('NUMBER'))
+                tokens.append(value)
+                last_token_type = 'NUMBER'
+            elif match.lastgroup == 'OP':
+                op = match.group('OP')
+                # Handle unary minus for negative numbers
+                if op == '-' and (
+                    last_token_type is None or last_token_type in {'OP', 'LPAREN'}
+                ):
+                    # Next token should be a number
+                    num_match = self._TOKEN_REGEX.match(expr, match.end())
+                    if num_match and num_match.lastgroup == 'NUMBER':
+                        value = -float(num_match.group('NUMBER'))
+                        tokens.append(value)
+                        # skip the number part of the token as we've already parsed it
+                        index = num_match.end() - 1
+                        last_token_type = 'NUMBER'
+                    else:
+                        raise ValueError("Invalid use of unary minus")
+                else:
+                    tokens.append(op)
+                    last_token_type = 'OP'
+            elif match.lastgroup == 'LPAREN':
+                tokens.append('(')
+                last_token_type = 'LPAREN'
+            elif match.lastgroup == 'RPAREN':
+                tokens.append(')')
+                last_token_type = 'RPAREN'
+            # Skip whitespace
+            index = match.end()
+        return tokens
+
+    def _to_rpn(self, tokens: List[Union[float, str]]) -> List[Union[float, str]]:
+        """
+        Converts infix expression tokens to Reverse Polish Notation using the Shunting Yard algorithm.
+
+        Raises ValueError on unbalanced parentheses.
+        """
+        output: List[Union[float, str]] = []
+        op_stack: List[str] = []
+
+        for token in tokens:
+            if isinstance(token, float):
+                output.append(token)
+            elif token in self._OPERATORS:
+                while (
+                    op_stack and
+                    op_stack[-1] in self._OPERATORS and
+                    self._OPERATORS[token][0] <= self._OPERATORS[op_stack[-1]][0]
+                ):
+                    output.append(op_stack.pop())
+                op_stack.append(token)
+            elif token == '(':
+                op_stack.append(token)
+            elif token == ')':
+                while op_stack and op_stack[-1] != '(':
+                    output.append(op_stack.pop())
+                if not op_stack or op_stack[-1] != '(':
+                    raise ValueError("Unbalanced parentheses detected")
+                op_stack.pop()  # pop '('
+            else:
+                raise ValueError(f"Unknown token: {token}")
+
+        # Pop any remaining operators
+        while op_stack:
+            top = op_stack.pop()
+            if top in ('(', ')'):
+                raise ValueError("Unbalanced parentheses detected")
+            output.append(top)
+        return output
+
+    def _evaluate_rpn(self, rpn: List[Union[float, str]]) -> float:
+        """
+        Evaluates a Reverse Polish Notation (RPN) list and returns the result.
+
+        Raises ZeroDivisionError and ValueError as appropriate.
+        """
+        stack: List[float] = []
+        for token in rpn:
+            if isinstance(token, float):
+                stack.append(token)
+            elif token in self._OPERATORS:
+                if len(stack) < 2:
+                    raise ValueError("Invalid syntax in expression.")
+                y = stack.pop()
+                x = stack.pop()
+                # Check division by zero
+                if token == '/' and y == 0:
+                    raise ZeroDivisionError("Division by zero is undefined.")
+                result = self._OPERATORS[token][1](x, y)
+                stack.append(result)
+            else:
+                raise ValueError(f"Unknown token in RPN: {token}")
+        if len(stack) != 1:
+            raise ValueError("Malformed expression.")
+        return stack[0]
+
+# Example usage and simple tests:
+if __name__ == "__main__":
+    calc = Calculator()
+
+    test_expressions = [
+        "2 + 3 * 4",
+        "-3 + 5",
+        "10 / 2 - 3",
+        "2 * (3 + 4)",
+        "5 + ((1 + 2) * 4) - 3",
+        "-2.5 * (4 + 3.5) / -2",
+        "1 / 0",   # should raise ZeroDivisionError
+        "2 + (3",  # should raise ValueError
+        "2 ++ 3",  # should raise ValueError
+        "2 + a"    # should raise ValueError
+    ]
+
+    for expr in test_expressions:
+        try:
+            result = calc.calculate(expr)
+            print(f"{expr} = {result}")
+        except Exception as e:
+            print(f"{expr} : Error: {e}")
+```

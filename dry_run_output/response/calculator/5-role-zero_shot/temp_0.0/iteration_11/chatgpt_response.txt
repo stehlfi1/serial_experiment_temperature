@@ -1,0 +1,234 @@
+```python
+import re
+from typing import List, Union
+
+
+class CalculatorError(Exception):
+    """Base class for calculator errors."""
+    pass
+
+
+class InvalidCharacterError(CalculatorError, ValueError):
+    """Raised when the expression contains invalid characters."""
+    pass
+
+
+class UnbalancedParenthesesError(CalculatorError, ValueError):
+    """Raised when parentheses are unbalanced in the expression."""
+    pass
+
+
+class DivisionByZeroError(CalculatorError, ZeroDivisionError):
+    """Raised when division by zero occurs."""
+    pass
+
+
+class Calculator:
+    """
+    Console-based arithmetic calculator implementing addition, subtraction, multiplication,
+    division, and parentheses with correct operator precedence and input validation.
+
+    Adheres to ISO/IEC 25010 quality standards: correctness, performance, modularity, safety, testability, and readability.
+
+    Public Interface:
+        calculate(expression: str) -> float
+    """
+    
+    # Allowed operators and their precedence
+    _OPERATORS = {
+        '+': (1, lambda a, b: a + b),
+        '-': (1, lambda a, b: a - b),
+        '*': (2, lambda a, b: a * b),
+        '/': (2, lambda a, b: a / b),
+    }
+    
+    # Token regex: numbers (including negative and floats), operators, and parentheses
+    _TOKEN_REGEX = re.compile(
+        r"""
+        (?P<NUMBER>(?<!\w)\-?\d+(\.\d+)?)
+        |(?P<OP>[\+\-\*/])
+        |(?P<PAREN>[\(\)])
+        |(?P<SPACE>\s+)
+        |(?P<INVALID>.)
+        """, re.VERBOSE
+    )
+
+    def calculate(self, expression: str) -> float:
+        """
+        Parses and evaluates a mathematical expression string.
+        
+        Args:
+            expression (str): The arithmetic expression to evaluate.
+            
+        Returns:
+            float: The result of the evaluated expression.
+            
+        Raises:
+            InvalidCharacterError: If the expression contains invalid characters.
+            UnbalancedParenthesesError: If parentheses are unbalanced.
+            DivisionByZeroError: If division by zero is attempted.
+            ValueError: If the input cannot be parsed/evaluated.
+        """
+        tokens = self._tokenize(expression)
+        postfix = self._infix_to_postfix(tokens)
+        result = self._evaluate_postfix(postfix)
+        return result
+
+    def _tokenize(self, expr: str) -> List[Union[float, str]]:
+        """
+        Tokenizes the expression string into numbers, operators, and parentheses.
+        
+        Args:
+            expr (str): The expression to tokenize.
+        
+        Returns:
+            List[Union[float, str]]: List of tokens as numbers or operator/paren strings.
+        
+        Raises:
+            InvalidCharacterError: On invalid character in expression.
+            UnbalancedParenthesesError: On unbalanced parentheses.
+        """
+        tokens = []
+        open_parens = 0
+        prev_token_type = None
+
+        for match in self._TOKEN_REGEX.finditer(expr):
+            kind = match.lastgroup
+            value = match.group()
+            if kind == 'SPACE':
+                continue
+            elif kind == 'NUMBER':
+                tokens.append(float(value))
+                prev_token_type = 'NUMBER'
+            elif kind == 'OP':
+                # Handle unary minus (as part of a number not operator)
+                if value == '-' and (
+                    prev_token_type in (None, 'OP', 'PAREN_L')
+                ):
+                    # This may be a negative number (caught by the regex in parsing), so skip as op
+                    tokens.append(0.0)  # Convert unary minus to "0 - number"
+                tokens.append(value)
+                prev_token_type = 'OP'
+            elif kind == 'PAREN':
+                tokens.append(value)
+                if value == '(':
+                    open_parens += 1
+                    prev_token_type = 'PAREN_L'
+                else:
+                    open_parens -= 1
+                    prev_token_type = 'PAREN_R'
+                    if open_parens < 0:
+                        raise UnbalancedParenthesesError("Too many closing parentheses")
+            elif kind == 'INVALID':
+                raise InvalidCharacterError(f"Invalid character in expression: '{value}'")
+        
+        if open_parens != 0:
+            raise UnbalancedParenthesesError("Unbalanced parentheses in expression")
+        return tokens
+
+    def _infix_to_postfix(self, tokens: List[Union[float, str]]) -> List[Union[float, str]]:
+        """
+        Converts infix tokens to postfix (Reverse Polish Notation) using shunting yard algorithm.
+
+        Args:
+            tokens (List[Union[float, str]]): List of tokens in infix order.
+
+        Returns:
+            List[Union[float, str]]: List of tokens in postfix order.
+
+        Raises:
+            ValueError: On misplaced operators or unmatched parentheses.
+        """
+        output = []
+        stack = []
+        for token in tokens:
+            if isinstance(token, float):
+                output.append(token)
+            elif token in self._OPERATORS:
+                while (stack and stack[-1] in self._OPERATORS and
+                       self._OPERATORS[token][0] <= self._OPERATORS[stack[-1]][0]):
+                    output.append(stack.pop())
+                stack.append(token)
+            elif token == '(':
+                stack.append(token)
+            elif token == ')':
+                while stack and stack[-1] != '(':
+                    output.append(stack.pop())
+                if not stack:
+                    raise UnbalancedParenthesesError("Mismatched parentheses encountered")
+                stack.pop()  # Remove '('
+            else:
+                raise InvalidCharacterError(f"Invalid token during parsing: '{token}'")
+        while stack:
+            if stack[-1] in ('(', ')'):
+                raise UnbalancedParenthesesError("Mismatched parentheses at end of parsing")
+            output.append(stack.pop())
+        return output
+
+    def _evaluate_postfix(self, tokens: List[Union[float, str]]) -> float:
+        """
+        Evaluates a postfix (Reverse Polish Notation) list of tokens.
+
+        Args:
+            tokens (List[Union[float, str]]): Postfix tokens.
+
+        Returns:
+            float: Evaluated result.
+
+        Raises:
+            DivisionByZeroError: If division by zero occurs.
+            ValueError: If expression is malformed.
+        """
+        stack: List[float] = []
+        for token in tokens:
+            if isinstance(token, float):
+                stack.append(token)
+            elif token in self._OPERATORS:
+                if len(stack) < 2:
+                    raise ValueError("Invalid expression: insufficient values for operation")
+                b = stack.pop()
+                a = stack.pop()
+                if token == '/' and b == 0.0:
+                    raise DivisionByZeroError("Division by zero encountered")
+                try:
+                    result = self._OPERATORS[token][1](a, b)
+                except ZeroDivisionError:
+                    raise DivisionByZeroError("Division by zero encountered")
+                stack.append(result)
+            else:
+                raise InvalidCharacterError(f"Invalid token during evaluation: '{token}'")
+        if len(stack) != 1:
+            raise ValueError("Invalid expression: leftover values after evaluation")
+        return stack[0]
+
+
+# Example usage and testing
+if __name__ == "__main__":
+    calc = Calculator()
+    test_expressions = [
+        "1 + 2 * 3",
+        "(1 + 2) * 3",
+        "-2.5 + (3.5 * 2) / 5",
+        "10 / (5 - 5)",                 # Should raise DivisionByZeroError
+        "3 + (4 - 1",                   # Should raise UnbalancedParenthesesError
+        "abc + 1",                      # Should raise InvalidCharacterError
+        "5 + * 2",                      # Should raise ValueError (malformed)
+        "3.5 - -1.5",                   # Valid: 3.5 - (-1.5)
+        "-3 + 6 * (2 + 4) / -3"         # Valid: negative numbers and division
+    ]
+    for expr in test_expressions:
+        try:
+            result = calc.calculate(expr)
+            print(f"Expression: {expr}\nResult: {result}\n")
+        except CalculatorError as ce:
+            print(f"Expression: {expr}\nCalculatorError: {ce}\n")
+        except Exception as e:
+            print(f"Expression: {expr}\nOther error: {e}\n")
+```
+**Notes:**
+- The class and its methods are modular and clearly documented.
+- Custom exception classes provide safety and clarity in error handling.
+- Tokenization, parsing (shunting yard), and evaluation are logically separated.
+- Negative numbers, floating-point numbers, mixed operator precedence, and parentheses are all supported and tested.
+- No use of `eval()` or similar dynamic code evaluation methods to avoid safety issues.
+- Suitable for unit testing due to modularity and clear error signaling.

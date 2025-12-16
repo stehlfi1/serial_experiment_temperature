@@ -1,0 +1,213 @@
+```python
+import re
+from typing import List, Union
+
+class CalculatorError(Exception):
+    """Base exception for Calculator errors."""
+    pass
+
+class InvalidCharacterError(CalculatorError, ValueError):
+    """Raised when the expression contains invalid characters."""
+    pass
+
+class UnbalancedParenthesesError(CalculatorError, ValueError):
+    """Raised when parentheses are unbalanced."""
+    pass
+
+class DivisionByZeroError(CalculatorError, ZeroDivisionError):
+    """Raised when division by zero is encountered."""
+    pass
+
+class Calculator:
+    """
+    Console-based arithmetic calculator compliant with ISO/IEC 25010 quality attributes.
+    Supports +, -, *, /, parentheses, operator precedence, integers, floats, and negative values.
+    """
+
+    # Supported operators and their precedence (higher value = higher precedence)
+    _OPERATORS = {
+        '+': {'precedence': 1, 'associativity': 'left'},
+        '-': {'precedence': 1, 'associativity': 'left'},
+        '*': {'precedence': 2, 'associativity': 'left'},
+        '/': {'precedence': 2, 'associativity': 'left'}
+    }
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates the given arithmetic expression and returns the result as float.
+
+        :param expression: Arithmetic expression as a string.
+        :return: Result as a float.
+        :raises InvalidCharacterError: If invalid characters are present.
+        :raises UnbalancedParenthesesError: If parentheses are unbalanced.
+        :raises DivisionByZeroError: If division by zero occurs.
+        """
+        tokens = self._tokenize(expression)
+        rpn = self._shunting_yard(tokens)
+        result = self._evaluate_rpn(rpn)
+        return result
+
+    def _tokenize(self, expression: str) -> List[str]:
+        """
+        Tokenizes the arithmetic expression.
+
+        :param expression: Expression string.
+        :return: List of string tokens.
+        :raises InvalidCharacterError: If invalid characters are detected.
+        :raises UnbalancedParenthesesError: If parentheses are unbalanced.
+        """
+        tokens = []
+        num_buff = ''
+        last_token = ''
+        expr = expression.replace(' ', '')
+        allowed_chars = set('0123456789+-*/().')
+
+        paren_count = 0
+        i = 0
+        while i < len(expr):
+            c = expr[i]
+            if c not in allowed_chars:
+                raise InvalidCharacterError(f"Invalid character detected: '{c}'")
+            if c.isdigit() or c == '.':
+                num_buff += c
+            elif c in '+-':
+                # Handle unary plus or minus
+                if (i == 0 or expr[i-1] in '(+*/-'):
+                    num_buff += c  # Consider as part of number
+                else:
+                    if num_buff:
+                        tokens.append(num_buff)
+                        num_buff = ''
+                    tokens.append(c)
+            elif c in '*/':
+                if num_buff:
+                    tokens.append(num_buff)
+                    num_buff = ''
+                tokens.append(c)
+            elif c == '(':
+                paren_count += 1
+                if num_buff:
+                    tokens.append(num_buff)
+                    num_buff = ''
+                tokens.append(c)
+            elif c == ')':
+                paren_count -= 1
+                if paren_count < 0:
+                    raise UnbalancedParenthesesError("Unbalanced parenthesis: More closing than opening.")
+                if num_buff:
+                    tokens.append(num_buff)
+                    num_buff = ''
+                tokens.append(c)
+            else:
+                # Should never reach here due to allowed_chars check.
+                raise InvalidCharacterError(f"Invalid character detected: '{c}'")
+            i += 1
+
+        if num_buff:
+            tokens.append(num_buff)
+        if paren_count != 0:
+            raise UnbalancedParenthesesError("Unbalanced parenthesis: Mismatched parentheses.")
+        return tokens
+
+    def _shunting_yard(self, tokens: List[str]) -> List[str]:
+        """
+        Converts tokens into Reverse Polish Notation using the Shunting Yard algorithm.
+
+        :param tokens: List of string tokens.
+        :return: RPN as a list of tokens.
+        """
+        output_queue: List[str] = []
+        operator_stack: List[str] = []
+
+        for token in tokens:
+            if self._is_number(token):
+                output_queue.append(token)
+            elif token in self._OPERATORS:
+                while (operator_stack and
+                       operator_stack[-1] in self._OPERATORS and
+                       ((self._OPERATORS[token]['associativity'] == 'left' and
+                         self._OPERATORS[token]['precedence'] <= self._OPERATORS[operator_stack[-1]]['precedence']))):
+                    output_queue.append(operator_stack.pop())
+                operator_stack.append(token)
+            elif token == '(':
+                operator_stack.append(token)
+            elif token == ')':
+                while operator_stack and operator_stack[-1] != '(':
+                    output_queue.append(operator_stack.pop())
+                if not operator_stack:
+                    raise UnbalancedParenthesesError("Unbalanced parenthesis: ')' encountered with no matching '('.")
+                operator_stack.pop()  # Remove '('
+        while operator_stack:
+            op = operator_stack.pop()
+            if op in '()':
+                raise UnbalancedParenthesesError("Unbalanced parenthesis: Mismatched at end of expression.")
+            output_queue.append(op)
+        return output_queue
+
+    def _evaluate_rpn(self, rpn_tokens: List[str]) -> float:
+        """
+        Evaluates a Reverse Polish Notation (RPN) expression.
+
+        :param rpn_tokens: List of RPN tokens.
+        :return: Result of evaluation as float.
+        :raises DivisionByZeroError: If division by zero is attempted.
+        """
+        stack: List[float] = []
+        for token in rpn_tokens:
+            if self._is_number(token):
+                stack.append(float(token))
+            elif token in self._OPERATORS:
+                if len(stack) < 2:
+                    raise CalculatorError("Syntax Error: Not enough operands.")
+                b = stack.pop()
+                a = stack.pop()
+                if token == '+':
+                    stack.append(a + b)
+                elif token == '-':
+                    stack.append(a - b)
+                elif token == '*':
+                    stack.append(a * b)
+                elif token == '/':
+                    if b == 0:
+                        raise DivisionByZeroError("Division by zero encountered.")
+                    stack.append(a / b)
+            else:
+                raise InvalidCharacterError(f"Invalid token encountered during evaluation: '{token}'")
+        if len(stack) != 1:
+            raise CalculatorError("Syntax Error: Malformed expression.")
+        return stack[0]
+
+    def _is_number(self, token: str) -> bool:
+        """
+        Determines if token is a valid number.
+
+        :param token: Token string.
+        :return: True if token is a number, False otherwise.
+        """
+        try:
+            float(token)
+            return True
+        except ValueError:
+            return False
+
+# If you wish to manually test, uncomment the code below:
+if __name__ == "__main__":
+    calc = Calculator()
+    test_expressions = [
+        "1 + 2",
+        "-2 * (3.5 + 2)",
+        "4/(3-3)",           # Should raise DivisionByZeroError
+        "7 + ((3.2 - 1.2) * 5)/2",
+        "invalid + 1",       # Should raise InvalidCharacterError
+        "1 + (2 * 3",        # Should raise UnbalancedParenthesesError
+        "2 * -3",
+        "-(4 + 2)",
+    ]
+    for expr in test_expressions:
+        print(f"\nExpression: {expr}")
+        try:
+            result = calc.calculate(expr)
+            print("Result:", result)
+        except CalculatorError as e:
+            print("Error:", str(e))
+```

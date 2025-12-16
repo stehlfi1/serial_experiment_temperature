@@ -1,0 +1,296 @@
+
+"""
+A high-quality, maintainable arithmetic calculator implemented in Python for console applications.
+Adheres to ISO/IEC 25010 standards, covering correctness, performance, modularity, safety, testability,
+readability, and documentation.
+"""
+
+import re
+from typing import List, Union
+
+
+class CalculatorError(Exception):
+    """Base exception class for Calculator errors."""
+    pass
+
+class InvalidCharacterError(CalculatorError, ValueError):
+    """Exception raised for invalid characters in the expression."""
+    pass
+
+class UnbalancedParenthesesError(CalculatorError, ValueError):
+    """Exception raised for unbalanced parentheses."""
+    pass
+
+class InvalidExpressionError(CalculatorError, ValueError):
+    """Exception raised for invalid expression syntax."""
+    pass
+
+class DivisionByZeroError(CalculatorError, ZeroDivisionError):
+    """Exception raised for division by zero."""
+    pass
+
+class Calculator:
+    """
+    Console-based arithmetic calculator supporting +, -, *, /, parentheses, and correct precedence.
+    Public interface:
+      - calculate(expression: str) -> float
+    """
+
+    # Operator precedence and associativity definitions
+    OPERATORS = {
+        '+': {'precedence': 1, 'associativity': 'L'},
+        '-': {'precedence': 1, 'associativity': 'L'},
+        '*': {'precedence': 2, 'associativity': 'L'},
+        '/': {'precedence': 2, 'associativity': 'L'},
+    }
+
+    # Token pattern for numbers (ints/floats), operators, and parentheses
+    TOKEN_PATTERN = re.compile(
+        r'''
+        (?P<NUMBER>   -?(?:\d+\.\d+|\d+|\.\d+))   # Integer or decimal (possibly negative)
+        |(?P<OP>      [+\-*/])
+        |(?P<LPAREN>  \()
+        |(?P<RPAREN>  \))
+        |(?P<SPACE>   \s+)
+        ''',
+        re.VERBOSE
+    )
+
+    def calculate(self, expression: str) -> float:
+        """
+        Parses and evaluates an arithmetic expression.
+
+        Args:
+            expression (str): The arithmetic expression to evaluate.
+
+        Returns:
+            float: The result of the evaluated expression.
+
+        Raises:
+            InvalidCharacterError, UnbalancedParenthesesError, InvalidExpressionError, DivisionByZeroError
+        """
+        tokens = self._tokenize(expression)
+        rpn = self._to_rpn(tokens)
+        result = self._evaluate_rpn(rpn)
+        return result
+
+    def _tokenize(self, expression: str) -> List[str]:
+        """
+        Converts expression string into a list of tokens.
+
+        Args:
+            expression (str): The raw expression.
+
+        Returns:
+            List[str]: List of tokens.
+
+        Raises:
+            InvalidCharacterError, UnbalancedParenthesesError
+        """
+        tokens = []
+        pos = 0
+        prev_token = None
+
+        while pos < len(expression):
+            match = self.TOKEN_PATTERN.match(expression, pos)
+            if not match:
+                raise InvalidCharacterError(f"Invalid character at position {pos}: '{expression[pos]}'")
+
+            if match.lastgroup == 'NUMBER':
+                tokens.append(match.group('NUMBER'))
+                prev_token = 'NUMBER'
+            elif match.lastgroup == 'OP':
+                op = match.group('OP')
+                # Handle unary minus, e.g., (-3), 4*-2 etc.
+                if op == '-' and (prev_token in (None, 'OP', 'LPAREN')):
+                    # Negative number: look ahead for a number or dot
+                    num_match = self.TOKEN_PATTERN.match(expression, match.end())
+                    if num_match and num_match.lastgroup == 'NUMBER':
+                        neg_number = '-' + num_match.group('NUMBER').lstrip('-')
+                        tokens.append(neg_number)
+                        pos = num_match.end() - 1  # -1 because pos += 1 at the end
+                        prev_token = 'NUMBER'
+                    else:
+                        # Standalone minus operator
+                        tokens.append(op)
+                        prev_token = 'OP'
+                else:
+                    tokens.append(op)
+                    prev_token = 'OP'
+            elif match.lastgroup == 'LPAREN':
+                tokens.append('(')
+                prev_token = 'LPAREN'
+            elif match.lastgroup == 'RPAREN':
+                tokens.append(')')
+                prev_token = 'RPAREN'
+            # Spaces are ignored
+
+            pos = match.end()
+
+        self._validate_parentheses(tokens)
+        return tokens
+
+    def _validate_parentheses(self, tokens: List[str]):
+        """
+        Validates that parentheses are balanced.
+
+        Args:
+            tokens (List[str]): The token list
+
+        Raises:
+            UnbalancedParenthesesError
+        """
+        count = 0
+        for token in tokens:
+            if token == '(':
+                count += 1
+            elif token == ')':
+                count -= 1
+            if count < 0:
+                raise UnbalancedParenthesesError("Mismatched parentheses: too many closing ')'.")
+        if count != 0:
+            raise UnbalancedParenthesesError("Mismatched parentheses: too many opening '('.")
+
+    def _to_rpn(self, tokens: List[str]) -> List[str]:
+        """
+        Converts token list to Reverse Polish Notation (Shunting Yard Algorithm).
+
+        Args:
+            tokens (List[str]): List of tokens
+
+        Returns:
+            List[str]: RPN token list
+
+        Raises:
+            InvalidExpressionError
+        """
+        output = []
+        stack = []
+        for idx, token in enumerate(tokens):
+            if self._is_number(token):
+                output.append(token)
+            elif token in self.OPERATORS:
+                while (stack and stack[-1] in self.OPERATORS and
+                       ((self.OPERATORS[token]['associativity'] == 'L' and
+                         self.OPERATORS[token]['precedence'] <= self.OPERATORS[stack[-1]]['precedence']) or
+                        (self.OPERATORS[token]['associativity'] == 'R' and
+                         self.OPERATORS[token]['precedence'] < self.OPERATORS[stack[-1]]['precedence']))):
+                    output.append(stack.pop())
+                stack.append(token)
+            elif token == '(':
+                stack.append(token)
+            elif token == ')':
+                found_paren = False
+                while stack:
+                    top = stack.pop()
+                    if top == '(':
+                        found_paren = True
+                        break
+                    else:
+                        output.append(top)
+                if not found_paren:
+                    # This case should already be checked by _validate_parentheses
+                    raise UnbalancedParenthesesError("Mismatched parentheses during conversion.")
+            else:
+                raise InvalidExpressionError(f"Unknown token '{token}'.")
+
+        while stack:
+            top = stack.pop()
+            if top in ('(', ')'):
+                raise UnbalancedParenthesesError("Mismatched parentheses during output formation.")
+            output.append(top)
+        return output
+
+    def _evaluate_rpn(self, rpn: List[str]) -> float:
+        """
+        Evaluates an RPN (postfix) expression.
+
+        Args:
+            rpn (List[str]): RPN token list
+
+        Returns:
+            float: Evaluation result
+
+        Raises:
+            InvalidExpressionError, DivisionByZeroError
+        """
+        stack: List[float] = []
+        for token in rpn:
+            if self._is_number(token):
+                stack.append(float(token))
+            elif token in self.OPERATORS:
+                try:
+                    b = stack.pop()
+                    a = stack.pop()
+                except IndexError:
+                    raise InvalidExpressionError("Insufficient operands for operation.")
+                result = self._apply_operator(a, b, token)
+                stack.append(result)
+            else:
+                raise InvalidExpressionError(f"Unknown token in RPN '{token}'.")
+        if len(stack) != 1:
+            raise InvalidExpressionError("Invalid expression. Too many operands.")
+        return stack[0]
+
+    def _apply_operator(self, a: float, b: float, op: str) -> float:
+        """
+        Applies arithmetic operation.
+
+        Args:
+            a, b (float): Operands
+            op (str): Operator
+
+        Returns:
+            float: Result
+
+        Raises:
+            DivisionByZeroError
+        """
+        if op == '+':
+            return a + b
+        elif op == '-':
+            return a - b
+        elif op == '*':
+            return a * b
+        elif op == '/':
+            if abs(b) < 1e-12:  # Floating point safety margin
+                raise DivisionByZeroError("Division by zero.")
+            return a / b
+        else:
+            # Should not reach here due to prior validation
+            raise InvalidExpressionError(f"Unknown operator '{op}'.")
+
+    def _is_number(self, token: str) -> bool:
+        """Check if the token is a number (int/float), supports negative."""
+        try:
+            float(token)
+            return True
+        except ValueError:
+            return False
+
+
+# Example usage and simple test cases (for demonstration purposes)
+if __name__ == "__main__":
+    calc = Calculator()
+    expressions = [
+        "1 + 2 * 3",                  # 7.0
+        "2 * (3 + 4)",                # 14.0
+        "-5 + 2 * (-1)",              # -7.0
+        "-5.5 * (2 + 3.1) / -1",      # 28.05
+        "(-2.5 + 10) / 3",            # 2.5
+        "(((((3)))))",                # 3.0
+        "2 + 3 * 4 - 8 / 2",          # 8.0
+        "3 / 0",                      # DivisionByZeroError
+        "1 + (2 * 3",                 # UnbalancedParenthesesError
+        "1 + 2 ** 3",                 # InvalidCharacterError
+        "abc + 1",                    # InvalidCharacterError
+    ]
+
+    for expr in expressions:
+        print(f"Expression: {expr}")
+        try:
+            result = calc.calculate(expr)
+            print(f"Result: {result}")
+        except CalculatorError as e:
+            print(f"Error: {e}")
+        print("-" * 40)

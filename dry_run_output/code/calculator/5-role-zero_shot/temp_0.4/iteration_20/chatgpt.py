@@ -1,0 +1,271 @@
+
+import re
+from typing import List, Union
+
+class Calculator:
+    """
+    Arithmetic calculator supporting +, -, *, /, parentheses, negative numbers,
+    floats and integers. Provides safe evaluation and robust input validation.
+    """
+
+    def __init__(self):
+        # Supported operators and their precedence (higher number = higher precedence)
+        self._operators = {
+            '+': (1, self._add),
+            '-': (1, self._sub),
+            '*': (2, self._mul),
+            '/': (2, self._div)
+        }
+
+        # Pattern to match numbers (integer or float), operators and parentheses
+        self._token_pattern = re.compile(
+            r'\s*('
+            r'(?P<number>[+-]?(\d+(\.\d*)?|\.\d+))'
+            r'|(?P<op>[\+\-\*/])'
+            r'|(?P<paren>[()])'
+            r')\s*'
+        )
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates an arithmetic expression and returns the result as a float.
+
+        Args:
+            expression (str): The arithmetic expression to evaluate.
+
+        Returns:
+            float: The result of the expression.
+
+        Raises:
+            ValueError: If the expression is invalid or contains unbalanced parentheses.
+            ZeroDivisionError: If division by zero occurs.
+        """
+        tokens = self._tokenize(expression)
+        rpn = self._to_rpn(tokens)
+        result = self._evaluate_rpn(rpn)
+        return result
+
+    # ========== Tokenization Stage ==========
+
+    def _tokenize(self, expression: str) -> List[str]:
+        """
+        Converts expression into list of tokens with validation.
+
+        Args:
+            expression (str): Input arithmetic expression.
+
+        Returns:
+            List[str]: List of tokens.
+        
+        Raises:
+            ValueError: For invalid characters or malformed numbers.
+        """
+        tokens = []
+        pos = 0
+        last_token = None
+        while pos < len(expression):
+            match = self._token_pattern.match(expression, pos)
+            if not match:
+                raise ValueError(f"Invalid character at position {pos}: '{expression[pos]}'")
+            if match.group('number'):
+                # Validate number format
+                num_token = match.group('number')
+                # Support negative numbers: only as first token or after '(' or operator
+                if num_token.startswith('-') and (
+                        last_token not in (None, '(', '+', '-', '*', '/')):
+                    raise ValueError(f"Invalid placement of negative number at position {pos}")
+                tokens.append(num_token)
+                last_token = 'number'
+            elif match.group('op'):
+                tokens.append(match.group('op'))
+                last_token = match.group('op')
+            elif match.group('paren'):
+                tokens.append(match.group('paren'))
+                last_token = match.group('paren')
+            pos = match.end()
+        self._validate_parentheses(tokens)
+        self._validate_tokens(tokens)
+        return tokens
+
+    def _validate_parentheses(self, tokens: List[str]) -> None:
+        """
+        Validate parentheses balance.
+
+        Args:
+            tokens (List[str]): List of tokens.
+
+        Raises:
+            ValueError: If parentheses are not balanced.
+        """
+        depth = 0
+        for token in tokens:
+            if token == '(':
+                depth += 1
+            elif token == ')':
+                depth -= 1
+                if depth < 0:
+                    raise ValueError("Unbalanced parentheses: too many ')'.")
+        if depth != 0:
+            raise ValueError("Unbalanced parentheses: too many '('.")
+    
+    def _validate_tokens(self, tokens: List[str]) -> None:
+        """
+        Additional validation: check for invalid operator sequences.
+
+        Args:
+            tokens (List[str]): List of tokens.
+
+        Raises:
+            ValueError: If operators/parentheses have invalid sequence.
+        """
+        if not tokens:
+            raise ValueError("Empty expression.")
+        valid_prev = {'number', ')'}
+        valid_next = {'number', '('}
+        last = None
+        for idx, token in enumerate(tokens):
+            if token in self._operators:
+                if idx == 0 or tokens[idx - 1] in self._operators and tokens[idx - 1] != ')':
+                    if not (token == '-' and (
+                        idx == 0 or tokens[idx - 1] in ('(', '+', '-', '*', '/'))):
+                        raise ValueError("Invalid operator sequence.")
+            elif token == '(':
+                if last == 'number' or last == ')':
+                    raise ValueError("Missing operator before '('.")
+            elif token == ')':
+                if last in self._operators or last is None or last == '(':
+                    raise ValueError("Nothing between '(' and ')'.")
+            last = (
+                "number" if self._is_number(token) else token
+            )
+
+    # ========== Shunting Yard Algorithm: Infix to RPN ==========
+
+    def _to_rpn(self, tokens: List[str]) -> List[str]:
+        """
+        Converts infix tokens to reverse polish notation (RPN).
+
+        Args:
+            tokens (List[str]): Infix tokens.
+
+        Returns:
+            List[str]: Tokens in RPN.
+        """
+        output = []
+        stack = []
+        for token in tokens:
+            if self._is_number(token):
+                output.append(token)
+            elif token in self._operators:
+                while (stack and stack[-1] in self._operators and
+                       self._operators[token][0] <= self._operators[stack[-1]][0]):
+                    output.append(stack.pop())
+                stack.append(token)
+            elif token == '(':
+                stack.append(token)
+            elif token == ')':
+                while stack and stack[-1] != '(':
+                    output.append(stack.pop())
+                if not stack:
+                    raise ValueError("Unbalanced parentheses (during RPN conversion).")
+                stack.pop()  # Remove '('
+        while stack:
+            if stack[-1] in ('(', ')'):
+                raise ValueError("Unbalanced parentheses (in stack after conversion).")
+            output.append(stack.pop())
+        return output
+
+    # ========== RPN Evaluation ==========
+
+    def _evaluate_rpn(self, tokens: List[str]) -> float:
+        """
+        Evaluate RPN expression.
+
+        Args:
+            tokens (List[str]): RPN tokens.
+
+        Returns:
+            float: The result.
+
+        Raises:
+            ZeroDivisionError: If division by zero occurs.
+            ValueError: If the expression has an invalid structure.
+        """
+        stack: List[float] = []
+        for token in tokens:
+            if self._is_number(token):
+                stack.append(float(token))
+            elif token in self._operators:
+                try:
+                    b = stack.pop()
+                    a = stack.pop()
+                except IndexError:
+                    raise ValueError("Malformed expression.")
+                result = self._operators[token][1](a, b)
+                stack.append(result)
+            else:
+                raise ValueError(f"Unknown token '{token}' in RPN.")
+        if len(stack) != 1:
+            raise ValueError("Malformed expression (stack imbalance).")
+        return stack[0]
+
+    # ========== Operator Methods ==========
+
+    def _add(self, a: float, b: float) -> float:
+        return a + b
+
+    def _sub(self, a: float, b: float) -> float:
+        return a - b
+
+    def _mul(self, a: float, b: float) -> float:
+        return a * b
+
+    def _div(self, a: float, b: float) -> float:
+        if b == 0:
+            raise ZeroDivisionError("Division by zero.")
+        return a / b
+
+    # ========== Utility ==========
+
+    def _is_number(self, token: str) -> bool:
+        """
+        Determines if a string is a valid number.
+
+        Args:
+            token (str): The token to check.
+
+        Returns:
+            bool: True if token is a number, False otherwise.
+        """
+        try:
+            float(token)
+            return True
+        except ValueError:
+            return False
+
+# =============================
+# Example usage and test block
+# =============================
+
+if __name__ == "__main__":
+    calc = Calculator()
+    expressions = [
+        "3 + 4 * 2",
+        "(1 + 2) * (3 + 4)",
+        "7 - 3 * (2 + 1)",
+        "10 / 2 + 3.5",
+        "-1 + 2",
+        "4 * -2.5 + 10",
+        "((2+3)*5)/-2",
+        "--3+8",
+        "2 / 0",
+        "5 + (4 * 3",
+        "3 + * 2",
+        "abc + 1"
+    ]
+    for expr in expressions:
+        try:
+            res = calc.calculate(expr)
+            print(f"{expr} = {res}")
+        except (ValueError, ZeroDivisionError) as e:
+            print(f"{expr} -> Error: {e}")

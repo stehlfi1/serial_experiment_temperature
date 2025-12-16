@@ -1,0 +1,264 @@
+
+"""
+A high-quality, maintainable implementation of a console-based calculator.
+
+This module provides a Calculator class that can parse and evaluate arithmetic
+expressions from strings, adhering to the ISO/IEC 25010 standard for
+software quality.
+"""
+
+import re
+from typing import List, Union
+
+class Calculator:
+    """
+    A robust arithmetic expression evaluator.
+
+    This class provides functionality to safely parse and compute the result of
+    arithmetic expressions provided as strings. It supports addition,
+    subtraction, multiplication, division, parentheses, and correct operator
+    precedence.
+
+    The evaluation is performed using the Shunting-yard algorithm to convert
+    the infix expression to Reverse Polish Notation (RPN), which is then
+
+    evaluated. This approach is efficient and avoids the security risks
+    associated with using `eval()`.
+    
+    Attributes:
+        _OPERATORS (set): A set of supported operators.
+        _PRECEDENCE (dict): A mapping of operators to their precedence levels.
+    """
+
+    # --- Class Attributes for Configuration [Modularity, Maintainability] ---
+    _OPERATORS = {'+', '-', '*', '/'}
+    _PRECEDENCE = {'+': 1, '-': 1, '*': 2, '/': 2}
+
+    def _tokenize(self, expression: str) -> List[str]:
+        """
+        Converts an expression string into a list of tokens.
+
+        This private method handles numbers (including floating-point and
+        negatives), operators, and parentheses. It correctly identifies unary
+        minus operators (e.g., in '-5' or '3 * -2').
+
+        Args:
+            expression: The string expression to tokenize.
+
+        Returns:
+            A list of tokens (numbers as strings, operators, parentheses).
+
+        Raises:
+            ValueError: If the expression contains invalid characters.
+        """
+        # --- Whitespace normalization [Readability, Correctness] ---
+        expression = expression.replace(" ", "")
+        if not expression:
+            return []
+            
+        # --- Regex for tokenizing numbers and operators [Correctness, Performance] ---
+        # This pattern captures:
+        # 1. Floating point or integer numbers: \d+\.?\d*
+        # 2. Operators and parentheses: [+\-*/()]
+        token_regex = re.compile(r"(\d+\.?\d*|[+\-*/()])")
+        tokens = token_regex.findall(expression)
+        
+        # --- Validation: Check if all parts of the string were tokenized [Safety] ---
+        if "".join(tokens) != expression:
+            raise ValueError("Expression contains invalid characters")
+
+        # --- Handle unary minus [Correctness] ---
+        # A '-' is unary if it is the first token, or if it follows an operator 
+        # or an opening parenthesis.
+        processed_tokens = []
+        for i, token in enumerate(tokens):
+            if token == '-' and (i == 0 or tokens[i-1] in self._OPERATORS or tokens[i-1] == '('):
+                # This is a unary minus. Combine it with the next number.
+                if i + 1 < len(tokens) and re.match(r"\d+\.?\d*", tokens[i+1]):
+                    # The next token is a number, so prepend the '-'
+                    # We will skip this token in the next iteration.
+                    pass 
+                else:
+                    raise ValueError(f"Invalid use of unary minus before '{tokens[i+1]}'")
+            elif i > 0 and tokens[i-1] == '-' and (i == 1 or tokens[i-2] in self._OPERATORS or tokens[i-2] == '('):
+                # This token is a number following a unary minus.
+                processed_tokens.append('-' + token)
+            else:
+                processed_tokens.append(token)
+        
+        return processed_tokens
+
+    def _to_rpn(self, tokens: List[str]) -> List[Union[float, str]]:
+        """
+        Converts a list of infix tokens to Reverse Polish Notation (RPN).
+
+        This method implements the Shunting-yard algorithm.
+
+        Args:
+            tokens: A list of tokens from the _tokenize method.
+
+        Returns:
+            A list representing the RPN expression. Numbers are converted to
+            floats, operators/parentheses remain strings.
+
+        Raises:
+            ValueError: If the expression has mismatched parentheses.
+        """
+        output_queue: List[Union[float, str]] = []
+        operator_stack: List[str] = []
+
+        for token in tokens:
+            try:
+                # --- If token is a number, add to output queue [Correctness] ---
+                output_queue.append(float(token))
+            except ValueError:
+                if token in self._OPERATORS:
+                    # --- If token is an operator [Correctness] ---
+                    while (operator_stack and 
+                           operator_stack[-1] in self._OPERATORS and
+                           self._PRECEDENCE.get(operator_stack[-1], 0) >= self._PRECEDENCE.get(token, 0)):
+                        output_queue.append(operator_stack.pop())
+                    operator_stack.append(token)
+                elif token == '(':
+                    operator_stack.append(token)
+                elif token == ')':
+                    # --- Pop operators until a matching '(' is found [Correctness] ---
+                    while operator_stack and operator_stack[-1] != '(':
+                        output_queue.append(operator_stack.pop())
+                    
+                    if not operator_stack or operator_stack[-1] != '(':
+                        raise ValueError("Mismatched parentheses in expression")
+                    operator_stack.pop() # Discard the '('
+                else:
+                    # This case should ideally not be reached due to tokenizer validation
+                    raise ValueError(f"Invalid token: {token}")
+
+        # --- Pop any remaining operators from the stack to the output queue [Correctness] ---
+        while operator_stack:
+            operator = operator_stack.pop()
+            if operator == '(':
+                raise ValueError("Mismatched parentheses in expression")
+            output_queue.append(operator)
+
+        return output_queue
+
+    def _evaluate_rpn(self, rpn_tokens: List[Union[float, str]]) -> float:
+        """
+        Evaluates an expression in Reverse Polish Notation (RPN).
+
+        Args:
+            rpn_tokens: A list representing the RPN expression.
+
+        Returns:
+            The final calculated result as a float.
+
+        Raises:
+            ValueError: If the expression is malformed (e.g., not enough operands).
+            ZeroDivisionError: If division by zero is attempted.
+        """
+        value_stack: List[float] = []
+
+        for token in rpn_tokens:
+            if isinstance(token, float):
+                value_stack.append(token)
+            elif token in self._OPERATORS:
+                if len(value_stack) < 2:
+                    raise ValueError("Invalid expression: insufficient operands for operator")
+                
+                # --- Pop operands and perform operation [Correctness, Safety] ---
+                operand2 = value_stack.pop()
+                operand1 = value_stack.pop()
+
+                if token == '+':
+                    value_stack.append(operand1 + operand2)
+                elif token == '-':
+                    value_stack.append(operand1 - operand2)
+                elif token == '*':
+                    value_stack.append(operand1 * operand2)
+                elif token == '/':
+                    if operand2 == 0:
+                        raise ZeroDivisionError("Division by zero is not allowed")
+                    value_stack.append(operand1 / operand2)
+
+        if len(value_stack) != 1:
+            raise ValueError("Invalid expression: malformed structure")
+
+        return value_stack[0]
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates a mathematical expression from a string.
+
+        This is the main public interface for the Calculator class. It orchestrates
+        the tokenizing, conversion to RPN, and final evaluation. It also
+        catches and handles all expected errors gracefully.
+
+        Args:
+            expression: The arithmetic expression string to evaluate.
+                         Example: "3 + 5 * (2 - 8 / 4)"
+
+        Returns:
+            The result of the calculation as a float.
+
+        Raises:
+            ValueError: For invalid input syntax, mismatched parentheses,
+                        or invalid characters.
+            ZeroDivisionError: For division by zero.
+        """
+        # --- Orchestration of the evaluation process [Modularity] ---
+        tokens = self._tokenize(expression)
+        rpn_expression = self._to_rpn(tokens)
+        result = self._evaluate_rpn(rpn_expression)
+
+        return result
+
+# --- Example Usage and Demonstration [Testability, Usability] ---
+if __name__ == "__main__":
+    calculator = Calculator()
+    
+    # --- A suite of test cases to demonstrate correctness ---
+    test_expressions = {
+        "Simple addition": "5 + 3",
+        "Simple subtraction": "10 - 4",
+        "Simple multiplication": "6 * 7",
+        "Simple division": "20 / 4",
+        "Operator precedence": "3 + 5 * 2",
+        "Parentheses": "(3 + 5) * 2",
+        "Floating point numbers": "2.5 * 4 + 1.5",
+        "Negative numbers": "-5 + 10",
+        "Unary minus with operators": "10 * -2",
+        "Complex expression": "100 / ( 2 + 3 * ( 8 - 6 ) ) - 5",
+        "Nested parentheses": "((10 + 5) * 2) / (12 - 9)",
+        "Invalid character error": "5 & 3",
+        "Mismatched parenthesis error 1": "(3 + 5 * 2",
+        "Mismatched parenthesis error 2": "3 + 5) * 2",
+        "Division by zero error": "10 / (5 - 5)",
+        "Invalid syntax error": "5 * + 3",
+    }
+    
+    print("--- Calculator Demonstration ---")
+    for description, expr in test_expressions.items():
+        try:
+            result = calculator.calculate(expr)
+            print(f"{description:<28} | Expression: {expr:<35} | Result: {result}")
+        except (ValueError, ZeroDivisionError) as e:
+            print(f"{description:<28} | Expression: {expr:<35} | Error: {e}")
+
+    # --- Interactive console loop ---
+    print("\n--- Interactive Calculator ---")
+    print("Enter 'exit' or 'quit' to end the session.")
+    while True:
+        try:
+            user_input = input("Calculate: ")
+            if user_input.lower() in ['exit', 'quit']:
+                print("Exiting calculator.")
+                break
+            
+            result = calculator.calculate(user_input)
+            print(f"Result: {result}")
+
+        except (ValueError, ZeroDivisionError) as e:
+            print(f"Error: {e}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+

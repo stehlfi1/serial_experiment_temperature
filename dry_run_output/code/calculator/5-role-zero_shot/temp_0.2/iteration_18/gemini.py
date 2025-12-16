@@ -1,0 +1,252 @@
+
+import operator
+import re
+from typing import List, Dict, Union, Callable
+
+# Type alias for operator properties for better readability
+OperatorProperties = Dict[str, Union[int, Callable[[float, float], float]]]
+
+
+class Calculator:
+    """
+    A console-based arithmetic calculator that evaluates string expressions.
+
+    This class implements a robust calculator using the Shunting-yard algorithm
+    to convert infix expressions to postfix (RPN) and then evaluates the result.
+    It adheres to ISO/IEC 25010 principles, focusing on correctness,
+    efficiency, security, and maintainability.
+
+    Attributes:
+        operators (Dict[str, OperatorProperties]): A dictionary mapping operator
+            symbols to their properties, including precedence and the
+            corresponding function from the `operator` module.
+    """
+
+    def __init__(self):
+        """
+        Initializes the Calculator, defining the supported operators and their
+        properties. This modular design allows for easy extension with new
+        operators.
+        """
+        self.operators: Dict[str, OperatorProperties] = {
+            '+': {'precedence': 1, 'func': operator.add},
+            '-': {'precedence': 1, 'func': operator.sub},
+            '*': {'precedence': 2, 'func': operator.mul},
+            '/': {'precedence': 2, 'func': operator.truediv},
+            # 'u-' is a special token for the unary minus operator
+            'u-': {'precedence': 3, 'func': operator.neg},
+        }
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates a mathematical expression provided as a string.
+
+        This is the main public interface of the calculator. It orchestrates
+        the tokenization, parsing (infix to RPN), and evaluation of the
+        expression.
+
+        Args:
+            expression: The mathematical expression string to evaluate.
+                        e.g., "3 + 4 * (2 - 1)"
+
+        Returns:
+            The result of the calculation as a float.
+
+        Raises:
+            ValueError: If the expression is invalid (e.g., mismatched
+                        parentheses, invalid characters, malformed expression).
+            ZeroDivisionError: If the expression contains a division by zero.
+        """
+        try:
+            tokens = self._tokenize(expression)
+            rpn_tokens = self._to_rpn(tokens)
+            result = self._evaluate_rpn(rpn_tokens)
+            return result
+        except (ValueError, ZeroDivisionError) as e:
+            # Re-raise exceptions to allow the caller to handle them.
+            # This maintains a clean and predictable interface.
+            raise e
+        except Exception:
+            # Catch any other unexpected errors during processing
+            raise ValueError("Invalid or malformed expression")
+
+    def _tokenize(self, expression: str) -> List[str]:
+        """
+        Converts the input string into a list of tokens (numbers, operators).
+
+        This method uses regular expressions to split the string into its
+        constituent parts. It also performs a crucial pre-processing step
+        to distinguish between binary subtraction and unary negation,
+        representing the latter with a special 'u-' token.
+
+        Args:
+            expression: The raw expression string.
+
+        Returns:
+            A list of string tokens.
+
+        Raises:
+            ValueError: If the expression contains invalid characters.
+        """
+        # Remove all whitespace for easier parsing
+        expression = expression.replace(" ", "")
+
+        # The regex captures numbers (int/float) and operators/parentheses.
+        token_regex = re.compile(r"(\d+\.?\d*|[\+\-\*\/\(\)])")
+        tokens = token_regex.findall(expression)
+
+        # Verify that the tokens constitute the entire expression string.
+        # If not, there were invalid characters.
+        if "".join(tokens) != expression:
+            raise ValueError("Expression contains invalid characters")
+
+        # Differentiate unary minus from binary subtraction
+        processed_tokens = []
+        for i, token in enumerate(tokens):
+            if token == '-':
+                # A minus sign is unary if:
+                # 1. It's the first token.
+                # 2. It follows an operator.
+                # 3. It follows an opening parenthesis.
+                is_first_token = (i == 0)
+                preceded_by_operator = (i > 0 and tokens[i-1] in self.operators)
+                preceded_by_open_paren = (i > 0 and tokens[i-1] == '(')
+
+                if is_first_token or preceded_by_operator or preceded_by_open_paren:
+                    processed_tokens.append('u-')
+                else:
+                    processed_tokens.append('-')
+            else:
+                processed_tokens.append(token)
+
+        return processed_tokens
+
+    def _to_rpn(self, tokens: List[str]) -> List[str]:
+        """
+        Converts a list of infix tokens to Reverse Polish Notation (RPN).
+
+        This method implements the Shunting-yard algorithm to correctly handle
+        operator precedence and associativity.
+
+        Args:
+            tokens: A list of tokens from the _tokenize method.
+
+        Returns:
+            A list of tokens in RPN order.
+
+        Raises:
+            ValueError: If the expression has mismatched parentheses.
+        """
+        output_queue: List[str] = []
+        operator_stack: List[str] = []
+
+        for token in tokens:
+            if token.replace('.', '', 1).replace('-', '', 1).isdigit():
+                output_queue.append(token)
+            elif token in self.operators:
+                op1_props = self.operators[token]
+                while (operator_stack and operator_stack[-1] in self.operators and
+                       self.operators[operator_stack[-1]]['precedence'] >= op1_props['precedence']):
+                    output_queue.append(operator_stack.pop())
+                operator_stack.append(token)
+            elif token == '(':
+                operator_stack.append(token)
+            elif token == ')':
+                while operator_stack and operator_stack[-1] != '(':
+                    output_queue.append(operator_stack.pop())
+
+                if not operator_stack or operator_stack[-1] != '(':
+                    raise ValueError("Mismatched parentheses in expression")
+                operator_stack.pop()  # Discard the '('
+
+        # Pop any remaining operators from the stack to the output queue
+        while operator_stack:
+            op = operator_stack.pop()
+            if op == '(':
+                raise ValueError("Mismatched parentheses in expression")
+            output_queue.append(op)
+
+        return output_queue
+
+    def _evaluate_rpn(self, rpn_tokens: List[str]) -> float:
+        """
+        Evaluates a token list in Reverse Polish Notation (RPN).
+
+        Args:
+            rpn_tokens: A list of tokens in RPN order.
+
+        Returns:
+            The final calculated result as a float.
+
+        Raises:
+            ValueError: If the expression is malformed (e.g., not enough operands).
+            ZeroDivisionError: If division by zero is attempted.
+        """
+        value_stack: List[float] = []
+
+        for token in rpn_tokens:
+            if token.replace('.', '', 1).replace('-', '', 1).isdigit():
+                value_stack.append(float(token))
+            elif token in self.operators:
+                op_props = self.operators[token]
+                # Unary operators take one operand
+                if token == 'u-':
+                    if not value_stack:
+                        raise ValueError("Invalid expression: Not enough operands for unary minus")
+                    operand = value_stack.pop()
+                    result = op_props['func'](operand)
+                    value_stack.append(result)
+                # Binary operators take two operands
+                else:
+                    if len(value_stack) < 2:
+                        raise ValueError(f"Invalid expression: Not enough operands for '{token}'")
+                    op2 = value_stack.pop()
+                    op1 = value_stack.pop()
+
+                    if token == '/' and op2 == 0:
+                        raise ZeroDivisionError("Division by zero is not allowed")
+
+                    result = op_props['func'](op1, op2)
+                    value_stack.append(result)
+
+        if len(value_stack) != 1:
+            raise ValueError("Invalid expression: Too many values left after evaluation")
+
+        return value_stack[0]
+
+
+# --- Main execution block for demonstration and simple testing ---
+if __name__ == "__main__":
+    # This block demonstrates the usage of the Calculator class and serves as
+    # a basic test suite, covering various aspects of the functionality.
+    # It enhances testability and provides a clear example of the API.
+
+    calculator = Calculator()
+
+    test_expressions = {
+        "Simple addition": "5 + 3",
+        "Simple subtraction": "10 - 4",
+        "Simple multiplication": "6 * 7",
+        "Simple division": "20 / 5",
+        "Operator precedence": "2 + 3 * 4",
+        "Parentheses": "(2 + 3) * 4",
+        "Floating point numbers": "1.5 + 2.5 * 4",
+        "Negative numbers (unary)": "-5 + 10",
+        "Negative numbers (binary)": "5 - -3",
+        "Complex expression": "10 + (4 * (5 - 3)) / 2 - 1",
+        "All operators": "10 / 2 * (10 - 5) + -3",
+        "Division by zero": "10 / 0",
+        "Invalid character": "5 # 4",
+        "Mismatched parentheses 1": "(5 + 3",
+        "Mismatched parentheses 2": "5 + 3)",
+        "Malformed expression": "5 * + 3",
+    }
+
+    print("--- Calculator Demonstration ---")
+    for name, expr in test_expressions.items():
+        try:
+            result = calculator.calculate(expr)
+            print(f"'{expr}' = {result:<15} ({name})")
+        except (ValueError, ZeroDivisionError) as e:
+            print(f"'{expr}' -> ERROR: {e} ({name})")
+

@@ -1,0 +1,164 @@
+```python
+"""
+ascii_art.py
+-------------
+High-quality, maintainable Python module for rendering 2D ASCII art shapes in the console.
+
+Meets functional and implementation requirements as per the ISO/IEC 25010 standard for software quality:
+- Functional suitability
+- Performance Efficiency
+- Usability
+- Reliability
+- Security (safe input handling)
+- Maintainability
+- Portability
+"""
+
+from typing import Any
+
+
+class AsciiArt:
+    """
+    AsciiArt
+    --------
+    Provides API for rendering ASCII art of 2D shapes to string.
+    """
+
+    def _validate_symbol(self, symbol: str) -> None:
+        """
+        Validates that the symbol is a single printable non-whitespace character.
+        Raises ValueError on invalid input.
+        """
+        if not isinstance(symbol, str):
+            raise TypeError("Symbol must be a string")
+        if len(symbol) != 1:
+            raise ValueError("Symbol must be a single character.")
+        if symbol.isspace():
+            raise ValueError("Symbol cannot be a whitespace character.")
+        if not symbol.isprintable():
+            raise ValueError("Symbol must be printable.")
+
+    def _validate_dimensions(self, **kwargs: int) -> None:
+        """
+        Validates provided dimensions (width, height) are positive integers.
+        Raises ValueError on invalid input.
+        """
+        for key, value in kwargs.items():
+            if not isinstance(value, int):
+                raise TypeError(f"{key.capitalize()} must be an integer.")
+            if value < 1:
+                raise ValueError(f"{key.capitalize()} must be a positive integer.")
+
+    def draw_square(self, width: int, symbol: str) -> str:
+        """
+        Draws a filled square of given width using the chosen symbol.
+        :param width: Length of one side of the square (must be > 0)
+        :param symbol: Printable, non-whitespace single character
+        :return: Multi-line string representing the square
+        """
+        self._validate_dimensions(width=width)
+        self._validate_symbol(symbol)
+        line = symbol * width
+        result = '\n'.join([line for _ in range(width)])
+        return result
+
+    def draw_rectangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled rectangle of given width and height.
+        :param width: Width of rectangle (must be > 0)
+        :param height: Height of rectangle (must be > 0)
+        :param symbol: Printable, non-whitespace single character
+        :return: Multi-line string representing the rectangle
+        """
+        self._validate_dimensions(width=width, height=height)
+        self._validate_symbol(symbol)
+        line = symbol * width
+        result = '\n'.join([line for _ in range(height)])
+        return result
+
+    def draw_parallelogram(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled parallelogram.
+        Each row is shifted right by one space from the previous row.
+        :param width: Width of parallelogram (number of symbols per row)
+        :param height: Height of parallelogram (number of rows)
+        :param symbol: Printable, non-whitespace single character
+        :return: Multi-line string representing the parallelogram
+        """
+        self._validate_dimensions(width=width, height=height)
+        self._validate_symbol(symbol)
+        lines = []
+        for row in range(height):
+            # Each row begins with a number of spaces equal to row index
+            line = (' ' * row) + (symbol * width)
+            lines.append(line)
+        return '\n'.join(lines)
+
+    def draw_triangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled right-angled triangle (top-left origin). Grows rightward,
+        with the right edge slanting diagonally to the bottom-right.
+        Each row i (from 0 to height-1) has
+        ceil((i+1)/height * width) symbols (minimum one symbol per row, maximum 'width' at the last row).
+        :param width: Base width (number of symbols at the bottom)
+        :param height: Height of triangle (number of rows)
+        :param symbol: Printable, non-whitespace single character
+        :return: Multi-line string representing the triangle
+        """
+        from math import ceil
+
+        self._validate_dimensions(width=width, height=height)
+        self._validate_symbol(symbol)
+        lines = []
+        for row in range(height):
+            n_symbols = max(1, ceil((row + 1) * width / height))
+            line = symbol * n_symbols
+            lines.append(line)
+        return '\n'.join(lines)
+
+    def draw_pyramid(self, height: int, symbol: str) -> str:
+        """
+        Draws a filled symmetrical pyramid of given height.
+        Each row is centered; the widest row is at the base.
+        :param height: Number of rows in the pyramid (must be > 0)
+        :param symbol: Printable, non-whitespace single character
+        :return: Multi-line string representing the pyramid
+        """
+        self._validate_dimensions(height=height)
+        self._validate_symbol(symbol)
+        lines = []
+        # The base width is 2 * height - 1
+        base_width = 2 * height - 1
+        for row in range(height):
+            n_symbols = 2 * row + 1
+            n_spaces = height - row - 1
+            line = (' ' * n_spaces) + (symbol * n_symbols) + (' ' * n_spaces)
+            lines.append(line)
+        return '\n'.join(lines)
+
+
+# Example test block (not run on import)
+if __name__ == "__main__":
+    art = AsciiArt()
+
+    # Test shapes with sample parameters
+    try:
+        print("SQUARE:")
+        print(art.draw_square(5, "#"))
+        print("\nRECTANGLE:")
+        print(art.draw_rectangle(8, 3, "*"))
+        print("\nPARALLELOGRAM:")
+        print(art.draw_parallelogram(6, 4, "+"))
+        print("\nTRIANGLE:")
+        print(art.draw_triangle(7, 5, "&"))
+        print("\nPYRAMID:")
+        print(art.draw_pyramid(5, "X"))
+    except (ValueError, TypeError) as err:
+        print(f"Error: {err}")
+```
+**Key Quality Notes:**
+- All parameters are strictly validated, with clear error messages and standard exception usage.
+- Each function returns a multi-line ASCII string, fully filled with the given symbol.
+- Easy to test—no side effects, CLI test block included.
+- Readable, modular, well-commented, and well-typed code.
+- The module/class layout, docstrings, and safe algorithms ensure maintainability, clarity, and fault tolerance per ISO/IEC 25010.

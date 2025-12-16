@@ -1,0 +1,156 @@
+
+"""
+ASCII Art Drawing Library
+========================
+
+Provides an AsciiArt class to generate common geometric shapes in ASCII using OOP.
+Implements input validation for ISO/IEC 25010 compliance (reliability, security, maintainability).
+"""
+
+class AsciiArt:
+    """
+    Provides methods to draw filled ASCII 2D shapes as strings.
+    """
+
+    def __validate_symbol(self, symbol: str) -> None:
+        """
+        Validates the symbol to be a single, printable, non-whitespace character.
+
+        Raises:
+            ValueError: If the symbol is not valid.
+        """
+        if not isinstance(symbol, str):
+            raise TypeError('Symbol must be a string.')
+        if len(symbol) != 1:
+            raise ValueError('Symbol must be a single character.')
+        if symbol.isspace():
+            raise ValueError('Symbol must not be whitespace.')
+        if not symbol.isprintable():
+            raise ValueError('Symbol must be a printable character.')
+
+    def __validate_positive_int(self, value: int, name: str) -> None:
+        """
+        Validates that the given value is a positive integer.
+
+        Raises:
+            ValueError: If the value is not a positive integer.
+        """
+        if not isinstance(value, int):
+            raise TypeError(f'{name} must be an integer.')
+        if value <= 0:
+            raise ValueError(f'{name} must be a positive integer (> 0).')
+
+    def draw_square(self, width: int, symbol: str) -> str:
+        """
+        Draws a filled square.
+
+        Args:
+            width (int): The width and height of the square (must be > 0).
+            symbol (str): The symbol to fill the square with (single printable character).
+
+        Returns:
+            str: Multi-line string representing the square.
+        """
+        self.__validate_positive_int(width, "width")
+        self.__validate_symbol(symbol)
+        line = symbol * width
+        return "\n".join([line for _ in range(width)])
+
+    def draw_rectangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled rectangle.
+
+        Args:
+            width (int): The width of the rectangle (must be > 0).
+            height (int): The height of the rectangle (must be > 0).
+            symbol (str): The symbol to fill the rectangle with (single printable character).
+
+        Returns:
+            str: Multi-line string representing the rectangle.
+        """
+        self.__validate_positive_int(width, "width")
+        self.__validate_positive_int(height, "height")
+        self.__validate_symbol(symbol)
+        line = symbol * width
+        return "\n".join([line for _ in range(height)])
+
+    def draw_parallelogram(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled parallelogram (shifts each row to the right by one).
+
+        Args:
+            width (int): The width of each row (must be > 0).
+            height (int): Number of rows (must be > 0).
+            symbol (str): The symbol to fill the parallelogram with.
+
+        Returns:
+            str: Multi-line string representing the parallelogram.
+        """
+        self.__validate_positive_int(width, "width")
+        self.__validate_positive_int(height, "height")
+        self.__validate_symbol(symbol)
+        lines = []
+        for row in range(height):
+            # Each row is shifted by row spaces
+            spaces = ' ' * row
+            art_row = spaces + (symbol * width)
+            lines.append(art_row)
+        return "\n".join(lines)
+
+    def draw_triangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled right-angled triangle growing to the right (top-left corner is right angle).
+
+        Args:
+            width (int): The maximum width at the base of the triangle (must be > 0).
+            height (int): The height of the triangle (must be > 0).
+            symbol (str): The symbol to fill the triangle with.
+
+        Returns:
+            str: Multi-line string representing the triangle.
+        """
+        self.__validate_positive_int(width, "width")
+        self.__validate_positive_int(height, "height")
+        self.__validate_symbol(symbol)
+        lines = []
+        for row in range(height):
+            # Distribute symbols so that the last row reaches exactly width
+            # Use integer division for lower rows, ensure final row is width
+            length = max(1, ((row + 1) * width) // height)
+            lines.append(symbol * length)
+        return "\n".join(lines)
+
+    def draw_pyramid(self, height: int, symbol: str) -> str:
+        """
+        Draws a symmetrical filled pyramid.
+
+        Args:
+            height (int): The height (number of rows) of the pyramid (must be > 0).
+            symbol (str): The symbol to fill the pyramid with.
+
+        Returns:
+            str: Multi-line string representing the pyramid.
+        """
+        self.__validate_positive_int(height, "height")
+        self.__validate_symbol(symbol)
+        lines = []
+        for row in range(height):
+            num_symbols = 2 * row + 1
+            num_spaces = height - row - 1
+            line = ' ' * num_spaces + symbol * num_symbols + ' ' * num_spaces
+            lines.append(line)
+        return "\n".join(lines)
+
+# ---- Example Usage / Testing ----
+if __name__ == "__main__":
+    art = AsciiArt()
+    print("Square (width=4, '*'):")
+    print(art.draw_square(4, '*'))
+    print("\nRectangle (width=6, height=3, '#'):")
+    print(art.draw_rectangle(6, 3, '#'))
+    print("\nParallelogram (width=5, height=4, '$'):")
+    print(art.draw_parallelogram(5, 4, '$'))
+    print("\nRight-angled Triangle (width=6, height=4, '@'):")
+    print(art.draw_triangle(6, 4, '@'))
+    print("\nPyramid (height=5, '+'):")
+    print(art.draw_pyramid(5, '+'))

@@ -1,0 +1,190 @@
+
+"""
+ascii_art.py
+
+A module providing a console-based 2D ASCII art application with object-oriented design.
+Adheres to ISO/IEC 25010 principles for code quality, maintainability, and safety.
+
+Author: [Your Name]
+Date: 2024-06-05
+"""
+
+import string
+
+class AsciiArt:
+    """
+    AsciiArt provides methods to generate several ASCII art shapes.
+    All methods validate input according to the interface requirements.
+    """
+
+    def draw_square(self, width: int, symbol: str) -> str:
+        """
+        Draws a square (width x width), filled with the specified symbol.
+
+        Args:
+            width (int): The width and height of the square (must be >= 1).
+            symbol (str): Single, non-whitespace printable character to fill the square.
+
+        Returns:
+            str: Multiline string representing the square.
+
+        Raises:
+            TypeError: If arguments are of invalid type.
+            ValueError: If arguments are out of allowed range or constraints.
+        """
+        self._validate_dimensions(width=width)
+        self._validate_symbol(symbol)
+        row = symbol * width
+        lines = [row for _ in range(width)]
+        return '\n'.join(lines)
+
+    def draw_rectangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a rectangle (width x height), filled with the specified symbol.
+
+        Args:
+            width (int): Number of columns (must be >= 1).
+            height (int): Number of rows (must be >= 1).
+            symbol (str): Single, non-whitespace printable character.
+
+        Returns:
+            str: Multiline string representing the rectangle.
+
+        Raises:
+            TypeError, ValueError: On invalid input.
+        """
+        self._validate_dimensions(width=width, height=height)
+        self._validate_symbol(symbol)
+        row = symbol * width
+        lines = [row for _ in range(height)]
+        return '\n'.join(lines)
+
+    def draw_parallelogram(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a filled parallelogram, growing diagonally to the right.
+
+        Args:
+            width (int): Number of columns (must be >= 1).
+            height (int): Number of rows (must be >= 1).
+            symbol (str): Single, non-whitespace printable character.
+
+        Returns:
+            str: Multiline string representing the parallelogram.
+
+        Raises:
+            TypeError, ValueError: On invalid input.
+        """
+        self._validate_dimensions(width=width, height=height)
+        self._validate_symbol(symbol)
+        lines = [
+            ' ' * i + symbol * width
+            for i in range(height)
+        ]
+        return '\n'.join(lines)
+
+    def draw_triangle(self, width: int, height: int, symbol: str) -> str:
+        """
+        Draws a right-angled triangle (top-left), filled with the symbol.
+        The base is of 'width', height is 'height' (must be >= 1).
+
+        Args:
+            width (int): Maximum width at the base (must be >= 1).
+            height (int): Number of rows (must be >= 1).
+            symbol (str): Single, non-whitespace printable character.
+
+        Returns:
+            str: Multiline string representing the triangle.
+
+        Raises:
+            TypeError, ValueError: On invalid input.
+        """
+        self._validate_dimensions(width=width, height=height)
+        self._validate_symbol(symbol)
+        # Calculate a ratio to increase width evenly up to base
+        # Ensure at least 1 symbol per row
+        lines = []
+        for i in range(height):
+            current_width = max(1, (width * (i + 1)) // height)
+            lines.append(symbol * current_width)
+        return '\n'.join(lines)
+
+    def draw_pyramid(self, height: int, symbol: str) -> str:
+        """
+        Draws a symmetrical pyramid, fully filled with the symbol.
+
+        Args:
+            height (int): Number of lines in the pyramid (must be >= 1).
+            symbol (str): Single, non-whitespace printable character.
+
+        Returns:
+            str: Multiline string representing the pyramid.
+
+        Raises:
+            TypeError, ValueError: On invalid input.
+        """
+        self._validate_dimensions(height=height)
+        self._validate_symbol(symbol)
+        width = 2 * height - 1  # The number of symbols at the base
+        lines = []
+        for i in range(height):
+            num_symbols = 2 * i + 1
+            num_spaces = (width - num_symbols) // 2
+            line = ' ' * num_spaces + symbol * num_symbols + ' ' * num_spaces
+            lines.append(line)
+        return '\n'.join(lines)
+
+    # ---------- Validation Utilities ----------
+
+    def _validate_symbol(self, symbol: str) -> None:
+        """
+        Validates that the symbol is a single, printable, non-whitespace character.
+
+        Args:
+            symbol (str): Symbol to validate.
+
+        Raises:
+            TypeError: If symbol is not a string.
+            ValueError: If symbol is not a single, printable, non-whitespace character.
+        """
+        if not isinstance(symbol, str):
+            raise TypeError("Symbol must be a string.")
+        if len(symbol) != 1:
+            raise ValueError("Symbol must be a single character.")
+        if symbol.isspace():
+            raise ValueError("Symbol cannot be a whitespace character.")
+        if symbol not in string.printable:
+            raise ValueError("Symbol must be a printable character.")
+
+    def _validate_dimensions(self, **kwargs) -> None:
+        """
+        Validates that all dimensions (width, height) in kwargs are positive integers >= 1.
+
+        Args:
+            kwargs: dimension_name=int pairs
+
+        Raises:
+            TypeError: If any provided dimension is not int.
+            ValueError: If any provided dimension is not >= 1.
+        """
+        for name, value in kwargs.items():
+            if not isinstance(value, int):
+                raise TypeError(f"{name.capitalize()} must be an integer.")
+            if value < 1:
+                raise ValueError(f"{name.capitalize()} must be >= 1.")
+
+
+# ------------- Optional: Simple Test Harness -------------
+
+if __name__ == "__main__":
+    art = AsciiArt()
+    # Demonstration & basic tests:
+    print("Square (5, '*'):\n")
+    print(art.draw_square(5, '*'))
+    print("\nRectangle (7x3, '#'):\n")
+    print(art.draw_rectangle(7, 3, '#'))
+    print("\nParallelogram (6x4, '@'):\n")
+    print(art.draw_parallelogram(6, 4, '@'))
+    print("\nTriangle (7x5, '&'):\n")
+    print(art.draw_triangle(7, 5, '&'))
+    print("\nPyramid (5, '$'):\n")
+    print(art.draw_pyramid(5, '$'))

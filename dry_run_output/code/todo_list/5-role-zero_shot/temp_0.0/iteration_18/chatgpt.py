@@ -1,0 +1,207 @@
+
+import threading
+
+
+class TaskValidationError(ValueError):
+    """Exception raised for task validation errors."""
+    pass
+
+
+class TaskNotFoundError(KeyError):
+    """Exception raised when a task with a given ID is not found."""
+    pass
+
+
+class TaskManager:
+    """
+    TaskManager manages tasks with add, remove, search, finish, get_all, and clear_all operations.
+    Tasks are stored in memory. Each task has:
+        - id: Unique integer ID
+        - task_name: Non-empty string
+        - task_description: Non-empty string
+        - is_finished: Boolean - True if the task is completed
+    """
+
+    def __init__(self):
+        """Initialize the in-memory task storage and ID counter."""
+        self._tasks = {}  # {id: {'id', 'task_name', 'task_description', 'is_finished'}}
+        self._id_counter = 1
+        self._lock = threading.Lock()  # Ensure thread safety
+
+    def add(self, task_name: str, task_description: str) -> int:
+        """
+        Adds a new task with the given name and description.
+        Returns the unique task ID.
+
+        Raises:
+            TaskValidationError: If name or description is empty.
+        """
+        name = (task_name or '').strip()
+        desc = (task_description or '').strip()
+        if not name:
+            raise TaskValidationError("Task name cannot be empty.")
+        if not desc:
+            raise TaskValidationError("Task description cannot be empty.")
+
+        with self._lock:
+            task_id = self._id_counter
+            self._tasks[task_id] = {
+                "id": task_id,
+                "task_name": name,
+                "task_description": desc,
+                "is_finished": False
+            }
+            self._id_counter += 1
+        return task_id
+
+    def remove(self, task_id: int) -> bool:
+        """
+        Removes the task with the given ID.
+        Returns True if removal was successful, False otherwise.
+
+        Raises:
+            TaskValidationError: If task_id is invalid.
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise TaskValidationError("Task ID must be a positive integer.")
+
+        with self._lock:
+            if task_id in self._tasks:
+                del self._tasks[task_id]
+                return True
+            return False
+
+    def search(self, task_term: str) -> list[dict]:
+        """
+        Searches tasks by case-insensitive term in name or description.
+        Returns a list of matching task dicts.
+
+        Raises:
+            TaskValidationError: If task_term is invalid.
+        """
+        term = (task_term or '').strip()
+        if not term:
+            raise TaskValidationError("Search term cannot be empty.")
+
+        term_lower = term.lower()
+        # For performance, use list comprehension.
+        return [
+            task.copy()
+            for task in self._tasks.values()
+            if term_lower in task["task_name"].lower() or term_lower in task["task_description"].lower()
+        ]
+
+    def finish(self, task_id: int) -> bool:
+        """
+        Marks task as finished by ID.
+        Returns True if the task was updated, False otherwise.
+
+        Raises:
+            TaskValidationError: If task_id is invalid.
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise TaskValidationError("Task ID must be a positive integer.")
+
+        with self._lock:
+            task = self._tasks.get(task_id)
+            if task:
+                if not task["is_finished"]:
+                    task["is_finished"] = True
+                return True
+            return False
+
+    def get_all(self) -> list[dict]:
+        """
+        Returns a list of all tasks (as dicts) in the format:
+        {id, task_name, task_description, is_finished}
+        """
+        # No modification; copying for safety.
+        return [task.copy() for task in self._tasks.values()]
+
+    def clear_all(self) -> bool:
+        """
+        Deletes all tasks from storage.
+        Returns True if tasks were present, False otherwise.
+        """
+        with self._lock:
+            if self._tasks:
+                self._tasks.clear()
+                return True
+            return False
+
+
+# ---------------------------
+# Console Interface Example Usage & Testing
+# ---------------------------
+def main():
+    """
+    Sample interactive session for the TaskManager.
+    To keep the code testable, put application logic under 'if __name__ == "__main__":'
+    """
+    tm = TaskManager()
+    menu = """
+    [1] Add a task
+    [2] Remove a task
+    [3] Mark a task as finished
+    [4] Search tasks
+    [5] List all tasks
+    [6] Clear all tasks
+    [7] Exit
+    """
+
+    def print_tasks(tasks):
+        if not tasks:
+            print("No tasks to display.")
+            return
+        print(f"{'ID':>3} | {'Finished':>8} | {'Name':<20} | Description")
+        print("-" * 60)
+        for t in tasks:
+            print(f"{t['id']:>3} | {str(t['is_finished']):>8} | {t['task_name']:<20} | {t['task_description']}")
+
+    while True:
+        print(menu)
+        try:
+            choice = input("Select an option: ").strip()
+            if choice == "1":
+                name = input("Enter task name: ")
+                desc = input("Enter task description: ")
+                task_id = tm.add(name, desc)
+                print(f"Task added with ID: {task_id}")
+            elif choice == "2":
+                tid = int(input("Enter Task ID to remove: "))
+                if tm.remove(tid):
+                    print("Task removed.")
+                else:
+                    print("Task not found.")
+            elif choice == "3":
+                tid = int(input("Enter Task ID to mark as finished: "))
+                if tm.finish(tid):
+                    print("Task marked as finished.")
+                else:
+                    print("Task not found.")
+            elif choice == "4":
+                term = input("Enter search term: ")
+                results = tm.search(term)
+                print_tasks(results)
+            elif choice == "5":
+                print_tasks(tm.get_all())
+            elif choice == "6":
+                if tm.clear_all():
+                    print("All tasks cleared.")
+                else:
+                    print("No tasks to clear.")
+            elif choice == "7":
+                print("Exiting.")
+                break
+            else:
+                print("Invalid option. Please enter a number 1-7.")
+        except TaskValidationError as ve:
+            print(f"Validation error: {ve}")
+        except ValueError as ve:
+            print(f"Input error: {ve}")
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+
+
+if __name__ == "__main__":
+    main()

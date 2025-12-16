@@ -1,0 +1,179 @@
+
+from typing import List, Dict
+
+
+class TaskManager:
+    """
+    TaskManager manages todo list tasks with add, remove, search, finish, get_all, and clear_all functionalities.
+
+    Each task has:
+        - id (int): unique identifier
+        - task_name (str): task title/name
+        - task_description (str): task details/description
+        - is_finished (bool): completion status
+
+    Adheres to ISO/IEC 25010: quality, reliability, and maintainability are prioritized.
+    """
+
+    def __init__(self):
+        """Initialize the task manager with an empty task list."""
+        self._tasks: Dict[int, Dict] = {}     # Stores tasks keyed by their unique ID for O(1) lookup & removal
+        self._next_id: int = 1                # Auto-incremented task ID
+
+    def add(self, task_name: str, task_description: str) -> int:
+        """
+        Adds a new task to the task list.
+
+        Args:
+            task_name (str): Title of the task (must be non-empty).
+            task_description (str): Description/details for the task (must be non-empty).
+
+        Returns:
+            int: The assigned unique ID for the new task.
+
+        Raises:
+            ValueError: If task_name or task_description is empty.
+        """
+        if not isinstance(task_name, str) or not task_name.strip():
+            raise ValueError("Task name must be a non-empty string.")
+        if not isinstance(task_description, str) or not task_description.strip():
+            raise ValueError("Task description must be a non-empty string.")
+
+        task_id = self._next_id
+        self._tasks[task_id] = {
+            'id': task_id,
+            'task_name': task_name.strip(),
+            'task_description': task_description.strip(),
+            'is_finished': False
+        }
+        self._next_id += 1
+
+        return task_id
+
+    def remove(self, task_id: int) -> bool:
+        """
+        Removes a task from the list by its unique ID.
+
+        Args:
+            task_id (int): The unique ID of the task.
+
+        Returns:
+            bool: True if task was found and removed, False otherwise.
+
+        Raises:
+            ValueError: If task_id is not a positive integer.
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise ValueError("Task ID must be a positive integer.")
+
+        return self._tasks.pop(task_id, None) is not None
+
+    def search(self, task_term: str) -> List[Dict]:
+        """
+        Searches for tasks by matching the search term in the task_name or task_description (case-insensitive).
+
+        Args:
+            task_term (str): The term to search for (must be non-empty).
+
+        Returns:
+            list[dict]: List of matching tasks (may be empty).
+
+        Raises:
+            ValueError: If task_term is an empty string.
+        """
+        if not isinstance(task_term, str) or not task_term.strip():
+            raise ValueError("Search term must be a non-empty string.")
+
+        lower_term = task_term.strip().lower()
+        results = [
+            {**task}
+            for task in self._tasks.values()
+            if lower_term in task['task_name'].lower() or lower_term in task['task_description'].lower()
+        ]
+        return results
+
+    def finish(self, task_id: int) -> bool:
+        """
+        Marks a task as finished by its unique ID.
+
+        Args:
+            task_id (int): The unique ID of the task.
+
+        Returns:
+            bool: True if task is found and marked as finished, False otherwise.
+
+        Raises:
+            ValueError: If task_id is not a positive integer.
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise ValueError("Task ID must be a positive integer.")
+
+        task = self._tasks.get(task_id)
+        if not task:
+            return False
+        task['is_finished'] = True
+        return True
+
+    def get_all(self) -> List[Dict]:
+        """
+        Retrieves all tasks with full details.
+
+        Returns:
+            list[dict]: A list of all tasks, each with (id, task_name, task_description, is_finished).
+        """
+        return [dict(task) for task in self._tasks.values()]
+
+    def clear_all(self) -> bool:
+        """
+        Deletes all tasks in the task list.
+
+        Returns:
+            bool: True if all tasks are removed (even if already empty).
+        """
+        self._tasks.clear()
+        return True
+
+
+if __name__ == "__main__":
+    # Example usage and test cases
+
+    tm = TaskManager()
+    print("Adding tasks...")
+
+    # Add tasks
+    first_id = tm.add("Buy groceries", "Milk, Bread, Eggs")
+    second_id = tm.add("Read Book", "Read chapter 5 of Python book")
+
+    print("All tasks:", tm.get_all())
+
+    # Search tasks
+    print("Search for 'book':", tm.search("book"))
+
+    # Mark a task as finished
+    print(f"Finish task with id {second_id}:", tm.finish(second_id))
+
+    # Remove a task
+    print(f"Remove task with id {first_id}:", tm.remove(first_id))
+
+    # Get all tasks after removal
+    print("All tasks after removal:", tm.get_all())
+
+    # Clear all tasks
+    print("Clear all tasks:", tm.clear_all())
+    print("All tasks after clearing:", tm.get_all())
+
+    # Try error cases
+    try:
+        tm.add("", "Description")  # Should raise ValueError
+    except ValueError as e:
+        print("Error:", e)
+
+    try:
+        tm.remove(-1)  # Should raise ValueError
+    except ValueError as e:
+        print("Error:", e)
+
+    try:
+        tm.search("")  # Should raise ValueError
+    except ValueError as e:
+        print("Error:", e)

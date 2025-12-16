@@ -1,0 +1,161 @@
+
+from typing import List, Dict, Optional
+
+class TaskValidationError(ValueError):
+    """Custom error for task validation failures."""
+    pass
+
+class TaskNotFoundError(KeyError):
+    """Custom error for non-existent task IDs."""
+    pass
+
+class Task:
+    """
+    Represents a single todo task.
+    """
+    def __init__(self, task_id: int, task_name: str, task_description: str) -> None:
+        self.id = task_id
+        self.name = task_name
+        self.description = task_description
+        self.is_finished = False
+
+    def to_dict(self) -> Dict:
+        """
+        Returns the task as a dictionary.
+        Includes: id, task_name, task_description, is_finished
+        """
+        return {
+            "id": self.id,
+            "task_name": self.name,
+            "task_description": self.description,
+            "is_finished": self.is_finished
+        }
+
+
+class TaskManager:
+    """
+    Manages a list of todo tasks in memory.
+    
+    Methods are implemented according to the specified interface.
+    """
+
+    def __init__(self) -> None:
+        # Efficient task lookup, insertion, deletion by task ID
+        self._tasks: Dict[int, Task] = {}
+        self._next_id: int = 1
+
+    def _validate_task_name(self, task_name: str) -> None:
+        if not isinstance(task_name, str) or not task_name.strip():
+            raise TaskValidationError("Task name must be a non-empty string.")
+
+    def _validate_task_description(self, task_description: str) -> None:
+        if not isinstance(task_description, str) or not task_description.strip():
+            raise TaskValidationError("Task description must be a non-empty string.")
+
+    def _validate_task_id(self, task_id: int) -> None:
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise TaskValidationError("Task ID must be a positive integer.")
+
+    def _get_task(self, task_id: int) -> Task:
+        self._validate_task_id(task_id)
+        try:
+            return self._tasks[task_id]
+        except KeyError:
+            raise TaskNotFoundError(f"Task with ID {task_id} does not exist.")
+
+    def add(self, task_name: str, task_description: str) -> int:
+        """
+        Adds a new task. Returns the new task's unique ID.
+        Raises TaskValidationError for invalid input.
+        """
+        self._validate_task_name(task_name)
+        self._validate_task_description(task_description)
+        task_id = self._next_id
+        self._tasks[task_id] = Task(
+            task_id=task_id,
+            task_name=task_name.strip(),
+            task_description=task_description.strip()
+        )
+        self._next_id += 1
+        return task_id
+
+    def remove(self, task_id: int) -> bool:
+        """
+        Removes a task by its ID.
+        Returns True if the task existed and was removed, False otherwise.
+        Raises TaskValidationError for invalid ID.
+        """
+        self._validate_task_id(task_id)
+        return self._tasks.pop(task_id, None) is not None
+
+    def search(self, task_term: str) -> List[Dict]:
+        """
+        Searches tasks by name or description.
+        Returns a list of matching task dictionaries.
+        Raises TaskValidationError for empty search term.
+        """
+        if not isinstance(task_term, str) or not task_term.strip():
+            raise TaskValidationError("Search term must be a non-empty string.")
+        term = task_term.strip().lower()
+        matched_tasks = [
+            task.to_dict()
+            for task in self._tasks.values()
+            if term in task.name.lower() or term in task.description.lower()
+        ]
+        return matched_tasks
+
+    def finish(self, task_id: int) -> bool:
+        """
+        Marks a task as finished.
+        Returns True if successful, False if the task does not exist.
+        Raises TaskValidationError for invalid ID.
+        """
+        try:
+            task = self._get_task(task_id)
+            if not task.is_finished:
+                task.is_finished = True
+                return True
+            return False
+        except TaskNotFoundError:
+            return False
+
+    def get_all(self) -> List[Dict]:
+        """
+        Returns all tasks as a list of dictionaries.
+        """
+        return [task.to_dict() for task in self._tasks.values()]
+
+    def clear_all(self) -> bool:
+        """
+        Removes all tasks.
+        Returns True if tasks were cleared, False if already empty.
+        """
+        if self._tasks:
+            self._tasks.clear()
+            return True
+        return False
+
+
+if __name__ == "__main__":
+    # Example basic test cases for TaskManager class
+    tm = TaskManager()
+    try:
+        id1 = tm.add("Buy groceries", "Milk, Bread, Eggs")
+        id2 = tm.add("Read book", "Read 'Clean Code'")
+        id3 = tm.add("Workout", "Run 5km outside")
+        print("All tasks:", tm.get_all())
+
+        print("Finishing task:", id2, tm.finish(id2))
+        print("All tasks after finishing one:", tm.get_all())
+        
+        print("Searching 'read':", tm.search("read"))
+        print("Removing task id=1:", tm.remove(1))
+        print("All tasks after removal:", tm.get_all())
+
+        print("Clearing all tasks:", tm.clear_all())
+        print("All tasks after clearing:", tm.get_all())
+
+    except TaskValidationError as err:
+        print("Validation error:", err)
+    except TaskNotFoundError as err:
+        print("Task not found:", err)

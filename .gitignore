@@ -177,10 +177,11 @@ cython_debug/
 archive/
 generated/
 dry_run_output_backup/
-dry_run_output/similarity_analysis/
-dry_run_output
-
+xmdfiles
 *.md
+.vscode/
+.claude/
+.uv_cache/
 
 # Archived data
 *.tar.gz

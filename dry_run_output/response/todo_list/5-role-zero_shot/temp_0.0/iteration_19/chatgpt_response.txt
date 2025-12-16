@@ -1,0 +1,158 @@
+```python
+"""
+Console-based Todo List Application (ISO/IEC 25010-aligned)
+
+This module provides a TaskManager class implementing a maintainable,
+efficient, and validated todo list manager as per best practices.
+"""
+
+from typing import List, Dict
+
+
+class TaskNotFoundError(Exception):
+    """Exception raised when a task is not found by ID."""
+    pass
+
+
+class InvalidTaskInputError(Exception):
+    """Exception raised for invalid input when creating or managing tasks."""
+    pass
+
+
+class TaskManager:
+    """
+    Manages todo tasks with add, remove, search, finish, get_all, and clear_all operations.
+
+    Tasks are stored in-memory for efficiency, and each is uniquely identified.
+    All methods include input validation, error handling, and concise documentation.
+    """
+
+    def __init__(self):
+        # Unique task counter for generating new IDs (monotonically increases).
+        self._next_id = 1
+        # Internal in-memory store: id -> task dict
+        self._tasks: Dict[int, Dict] = {}
+
+    def _validate_task_str(self, value: str):
+        if not isinstance(value, str) or not value.strip():
+            raise InvalidTaskInputError("String must be non-empty.")
+
+    def _validate_task_id(self, task_id: int):
+        if not isinstance(task_id, int) or task_id < 1:
+            raise InvalidTaskInputError("Task ID must be a positive integer.")
+
+    def _get_task(self, task_id: int) -> Dict:
+        task = self._tasks.get(task_id)
+        if not task:
+            raise TaskNotFoundError(f"Task with ID {task_id} does not exist.")
+        return task
+
+    def add(self, task_name: str, task_description: str) -> int:
+        """
+        Add a new task.
+
+        :param task_name: Name of the task (non-empty).
+        :param task_description: Task description (non-empty).
+        :return: Unique integer ID of the new task.
+        """
+        self._validate_task_str(task_name)
+        self._validate_task_str(task_description)
+        task_id = self._next_id
+        self._next_id += 1
+        self._tasks[task_id] = {
+            "id": task_id,
+            "task_name": task_name.strip(),
+            "task_description": task_description.strip(),
+            "is_finished": False,
+        }
+        return task_id
+
+    def remove(self, task_id: int) -> bool:
+        """
+        Remove a task by its ID.
+
+        :param task_id: The task's unique ID.
+        :return: True if successful, False if not found.
+        """
+        self._validate_task_id(task_id)
+        if task_id in self._tasks:
+            del self._tasks[task_id]
+            return True
+        return False
+
+    def search(self, task_term: str) -> List[Dict]:
+        """
+        Search for tasks with the search term in name or description (case-insensitive).
+
+        :param task_term: Term to search for (non-empty).
+        :return: List of task dicts matching the search.
+        """
+        self._validate_task_str(task_term)
+        normalized_term = task_term.casefold()
+        results = [
+            task.copy()
+            for task in self._tasks.values()
+            if normalized_term in task["task_name"].casefold()
+            or normalized_term in task["task_description"].casefold()
+        ]
+        return results
+
+    def finish(self, task_id: int) -> bool:
+        """
+        Mark a task as finished.
+
+        :param task_id: The task's unique ID.
+        :return: True if successfully marked, False otherwise.
+        """
+        self._validate_task_id(task_id)
+        task = self._tasks.get(task_id)
+        if task and not task['is_finished']:
+            task['is_finished'] = True
+            return True
+        return False
+
+    def get_all(self) -> List[Dict]:
+        """
+        Retrieve all tasks as a list of shallow copies.
+
+        :return: List of task information dictionaries.
+        """
+        # Return tasks sorted by id ascending
+        return [task.copy() for task_id, task in sorted(self._tasks.items())]
+
+    def clear_all(self) -> bool:
+        """
+        Remove all tasks.
+
+        :return: True if all tasks removed.
+        """
+        self._tasks.clear()
+        return True
+
+
+# Example usage and basic testing (uncomment to use)
+if __name__ == "__main__":
+    manager = TaskManager()
+    # Add tasks
+    tid1 = manager.add("Buy groceries", "Milk, eggs, bread")
+    tid2 = manager.add("Read book", "Finish reading ISO standard")
+    # List all tasks
+    print("Tasks:", manager.get_all())
+    # Mark the first task as finished
+    assert manager.finish(tid1) is True
+    # Search for tasks
+    print("Search 'read':", manager.search("read"))
+    # Remove a task
+    assert manager.remove(tid2) is True
+    # List remaining tasks
+    print("Tasks after remove:", manager.get_all())
+    # Clear all tasks
+    assert manager.clear_all() is True
+    print("Tasks after clear:", manager.get_all())
+```
+**Notes:**
+- All user-facing functions perform robust validation and error handling.
+- Tasks are always returned with fields: (id, task_name, task_description, is_finished).
+- Data storage uses a dict for O(1) insert, lookup, delete.
+- All operations are efficient, modular, and documented for testability and maintainability.
+- Example usage at the end can be uncommented for basic manual testing.

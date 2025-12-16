@@ -1,0 +1,225 @@
+
+import re
+from collections import deque
+from typing import List, Union
+
+class Calculator:
+    """
+    A console-based arithmetic calculator supporting +, -, *, /, parentheses, 
+    integers and floating-point numbers. Input is validated for correctness.
+    Adheres to ISO/IEC 25010 guidelines: correctness, safety, modularity, etc.
+    """
+
+    # Define supported operators and their precedence/associativity
+    _OPERATORS = {
+        '+': {'precedence': 1, 'associativity': 'L', 'function': lambda a, b: a + b},
+        '-': {'precedence': 1, 'associativity': 'L', 'function': lambda a, b: a - b},
+        '*': {'precedence': 2, 'associativity': 'L', 'function': lambda a, b: a * b},
+        '/': {'precedence': 2, 'associativity': 'L', 'function': lambda a, b: a / b},
+    }
+
+    # Regex pattern for tokenizing valid input (number, operator, parentheses)
+    _TOKEN_PATTERN = re.compile(
+        r'\s*(' +
+        r'(?P<number>-?\d+(\.\d+)?)' +    # Integer/Float, including negatives
+        r'|(?P<op>[\+\-\*/])' +           # Operators
+        r'|(?P<paren>[()])' +             # Parentheses
+        r')\s*'
+    )
+
+    def calculate(self, expression: str) -> float:
+        """
+        Evaluates an arithmetic expression and returns the result as float.
+        
+        :param expression: The arithmetic expression as a string.
+        :return: The evaluated result as a float.
+        :raises ValueError: On invalid input/unsupported characters/unbalanced parentheses.
+        :raises ZeroDivisionError: If division by zero occurs.
+        """
+        tokens = self._tokenize(expression)
+        self._validate_tokens(tokens)
+        postfix = self._infix_to_postfix(tokens)
+        result = self._evaluate_postfix(postfix)
+        return result
+
+    def _tokenize(self, text: str) -> List[str]:
+        """
+        Tokenizes the input string into numbers, operators, and parentheses.
+        
+        :param text: The input arithmetic expression.
+        :return: List of token strings.
+        :raises ValueError: For unsupported/invalid characters.
+        """
+        tokens = []
+        pos = 0
+        text = text.strip()
+        last_token = None
+        while pos < len(text):
+            match = self._TOKEN_PATTERN.match(text, pos)
+            if not match:
+                raise ValueError(
+                    f"Invalid character at position {pos}: '{text[pos]}'")
+            token = match.group().strip()
+            if match.group('number'):
+                # Handle unary minus (negative numbers at start or after '(' or operator)
+                if (last_token in (None, '(', '+', '-', '*', '/')
+                    and token.startswith('-')
+                    and len(token) > 1):
+                    tokens.append(token)
+                elif token.startswith('-') and last_token not in (None, '(', '+', '-', '*', '/'):
+                    # This is actually the subtraction operator, not unary minus
+                    tokens.append('-')
+                    tokens.append(token[1:])
+                else:
+                    tokens.append(token)
+                last_token = 'number'
+            elif match.group('op'):
+                tokens.append(token)
+                last_token = token
+            elif match.group('paren'):
+                tokens.append(token)
+                last_token = token
+            pos = match.end()
+        return tokens
+
+    def _validate_tokens(self, tokens: List[str]):
+        """
+        Validates token list for allowed syntax and structure.
+        
+        :param tokens: List of tokens from _tokenize.
+        :raises ValueError: For unbalanced parentheses, misplaced operators, etc.
+        """
+        if not tokens:
+            raise ValueError("Empty expression")
+
+        # Parentheses update
+        paren_stack = []
+        allowed_prev = {'number', ')'}
+        allowed_next = {'number', '-', '('}
+        prev_type = None
+        last_token = None
+        for i, token in enumerate(tokens):
+            if self._is_number(token):
+                prev_type = 'number'
+            elif token in self._OPERATORS:
+                if i == 0 or (last_token in self._OPERATORS or last_token == '('):
+                    # Check for unary minus, which is allowed immediately after operator or '('
+                    if token != '-':
+                        raise ValueError("Misplaced operator: '{}' at position {}".format(token, i))
+                elif last_token in (None, '(') and token == '-':
+                    pass  # Unary minus OK
+                prev_type = 'operator'
+            elif token == '(':
+                paren_stack.append('(')
+                prev_type = '('
+            elif token == ')':
+                if not paren_stack:
+                    raise ValueError("Unmatched closing parenthesis at position {}".format(i))
+                paren_stack.pop()
+                prev_type = ')'
+            last_token = token
+
+        if paren_stack:
+            raise ValueError("Unbalanced parentheses detected")
+
+        # Check for trailing operator
+        if tokens[-1] in self._OPERATORS:
+            raise ValueError("Expression cannot end with an operator")
+
+    def _infix_to_postfix(self, tokens: List[str]) -> List[Union[str, float]]:
+        """
+        Converts infix token list to postfix using the Shunting Yard algorithm.
+        :param tokens: List of tokens (infix order)
+        :return: List of tokens in postfix order
+        """
+        output = []
+        op_stack = []
+
+        def precedence(op): return self._OPERATORS[op]['precedence']
+        def is_left_assoc(op): return self._OPERATORS[op]['associativity'] == 'L'
+
+        i = 0
+        len_t = len(tokens)
+        while i < len_t:
+            token = tokens[i]
+            if self._is_number(token):
+                output.append(float(token))
+            elif token in self._OPERATORS:
+                # Unary minus handling: In tokenizer, negative numbers appear as single token
+                while (op_stack and op_stack[-1] in self._OPERATORS and
+                       ((is_left_assoc(token) and precedence(token) <= precedence(op_stack[-1])) or
+                        (not is_left_assoc(token) and precedence(token) < precedence(op_stack[-1])))):
+                    output.append(op_stack.pop())
+                op_stack.append(token)
+            elif token == '(':
+                op_stack.append(token)
+            elif token == ')':
+                while op_stack and op_stack[-1] != '(':
+                    output.append(op_stack.pop())
+                if not op_stack:
+                    raise ValueError("Unbalanced parenthesis detected in expression.")
+                op_stack.pop()  # Pop the '('
+            i += 1
+        while op_stack:
+            if op_stack[-1] in ('(', ')'):
+                raise ValueError("Unbalanced parenthesis in operator stack.")
+            output.append(op_stack.pop())
+        return output
+
+    def _evaluate_postfix(self, postfix: List[Union[str, float]]) -> float:
+        """
+        Evaluates a postfix expression.
+        
+        :param postfix: List of tokens in postfix notation
+        :return: Evaluated float result
+        :raises ZeroDivisionError: For division by zero
+        """
+        stack = []
+        for token in postfix:
+            if isinstance(token, float):
+                stack.append(token)
+            elif token in self._OPERATORS:
+                if len(stack) < 2:
+                    raise ValueError("Invalid syntax in expression")
+                b = stack.pop()
+                a = stack.pop()
+                if token == '/' and b == 0:
+                    raise ZeroDivisionError("Division by zero")
+                result = self._OPERATORS[token]['function'](a, b)
+                stack.append(result)
+            else:
+                raise ValueError(f"Invalid token in evaluation: {token}")
+        if len(stack) != 1:
+            raise ValueError("Invalid syntax: unable to evaluate to single value")
+        return stack[0]
+
+    @staticmethod
+    def _is_number(token: str) -> bool:
+        """
+        Determines if a token is a number.
+        :param token: The token string.
+        :return: True if number, False otherwise.
+        """
+        try:
+            float(token)
+            return True
+        except ValueError:
+            return False
+
+
+if __name__ == "__main__":
+    import sys
+    calc = Calculator()
+    print("Console Calculator. Enter 'exit' to quit.")
+    while True:
+        try:
+            expr = input("> ").strip()
+            if expr.lower() in ('exit', 'quit'):
+                print("Goodbye!")
+                break
+            if not expr:
+                continue
+            result = calc.calculate(expr)
+            print(f"= {result}")
+        except Exception as exc:
+            print(f"Error: {exc}")

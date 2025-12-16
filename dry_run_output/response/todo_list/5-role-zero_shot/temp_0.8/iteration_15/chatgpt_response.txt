@@ -1,0 +1,193 @@
+```python
+from typing import List, Dict, Optional
+import threading
+
+
+class InvalidTaskError(ValueError):
+    """Raised when a task input is invalid."""
+    pass
+
+
+class TaskNotFoundError(LookupError):
+    """Raised when a task ID does not exist."""
+    pass
+
+
+class Task:
+    """
+    Represents a single todo task.
+
+    Attributes:
+        id (int): Unique identifier for the task.
+        name (str): Name/title of the task.
+        description (str): Detailed description of the task.
+        is_finished (bool): True if the task is completed, False otherwise.
+    """
+    __slots__ = ['id', 'name', 'description', 'is_finished']
+
+    def __init__(self, id: int, name: str, description: str):
+        self.id = id
+        self.name = name
+        self.description = description
+        self.is_finished = False
+
+    def to_dict(self) -> Dict:
+        """Return a dictionary representation of this task."""
+        return {
+            'id': self.id,
+            'task_name': self.name,
+            'task_description': self.description,
+            'is_finished': self.is_finished,
+        }
+
+
+class TaskManager:
+    """
+    Manages todo tasks in memory.
+
+    Methods:
+        add(task_name, task_description): Adds a new task and returns its ID.
+        remove(task_id): Removes a task by ID, returns success status.
+        search(task_term): Searches tasks by name or description, returns matches.
+        finish(task_id): Marks a task as completed.
+        get_all(): Retrieves all tasks.
+        clear_all(): Removes all tasks.
+    """
+
+    def __init__(self):
+        # Efficient O(1) lookup, insert, delete by ID
+        self._tasks: Dict[int, Task] = {}
+        self._id_counter = 1
+        self._lock = threading.Lock()  # Ensure thread safety
+
+    def add(self, task_name: str, task_description: str) -> int:
+        """
+        Adds a task and returns its unique ID.
+
+        Raises:
+            InvalidTaskError: If task_name or task_description are empty.
+        """
+        if not isinstance(task_name, str) or not task_name.strip():
+            raise InvalidTaskError("Task name must be a non-empty string.")
+        if not isinstance(task_description, str) or not task_description.strip():
+            raise InvalidTaskError("Task description must be a non-empty string.")
+
+        with self._lock:
+            task_id = self._id_counter
+            self._tasks[task_id] = Task(task_id, task_name.strip(), task_description.strip())
+            self._id_counter += 1
+            return task_id
+
+    def remove(self, task_id: int) -> bool:
+        """
+        Removes a task by its ID.
+
+        Returns True if removal is successful, False otherwise.
+        Raises:
+            InvalidTaskError: If task_id is not a positive integer.
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise InvalidTaskError("Task ID must be a positive integer.")
+        with self._lock:
+            return self._tasks.pop(task_id, None) is not None
+
+    def search(self, task_term: str) -> List[Dict]:
+        """
+        Searches tasks by name or description (case-insensitive substring).
+
+        Returns a list of matching task dictionaries.
+        Raises:
+            InvalidTaskError: If task_term is empty or not a string.
+        """
+        if not isinstance(task_term, str) or not task_term.strip():
+            raise InvalidTaskError("Search term must be a non-empty string.")
+
+        keyword = task_term.strip().lower()
+        matches = [
+            task.to_dict()
+            for task in self._tasks.values()
+            if keyword in task.name.lower() or keyword in task.description.lower()
+        ]
+        return matches
+
+    def finish(self, task_id: int) -> bool:
+        """
+        Marks a task as completed.
+
+        Returns True if successful, False otherwise.
+        Raises:
+            InvalidTaskError: If task_id is not positive.
+        """
+        if not isinstance(task_id, int) or task_id <= 0:
+            raise InvalidTaskError("Task ID must be a positive integer.")
+        with self._lock:
+            task = self._tasks.get(task_id)
+            if not task:
+                return False
+            task.is_finished = True
+            return True
+
+    def get_all(self) -> List[Dict]:
+        """
+        Retrieves all tasks as a list of dictionaries.
+
+        Returns:
+            List[dict]: List of tasks, each with keys (id, task_name, task_description, is_finished).
+        """
+        return [task.to_dict() for task in self._tasks.values()]
+
+    def clear_all(self) -> bool:
+        """
+        Deletes all tasks.
+
+        Returns True if successful.
+        """
+        with self._lock:
+            self._tasks.clear()
+            self._id_counter = 1
+            return True
+
+
+# Below is sample code for running (for illustration and testing purposes only).
+# Remove or comment out this section if integrating into a larger application.
+
+if __name__ == "__main__":
+    manager = TaskManager()
+    try:
+        # Add tasks
+        t1 = manager.add("Buy groceries", "Milk, bread, cheese")
+        t2 = manager.add("Study Python", "Read ISO/IEC 25010 documentation")
+        t3 = manager.add("Call Alice", "Discuss the project status")
+
+        # List all tasks
+        print("All tasks:", manager.get_all())
+
+        # Finish task
+        manager.finish(t2)
+
+        # Search
+        print("Search 'Python':", manager.search("Python"))
+
+        # Remove a task
+        manager.remove(t1)
+        print("After removal:", manager.get_all())
+
+        # Clear all
+        manager.clear_all()
+        print("All cleared:", manager.get_all())
+
+    except InvalidTaskError as e:
+        print("Input error:", e)
+    except Exception as exc:
+        print("Unexpected error:", exc)
+```
+**Highlights & ISO/IEC 25010 Considerations:**
+
+- **Correctness & Robustness**: Strict validation and clear exceptions, consistent I/O formats, thorough inline documentation
+- **Performance**: Dicts for O(1) operations, direct lookups, and thread-safe updates
+- **Modularity & Maintainability**: OOP structure with separation of Task/TaskManager
+- **Safety**: Graceful error handling, prevention of invalid inputs
+- **Testability**: Each method is self-contained, stateless aside from data store; sample tests in `__main__`
+- **Readability & Documentation**: Explicit type hints, docstrings, readable variable names, and comments
+
+**This implementation is ready for integration, testing, and further extension.**
