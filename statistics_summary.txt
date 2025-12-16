@@ -1,0 +1,260 @@
+================================================================================
+STATISTICS SUMMARY FOR BACHELOR THESIS
+Temperature Parameter Impact on Code Quality and Similarity
+================================================================================
+
+
+================================================================================
+1. QUALITY METRICS
+================================================================================
+
+
+Compilability
+--------------------------------------------------------------------------------
+
+By Temperature:
+  T=0.0: Mean=0.994, SD=0.075 (n=180)
+  T=0.2: Mean=1.000, SD=0.000 (n=180)
+  T=0.4: Mean=1.000, SD=0.000 (n=180)
+  T=0.6: Mean=0.994, SD=0.075 (n=180)
+  T=0.8: Mean=1.000, SD=0.000 (n=180)
+  T=1.0: Mean=0.994, SD=0.075 (n=180)
+
+Correlation with temperature: r=-0.005, p=0.8657
+
+Linear regression slopes by model:
+  chatgpt: slope=-0.0024, R²=0.000, p=0.7700
+  claude: slope=0.0000, R²=0.000, p=1.0000
+  gemini: slope=0.0000, R²=0.000, p=1.0000
+
+
+Functional Correctness (%)
+--------------------------------------------------------------------------------
+
+By Temperature:
+  T=0.0: Mean=67.339, SD=18.016 (n=180)
+  T=0.2: Mean=67.916, SD=18.612 (n=180)
+  T=0.4: Mean=70.304, SD=15.347 (n=180)
+  T=0.6: Mean=69.192, SD=17.224 (n=180)
+  T=0.8: Mean=71.351, SD=14.545 (n=180)
+  T=1.0: Mean=66.767, SD=19.037 (n=180)
+
+Correlation with temperature: r=0.018, p=0.5562
+
+Linear regression slopes by model:
+  chatgpt: slope=0.8679, R²=0.001, p=0.6685
+  claude: slope=0.4669, R²=0.000, p=0.8744
+  gemini: slope=1.3788, R²=0.001, p=0.6342
+
+
+Cyclomatic Complexity
+--------------------------------------------------------------------------------
+
+By Temperature:
+  T=0.0: Mean=3.715, SD=2.682 (n=179)
+  T=0.2: Mean=3.728, SD=2.723 (n=180)
+  T=0.4: Mean=3.667, SD=3.087 (n=180)
+  T=0.6: Mean=3.883, SD=3.435 (n=179)
+  T=0.8: Mean=3.539, SD=2.909 (n=180)
+  T=1.0: Mean=3.709, SD=2.898 (n=179)
+
+Correlation with temperature: r=-0.006, p=0.8370
+
+Linear regression slopes by model:
+  chatgpt: slope=0.0613, R²=0.000, p=0.9099
+  claude: slope=0.1238, R²=0.006, p=0.1436
+  gemini: slope=-0.3518, R²=0.002, p=0.4362
+
+
+Cognitive Complexity
+--------------------------------------------------------------------------------
+
+By Temperature:
+  T=0.0: Mean=80.453, SD=67.366 (n=179)
+  T=0.2: Mean=78.644, SD=67.427 (n=180)
+  T=0.4: Mean=81.289, SD=64.547 (n=180)
+  T=0.6: Mean=86.223, SD=68.620 (n=179)
+  T=0.8: Mean=85.322, SD=70.783 (n=180)
+  T=1.0: Mean=86.028, SD=68.552 (n=179)
+
+Correlation with temperature: r=0.038, p=0.2119
+
+Linear regression slopes by model:
+  chatgpt: slope=14.9824, R²=0.005, p=0.1725
+  claude: slope=-4.3643, R²=0.000, p=0.7089
+  gemini: slope=12.1012, R²=0.006, p=0.1294
+
+
+Maintainability Index
+--------------------------------------------------------------------------------
+
+By Temperature:
+  T=0.0: Mean=62.672, SD=7.251 (n=179)
+  T=0.2: Mean=63.513, SD=7.594 (n=180)
+  T=0.4: Mean=62.506, SD=7.051 (n=180)
+  T=0.6: Mean=62.113, SD=7.611 (n=179)
+  T=0.8: Mean=61.804, SD=8.927 (n=180)
+  T=1.0: Mean=62.820, SD=7.002 (n=179)
+
+Correlation with temperature: r=-0.031, p=0.3120
+
+Linear regression slopes by model:
+  chatgpt: slope=-0.9216, R²=0.002, p=0.4163
+  claude: slope=0.5869, R²=0.001, p=0.5221
+  gemini: slope=-1.7352, R²=0.008, p=0.0844
+
+
+Halstead Volume
+--------------------------------------------------------------------------------
+
+By Temperature:
+  T=0.0: Mean=1318.066, SD=498.252 (n=179)
+  T=0.2: Mean=1303.909, SD=525.079 (n=180)
+  T=0.4: Mean=1305.019, SD=489.336 (n=180)
+  T=0.6: Mean=1321.942, SD=501.438 (n=179)
+  T=0.8: Mean=1363.166, SD=561.251 (n=180)
+  T=1.0: Mean=1356.346, SD=493.472 (n=179)
+
+Correlation with temperature: r=0.037, p=0.2263
+
+Linear regression slopes by model:
+  chatgpt: slope=63.2793, R²=0.003, p=0.3007
+  claude: slope=49.3084, R²=0.001, p=0.6085
+  gemini: slope=52.6784, R²=0.006, p=0.1512
+
+
+Halstead Difficulty
+--------------------------------------------------------------------------------
+
+By Temperature:
+  T=0.0: Mean=26.214, SD=11.135 (n=179)
+  T=0.2: Mean=26.028, SD=10.941 (n=180)
+  T=0.4: Mean=25.980, SD=10.649 (n=180)
+  T=0.6: Mean=26.200, SD=10.142 (n=179)
+  T=0.8: Mean=26.600, SD=10.830 (n=180)
+  T=1.0: Mean=26.583, SD=10.450 (n=179)
+
+Correlation with temperature: r=0.017, p=0.5706
+
+Linear regression slopes by model:
+  chatgpt: slope=0.0434, R²=0.000, p=0.9802
+  claude: slope=2.0028, R²=0.004, p=0.2514
+  gemini: slope=-0.4370, R²=0.000, p=0.7452
+
+
+Halstead Effort
+--------------------------------------------------------------------------------
+
+By Temperature:
+  T=0.0: Mean=38157.138, SD=30326.358 (n=179)
+  T=0.2: Mean=38060.344, SD=31963.986 (n=180)
+  T=0.4: Mean=37336.461, SD=29545.833 (n=180)
+  T=0.6: Mean=37866.525, SD=28725.206 (n=179)
+  T=0.8: Mean=40483.719, SD=31617.102 (n=180)
+  T=1.0: Mean=39667.252, SD=28508.827 (n=179)
+
+Correlation with temperature: r=0.025, p=0.4137
+
+Linear regression slopes by model:
+  chatgpt: slope=1943.4946, R²=0.001, p=0.6278
+  claude: slope=3069.3509, R²=0.001, p=0.6083
+  gemini: slope=1557.5660, R²=0.001, p=0.4679
+
+
+================================================================================
+2. SIMILARITY METRICS
+================================================================================
+
+
+BLEU
+--------------------------------------------------------------------------------
+
+By Temperature:
+  T=0.0: Mean=0.481, SD=0.232 (n=1710)
+  T=0.2: Mean=0.403, SD=0.140 (n=1710)
+  T=0.4: Mean=0.376, SD=0.115 (n=1710)
+  T=0.6: Mean=0.361, SD=0.111 (n=1710)
+  T=0.8: Mean=0.331, SD=0.100 (n=1710)
+  T=1.0: Mean=0.313, SD=0.088 (n=1710)
+
+Correlation with temperature: r=-0.350, p=0.0000
+
+Linear regression slopes by model:
+  chatgpt: slope=-0.1055, R²=0.089, p=0.0000
+  claude: slope=-0.2689, R²=0.346, p=0.0000
+  gemini: slope=-0.0855, R²=0.062, p=0.0000
+
+
+CodeBLEU
+--------------------------------------------------------------------------------
+
+By Temperature:
+  T=0.0: Mean=0.570, SD=0.187 (n=1710)
+  T=0.2: Mean=0.508, SD=0.100 (n=1710)
+  T=0.4: Mean=0.491, SD=0.085 (n=1710)
+  T=0.6: Mean=0.481, SD=0.093 (n=1710)
+  T=0.8: Mean=0.462, SD=0.077 (n=1710)
+  T=1.0: Mean=0.449, SD=0.081 (n=1710)
+
+Correlation with temperature: r=-0.315, p=0.0000
+
+Linear regression slopes by model:
+  chatgpt: slope=-0.0738, R²=0.067, p=0.0000
+  claude: slope=-0.1960, R²=0.285, p=0.0000
+  gemini: slope=-0.0542, R²=0.035, p=0.0000
+
+
+AST Edit Distance
+--------------------------------------------------------------------------------
+
+By Temperature:
+  T=0.0: Mean=465.141, SD=317.629 (n=1691)
+  T=0.2: Mean=544.381, SD=310.779 (n=1710)
+  T=0.4: Mean=570.857, SD=340.222 (n=1710)
+  T=0.6: Mean=539.399, SD=331.833 (n=1691)
+  T=0.8: Mean=599.099, SD=379.518 (n=1710)
+  T=1.0: Mean=608.800, SD=359.466 (n=1691)
+
+Correlation with temperature: r=0.120, p=0.0000
+
+Linear regression slopes by model:
+  chatgpt: slope=115.7740, R²=0.017, p=0.0000
+  claude: slope=127.4155, R²=0.010, p=0.0000
+  gemini: slope=120.6691, R²=0.031, p=0.0000
+
+
+TSED
+--------------------------------------------------------------------------------
+
+By Temperature:
+  T=0.0: Mean=492.334, SD=336.929 (n=1691)
+  T=0.2: Mean=577.038, SD=328.571 (n=1710)
+  T=0.4: Mean=604.946, SD=359.076 (n=1710)
+  T=0.6: Mean=572.313, SD=350.599 (n=1691)
+  T=0.8: Mean=635.611, SD=400.440 (n=1710)
+  T=1.0: Mean=645.966, SD=379.801 (n=1691)
+
+Correlation with temperature: r=0.122, p=0.0000
+
+Linear regression slopes by model:
+  chatgpt: slope=124.2855, R²=0.017, p=0.0000
+  claude: slope=139.5346, R²=0.011, p=0.0000
+  gemini: slope=125.7317, R²=0.030, p=0.0000
+
+
+================================================================================
+3. KEY FINDINGS FOR THESIS
+================================================================================
+
+
+Significant correlations with temperature (sorted by strength):
+
+  BLEU: r=-0.350, p=0.0000 (moderate, decreases)
+  CodeBLEU: r=-0.315, p=0.0000 (moderate, decreases)
+  TSED: r=0.122, p=0.0000 (weak, increases)
+  AST Edit Distance: r=0.120, p=0.0000 (weak, increases)
+
+Quality metrics: No significant temperature effects found.
+Similarity metrics: Clear negative correlation - higher temperature = lower similarity.
+
+================================================================================

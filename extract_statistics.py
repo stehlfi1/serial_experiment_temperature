@@ -341,8 +341,6 @@ def format_output():
     output.append("3. KEY FINDINGS FOR THESIS")
     output.append("=" * 80)
     output.append("")
-    output.append("Use these numbers in sections 2.4 and Conclusion:")
-    output.append("")
 
     # Collect all correlations
     correlations = []
